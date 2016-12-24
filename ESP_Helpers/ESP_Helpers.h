@@ -125,6 +125,17 @@ void printMacAddress() {
 }
 
 
+void registerDNS(){
+    // Register host name in WiFi and mDNS
+    String hostNameWifi = boardName;   // boardName is device name
+    hostNameWifi.concat(".local");
+    WiFi.hostname(hostNameWifi);
+    if (MDNS.begin(config.boardName)) {
+      DEBUG_PRINT("* MDNS responder started. http://");
+      DEBUG_PRINTLN(hostNameWifi);
+    }
+}
+
 //---------- LED FUNCTIONS ----------
 
 
@@ -273,7 +284,7 @@ void writeRTCmem() {
 }*/
 
 
-//---------- IOTAPPSTORY FUNCTIONS ----------
+//---------- IOTappStory FUNCTIONS ----------
 bool iotUpdater(String server, String url, String firmware, bool immediately, bool debugWiFi) {
   bool retValue = true;
   
@@ -315,11 +326,11 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
   return retValue;
 }
 
-void iotAppstory(){
- // update from IOTappstory.com
-  if (iotUpdater(config.IOTappStore1, config.IOTappStorePHP1, FIRMWARE, true, true) == false) {
+void IOTappStory(){
+ // update from IOTappStory.com
+  if (iotUpdater(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true, true) == false) {
    DEBUG_PRINTLN("False !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    if (iotUpdater(config.IOTappStore2, config.IOTappStorePHP2, FIRMWARE, true, true) == false) {
+    if (iotUpdater(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true, true) == false) {
       DEBUG_PRINTLN(" Update not succesful");
 #ifdef REMOTEDEBUGGING
       Debug.println(" Update not succesful");
@@ -341,8 +352,8 @@ void writeConfig() {
     WiFi.psk().toCharArray(config.password,STRUCT_CHAR_ARRAY_SIZE);
     DEBUG_PRINT("Stored ");
     DEBUG_PRINT(config.ssid);
-    DEBUG_PRINT(" ");
-    DEBUG_PRINTLN(config.password);
+    DEBUG_PRINTLN(" ");
+ //   DEBUG_PRINTLN(config.password);
   }
   EEPROM.begin(EEPROM_SIZE);
   config.magicBytes[0] = MAGICBYTES[0];
@@ -366,10 +377,10 @@ void readConfig() {
     EEPROM.end();
     // Standard
     boardName = String(config.boardName);
-    IOTappStore1 = String(config.IOTappStore1);
-    IOTappStorePHP1 = String(config.IOTappStorePHP1);
-    IOTappStore2 = String(config.IOTappStore2);
-    IOTappStorePHP2 = String(config.IOTappStorePHP2);
+    IOTappStory1 = String(config.IOTappStory1);
+    IOTappStoryPHP1 = String(config.IOTappStoryPHP1);
+    IOTappStory2 = String(config.IOTappStory2);
+    IOTappStoryPHP2 = String(config.IOTappStoryPHP2);
     ret = true;
 
   } else {

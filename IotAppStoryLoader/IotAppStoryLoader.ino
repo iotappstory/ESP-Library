@@ -1,6 +1,6 @@
-/* This sketch connects to the iopappstore and loads the assigned firmware down. The assignment is done on the server based on the MAC address of the board
+/* This sketch connects to the iopappstory and loads the assigned firmware down. The assignment is done on the server based on the MAC address of the board
 
-    On the server, you need PHP script "iotappstore.php" and the bin files are in the .\bin folder
+    On the server, you need PHP script "iotappstory.php" and the bin files are in the .\bin folder
 
     This work is based on the ESPhttpUpdate examples
 
@@ -28,7 +28,7 @@
 */
 
 #define VERSION "v4.1"
-#define FIRMWARE "IOTappstoryLoader "VERSION
+#define FIRMWARE "IOTappStoryLoader "VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
 #define REMOTEDEBUGGING   // telnet is used to present
@@ -47,23 +47,29 @@
 #include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include <WiFiManager.h>          //https://github.com/kentaylor/WiFiManager
 ESP8266WebServer server(80);                  // The Webserver
+#include <Ticker.h>
 
 extern "C" {
 #include "user_interface.h" // this is for the RTC memory read/write functions
 }
 
 //---------- CODE DEFINITIONS ----------
-#define MAXDEVICES 5
+#define MAX_WIFI_RETRIES 50
 #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
 #define SERVICENAME "LOADER"  // name of the MDNS service used in this group of ESPs
+
+#define RTCMEMBEGIN 68
+#define MAGICBYTE 85
 
 
 // -------- PIN DEFINITIONS ------------------
 #ifdef ARDUINO_ESP8266_ESP01           // Generic ESP's 
+#define GPIO0 0
 #define LEDgreen 13
 #define LEDred 12
 #define PIRpin 14
 #else
+#define GPIO0 D3
 #define LEDgreen D7
 #define LEDred D6
 #define PIRpin D5
@@ -71,9 +77,8 @@ extern "C" {
 
 
 //-------- SERVICES --------------
-ESP8266WebServer webServer(80);
-WiFiClient client;
-HTTPClient http;
+
+Ticker blink;
 
 // remoteDebug
 #ifdef REMOTEDEBUGGING
@@ -84,41 +89,56 @@ RemoteDebug Debug;
 //--------- ENUMS AND STRUCTURES  -------------------
 
 typedef struct {
-  char boardName[50];
-  char IOTappStore1[40];
-  char IOTappStorePHP1[40];
-  char IOTappStore2[40];
-  char IOTappStorePHP2[40];
+  char ssid[STRUCT_CHAR_ARRAY_SIZE];
+  char password[STRUCT_CHAR_ARRAY_SIZE];
+  char boardName[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStory1[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
   // insert NEW CONSTANTS according boardname example HERE!
   char magicBytes[4];
 } strConfig;
 
 strConfig config = {
+  "",
+  "",
   "INITloader",
-  "192.168.0.200",
-  "/iotappstore/iotappstorev20.php",
+  "iotappstory.com",
+  "/ota/esp8266-v1.php",
   "iotappstory.com",
   "/ota/esp8266-v1.php",
   "CFG"  // Magic Bytes
 };
 
+typedef struct {
+  byte markerFlag;
+  int bootTimes;
+} rtcMemDef __attribute__((aligned(4)));
+rtcMemDef rtcMem;
+
+
 //---------- VARIABLES ----------
 unsigned long entry;
-String  boardName, IOTappStore1, IOTappStorePHP1, IOTappStore2, IOTappStorePHP2;  // add NEW CONSTANTS according boardname example
+String  boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;  // add NEW CONSTANTS according boardname example
 
 bool initialConfig = true;
+
+volatile unsigned long buttonEntry, buttonTime;
+volatile bool buttonChanged = false;
+volatile int greenTimesOff = 0;
+volatile int redTimesOff = 0;
+volatile int greenTimes = 0;
+volatile int redTimes = 0;
 
 
 //---------- FUNCTIONS ----------
 void loopWiFiManager(void);
-boolean readConfig(void);
 void eraseFlash(void);
 
 
 //---------- OTHER .H FILES ----------
 #include "ESP_Helpers.h"
-
-
 
 
 //-------------------------- SETUP -----------------------------------------
@@ -138,7 +158,7 @@ void setup() {
 
   initWiFiManager();
 
- if (WiFi.status() == WL_CONNECTED) iotAppstory();
+  if (WiFi.status() == WL_CONNECTED) IOTappStory();
 
   Serial.println("setup done");
 }
@@ -171,10 +191,10 @@ void loopWiFiManager() {  // new
 
     // Standard
     WiFiManagerParameter p_boardName("boardName", "boardName", config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-    WiFiManagerParameter p_IOTappStore1("IOTappStore1", "IOTappStore1", config.IOTappStore1, STRUCT_CHAR_ARRAY_SIZE);
-    WiFiManagerParameter p_IOTappStorePHP1("IOTappStorePHP1", "IOTappStorePHP1", config.IOTappStorePHP1, STRUCT_CHAR_ARRAY_SIZE);
-    WiFiManagerParameter p_IOTappStore2("IOTappStore2", "IOTappStore2", config.IOTappStore2, STRUCT_CHAR_ARRAY_SIZE);
-    WiFiManagerParameter p_IOTappStorePHP2("IOTappStorePHP2", "IOTappStorePHP2", config.IOTappStorePHP2, STRUCT_CHAR_ARRAY_SIZE);
+    WiFiManagerParameter p_IOTappStory1("IOTappStory1", "IOTappStory1", config.IOTappStory1, STRUCT_CHAR_ARRAY_SIZE);
+    WiFiManagerParameter p_IOTappStoryPHP1("IOTappStoryPHP1", "IOTappStoryPHP1", config.IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE);
+    WiFiManagerParameter p_IOTappStory2("IOTappStory2", "IOTappStory2", config.IOTappStory2, STRUCT_CHAR_ARRAY_SIZE);
+    WiFiManagerParameter p_IOTappStoryPHP2("IOTappStoryPHP2", "IOTappStoryPHP2", config.IOTappStoryPHP2, STRUCT_CHAR_ARRAY_SIZE);
 
     // Just a quick hint
     WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small>");
@@ -188,10 +208,10 @@ void loopWiFiManager() {  // new
 
     // Standard
     wifiManager.addParameter(&p_boardName);
-    wifiManager.addParameter(&p_IOTappStore1);
-    wifiManager.addParameter(&p_IOTappStorePHP1);
-    wifiManager.addParameter(&p_IOTappStore2);
-    wifiManager.addParameter(&p_IOTappStorePHP2);
+    wifiManager.addParameter(&p_IOTappStory1);
+    wifiManager.addParameter(&p_IOTappStoryPHP1);
+    wifiManager.addParameter(&p_IOTappStory2);
+    wifiManager.addParameter(&p_IOTappStoryPHP2);
 
     // Sets timeout in seconds until configuration portal gets turned off.
     // If not specified device will remain in configuration mode until
@@ -214,10 +234,10 @@ void loopWiFiManager() {  // new
 
     // Standard
     strcpy(config.boardName, p_boardName.getValue());
-    strcpy(config.IOTappStore1, p_IOTappStore1.getValue());
-    strcpy(config.IOTappStorePHP1, p_IOTappStorePHP1.getValue());
-    strcpy(config.IOTappStore2, p_IOTappStore2.getValue());
-    strcpy(config.IOTappStorePHP2, p_IOTappStorePHP2.getValue());
+    strcpy(config.IOTappStory1, p_IOTappStory1.getValue());
+    strcpy(config.IOTappStoryPHP1, p_IOTappStoryPHP1.getValue());
+    strcpy(config.IOTappStory2, p_IOTappStory2.getValue());
+    strcpy(config.IOTappStoryPHP2, p_IOTappStoryPHP2.getValue());
     writeConfig();
 
 #ifdef LEDSONBOARD
