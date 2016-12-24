@@ -27,7 +27,7 @@
   SOFTWARE.
 */
 
-#define VERSION "v4.1"
+#define VERSION "v1.0.0"
 #define FIRMWARE "IOTappStoryLoader "VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
