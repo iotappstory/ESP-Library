@@ -161,6 +161,8 @@ void setup() {
 
 
   // ------------- INTERRUPTS ----------------------------
+
+          Serial.print(GPIO0);
   attachInterrupt(GPIO0, ISRbuttonStateChanged, CHANGE);
 
 
@@ -189,17 +191,13 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin();
 
-  int retries = MAX_WIFI_RETRIES;
-  while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
-    delay(500);
-    Serial.print(".");
+  if (!isNetworkConnected()) {
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
+    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
   }
-  if (retries >= MAX_WIFI_RETRIES || WiFi.psk() == "") {
-    DEBUG_PRINTLN("NoConn");
-    if ( WiFi.psk() == "") espRestart('C', "No Connection...");
-    else espRestart('N', "No Connection...");
-  } else {
-
+  else {
     DEBUG_PRINTLN("");
     DEBUG_PRINTLN("WiFi connected");
     getMACaddress();
@@ -282,7 +280,6 @@ void loop() {
     digitalWrite(LEDpin, !digitalRead(LEDpin));
     blinkEntry = millis();
   }
-
 }
 //------------------------- END LOOP --------------------------------------------
 

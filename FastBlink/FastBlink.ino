@@ -25,7 +25,7 @@
 */
 
 #define VERSION "V1.0"
-#define FIRMWARE "SLOWBLINK "VERSION
+#define FIRMWARE "FASTBLINK "VERSION
 
 #define SERIALDEBUG         // Serial is used to present debugging messages 
 #define REMOTEDEBUGGING     // telnet is used to present
@@ -187,17 +187,13 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin();
 
-  int retries = MAX_WIFI_RETRIES;
-  while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
-    delay(500);
-    Serial.print(".");
+ if (!isNetworkConnected()) {
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
+    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
   }
-  if (retries >= MAX_WIFI_RETRIES || WiFi.psk() == "") {
-    DEBUG_PRINTLN("NoConn");
-    if ( WiFi.psk() == "") espRestart('C', "No Connection...");
-    else espRestart('N', "No Connection...");
-  } else {
-
+  else {
     DEBUG_PRINTLN("");
     DEBUG_PRINTLN("WiFi connected");
     getMACaddress();

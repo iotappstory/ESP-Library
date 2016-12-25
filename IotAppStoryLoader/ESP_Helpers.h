@@ -291,6 +291,7 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
   bool retValue = true;
   
     delay(1000);
+    DEBUG_PRINTLN("");
     DEBUG_PRINTLN("------------- IOT Appstory MODE -------------------");
     REMOTEDEBUG_PRINTLN("------------- IOT Appstory Mode -------------------");
 
@@ -331,16 +332,15 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
 void IOTappStory(){
  // update from IOTappStory.com
   if (iotUpdater(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true, true) == false) {
-   DEBUG_PRINTLN("False !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    DEBUG_PRINTLN(" Update not succesful");
     if (iotUpdater(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true, true) == false) {
       DEBUG_PRINTLN(" Update not succesful");
 #ifdef REMOTEDEBUGGING
-      Debug.println(" Update not succesful");
+      REMOTEDEBUG_PRINTLN(" Update not succesful");
 #endif
-      //     WiFi.begin("No", "connection");
-      //     ESPrestart("No Connection");
     }
   }
+  DEBUG_PRINTLN("Returning from IOTAppstory");
 }
 
 

@@ -1,5 +1,5 @@
 /* This sketch monitors a PIR sensor and transmitts an "ON" or "OFF" signal to a receiving device. Together with a
-   Sonoff wireless switch, it can be used as a wireless motion detector. At startup, it connects to the IOTappstore to
+   Sonoff wireless switch, it can be used as a wireless motion detector. At startup, it connects to IOTappStory.com to
    check for updates.
 
    To add new constants in WiFiManager search for "NEW CONSTANTS" and insert them according the "boardName" example
@@ -34,7 +34,7 @@
 */
 
 
-#define VERSION "V5.1"
+#define VERSION "V5.0"
 #define SKETCH "SonoffSender "
 #define FIRMWARE SKETCH VERSION
 
@@ -111,10 +111,10 @@ typedef struct {
   char ssid[STRUCT_CHAR_ARRAY_SIZE];
   char password[STRUCT_CHAR_ARRAY_SIZE];
   char boardName[STRUCT_CHAR_ARRAY_SIZE];
-  char IOTappStore1[STRUCT_CHAR_ARRAY_SIZE];
-  char IOTappStorePHP1[STRUCT_CHAR_ARRAY_SIZE];
-  char IOTappStore2[STRUCT_CHAR_ARRAY_SIZE];
-  char IOTappStorePHP2[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStory1[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
+  char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
   char switchName1[STRUCT_CHAR_ARRAY_SIZE];
   char switchName2[STRUCT_CHAR_ARRAY_SIZE];
   // insert NEW CONSTANTS according boardname example HERE!
@@ -125,8 +125,8 @@ strConfig config = {
   mySSID,
   myPASSWORD,
   "SenderINIT",
-  "192.168.0.200",
-  "/iotappstore/iotappstorev20.php",
+  "iotappstory.org",
+  "ota/esp8266-v1.php",
   "iotappstory.org",
   "ota/esp8266-v1.php",
   "",
@@ -142,7 +142,7 @@ rtcMemDef rtcMem;
 
 //---------- VARIABLES ----------
 
-String switchName1, switchName2, boardName, IOTappStore1, IOTappStorePHP1, IOTappStore2, IOTappStorePHP2; // add NEW CONSTANTS according boardname example
+String switchName1, switchName2, boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2; // add NEW CONSTANTS according boardname example
 long onEntry;
 IPAddress sonoffIP[10];
 String deviceName[30];
@@ -233,16 +233,12 @@ void setup() {
   WiFi.begin();
 
   if (!isNetworkConnected()) {
-    DEBUG_PRINTLN("NoConn");
-    if ( WiFi.psk() == "") {
-      DEBUG_PRINTLN("Try to connect with saved PW");
-      WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-      if (!isNetworkConnected()) ESP.restart();  // still no success
-    } else {
-      DEBUG_PRINTLN("No valid PW");
-      ESP.restart();  // still no success
-    }
-  } else {
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
+    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
+  }
+  else {
     DEBUG_PRINTLN("");
     DEBUG_PRINTLN("WiFi connected");
     getMACaddress();
@@ -286,7 +282,7 @@ void loop() {
 
   //-------- Standard Block ---------------
   if (buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  // long button press > 4sec
-  if (buttonChanged && buttonTime > 500 && buttonTime < 4000) iotAppstory(); // long button press > 1sec
+  if (buttonChanged && buttonTime > 500 && buttonTime < 4000) IOTappStory(); // long button press > 1sec
   buttonChanged = false;
 #ifdef REMOTEDEBUGGING
   Debug.handle();
