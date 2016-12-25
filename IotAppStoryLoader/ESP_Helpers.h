@@ -87,11 +87,13 @@ bool isNetworkConnected() {
 }
 
 void ISRbuttonStateChanged() {
+  noInterrupts();
   if (digitalRead(GPIO0) == 0) buttonEntry = millis();
   else {
     buttonTime = millis() - buttonEntry;
     buttonChanged = true;
   }
+  interrupts();
 }
 
 void espRestart(char mmode, String message) {

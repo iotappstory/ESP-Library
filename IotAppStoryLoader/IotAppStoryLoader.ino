@@ -31,22 +31,19 @@
 #define FIRMWARE "IOTappStoryLoader "VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
-#define REMOTEDEBUGGING   // telnet is used to present
+// #define REMOTEDEBUGGING   // telnet is used to present
 #define LEDSONBOARD
 #define BOOTSTATISTICS    // send bootstatistics to Sparkfun
 
 
 
-#include <credentials.h>
 #include <ESP8266WiFi.h>
 #include <EEPROM.h>
 #include <ESP8266httpUpdate.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266mDNS.h>
-#include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include <WiFiManager.h>          //https://github.com/kentaylor/WiFiManager
-ESP8266WebServer server(80);                  // The Webserver
 #include <Ticker.h>
 
 extern "C" {
@@ -82,7 +79,7 @@ Ticker blink;
 
 // remoteDebug
 #ifdef REMOTEDEBUGGING
-RemoteDebug Debug;
+ RemoteDebug Debug;
 #endif
 
 
