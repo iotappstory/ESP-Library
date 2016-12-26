@@ -1,7 +1,5 @@
 # IOT-Appstore
-Appstore for ESP8266
-
-You can copy the folder iotappstore to the root of your webserver and upload the sketch IotAppStoreLoaderV10.ino to your ESP
+Download and update Infrastructure for IOT devices, currenlty the ESP8266
 
 Official Launch: https://www.youtube.com/edit?video_id=va0MtvESVCk
 
