@@ -79,7 +79,7 @@ Ticker blink;
 
 // remoteDebug
 #ifdef REMOTEDEBUGGING
- RemoteDebug Debug;
+RemoteDebug Debug;
 #endif
 
 
@@ -142,7 +142,7 @@ void eraseFlash(void);
 void setup() {
 
   Serial.begin(115200);
-
+  delay(1000);
   for (int i = 0; i < 5; i++) Serial.println("");
   Serial.println("Start "FIRMWARE);
 #ifdef REMOTEDEBUGGING
@@ -150,13 +150,17 @@ void setup() {
 #endif
   pinMode(GPIO0, INPUT_PULLUP);  // GPIO0 as input for Config mode selection
 
+  for (int ii = 0; ii < 3; ii++) {
+    for (int i = 0; i < 5; i++) Serial.println("");
+    Serial.println("!!!!!!!!!!!!!!!  Please reset first time after Serial load!   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    for (int i = 0; i < 5; i++) Serial.println("");
+    delay(5000);
+  }
+
   eraseFlash();
   writeConfig();  // configuration in EEPROM
 
   initWiFiManager();
-
-  if (WiFi.status() == WL_CONNECTED) IOTappStory();
-
   Serial.println("setup done");
 }
 
@@ -241,7 +245,7 @@ void loopWiFiManager() {  // new
     LEDswitch(None); // Turn LED off as we are not in configuration mode.
 #endif
 
-    ESP.reset();
+    IOTappStory();
   }
 }
 

@@ -5,7 +5,7 @@
 
 #define ON true
 #define OFF false
-  
+
 // macros for debugging
 #ifdef SERIALDEBUG
 #define         DEBUG_PRINT(x)    Serial.print(x)
@@ -50,30 +50,18 @@ enum ledColorDef {
 };
 
 /*
-typedef struct {
+  typedef struct {
   byte markerFlag;
   long lastSubscribers;
   int updateSpaces;
   int runSpaces;
   int bootTimes;
-} rtcMemDef __attribute__((aligned(4)));
-rtcMemDef rtcMem;*/
+  } rtcMemDef __attribute__((aligned(4)));
+  rtcMemDef rtcMem;*/
 
 
 
 //---------- MISC FUNCTIONS ----------
-
-/*
-void ESPrestart(String message){
-    DEBUG_PRINTLN(message);
-    DEBUG_PRINTLN("R E S E T");
-    #ifdef REMOTEDEBUGGING
-    Debug.println(message);
-    Debug.println("R E S E T");
-    #endif
-    ESP.restart();
-}
-*/
 
 // Wait till networl is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
 bool isNetworkConnected() {
@@ -86,20 +74,11 @@ bool isNetworkConnected() {
   else return true;
 }
 
-void ISRbuttonStateChanged() {
-  noInterrupts();
-  if (digitalRead(GPIO0) == 0) buttonEntry = millis();
-  else {
-    buttonTime = millis() - buttonEntry;
-    buttonChanged = true;
-  }
-  interrupts();
-}
 
 void espRestart(char mmode, String message) {
-   DEBUG_PRINTLN(message);
+  DEBUG_PRINTLN(message);
 #ifdef REMOTEDEBUGGING
-   Debug.println(message);
+  Debug.println(message);
 #endif
   while (digitalRead(GPIO0) == OFF) yield();    // wait till GPIOo released
   delay(500);
@@ -127,15 +106,15 @@ void printMacAddress() {
 }
 
 
-void registerDNS(){
-    // Register host name in WiFi and mDNS
-    String hostNameWifi = boardName;   // boardName is device name
-    hostNameWifi.concat(".local");
-    WiFi.hostname(hostNameWifi);
-    if (MDNS.begin(config.boardName)) {
-      DEBUG_PRINT("* MDNS responder started. http://");
-      DEBUG_PRINTLN(hostNameWifi);
-    }
+void registerDNS() {
+  // Register host name in WiFi and mDNS
+  String hostNameWifi = boardName;   // boardName is device name
+  hostNameWifi.concat(".local");
+  WiFi.hostname(hostNameWifi);
+  if (MDNS.begin(config.boardName)) {
+    DEBUG_PRINT("* MDNS responder started. http://");
+    DEBUG_PRINTLN(hostNameWifi);
+  }
 }
 
 //---------- LED FUNCTIONS ----------
@@ -143,27 +122,27 @@ void registerDNS(){
 
 
 void tickGreen() {
-  #ifdef LEDgreen
-  if (greenTimes%greenTimesOff==0) digitalWrite(LEDgreen,LEDON);
-  else digitalWrite(LEDgreen,LEDOFF);
+#ifdef LEDgreen
+  if (greenTimes % greenTimesOff == 0) digitalWrite(LEDgreen, LEDON);
+  else digitalWrite(LEDgreen, LEDOFF);
   greenTimes++;
-  #endif
+#endif
 }
 
 void tickRed() {
-  #ifdef LEDred
-  if (redTimes%redTimesOff==0) digitalWrite(LEDred,LEDON);
-  else digitalWrite(LEDred,LEDOFF);
+#ifdef LEDred
+  if (redTimes % redTimesOff == 0) digitalWrite(LEDred, LEDON);
+  else digitalWrite(LEDred, LEDOFF);
   redTimes++;
-  #endif
+#endif
 }
 
-void greenFlash(float takt, int timesOff){
+void greenFlash(float takt, int timesOff) {
   greenTimesOff = timesOff;
   blink.attach(takt, tickGreen);
 }
 
-void redFlash(float takt, int timesOff){
+void redFlash(float takt, int timesOff) {
   redTimesOff = timesOff;
   blink.attach(takt, tickRed);
 }
@@ -171,129 +150,114 @@ void redFlash(float takt, int timesOff){
 
 void LEDswitch(ledColorDef color) {
 
-/*
-none: 0.1 sec on, 3.6 sec off;
-Green, red, and both: LEDs always on
-..SlowBlink: 2 sec on, 2 sec off;
-..Blink: 0.5 sec on, o.5 sec off
-...FastBlink: 0.1 sec on, 0.1 sec off
-*/
+  /*
+    none: 0.1 sec on, 3.6 sec off;
+    Green, red, and both: LEDs always on
+    ..SlowBlink: 2 sec on, 2 sec off;
+    ..Blink: 0.5 sec on, o.5 sec off
+    ...FastBlink: 0.1 sec on, 0.1 sec off
+  */
 
-    blink.detach();
-    
-    switch (color) {
+  blink.detach();
+
+  switch (color) {
     case None:
-       #ifdef LEDgreen
-       greenFlash(0.1, 36);
-       #endif
+#ifdef LEDgreen
+      greenFlash(0.1, 36);
+#endif
 
-       break;
+      break;
     case Green:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDON);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDON);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
     case Red:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDON);
-       #endif
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDON);
+#endif
+      break;
     case Both:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDON);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDON);
-       #endif
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDON);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDON);
+#endif
+      break;
     case GreenSlowBlink:
-       #ifdef LEDgreen
-       greenFlash(2.0, 2);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
+#ifdef LEDgreen
+      greenFlash(2.0, 2);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
     case RedSlowBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       redFlash(2.0, 2);
-       #endif
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      redFlash(2.0, 2);
+#endif
+      break;
     case GreenBlink:
-       greenFlash(0.5, 2);
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
+      greenFlash(0.5, 2);
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
     case RedBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       redFlash(0.5, 2);
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+      redFlash(0.5, 2);
+      break;
     case GreenFastBlink:
-       #ifdef LEDgreen
-       greenFlash(0.1, 2);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
+#ifdef LEDgreen
+      greenFlash(0.1, 2);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
     case RedFastBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       redFlash(0.1, 2);
-       #endif
-       break;
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      redFlash(0.1, 2);
+#endif
+      break;
     default:
-       break;
-    }
+      break;
+  }
 }
 
 
 //---------- RTC MEMORY FUNCTIONS ----------
-/*bool readRTCmem() {
-  bool ret = true;
-  system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-  if (rtcMem.markerFlag != MAGICBYTE ) {
-    rtcMem.markerFlag = MAGICBYTE;
-    rtcMem.bootTimes = 0;
-    system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-    ret = false;
-  }
-  return ret;
-}*/
+
 
 void writeRTCmem() {
   rtcMem.markerFlag = MAGICBYTE;
   system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
 }
 
-/*void printRTCmem() {
-  DEBUG_PRINT("BootTimes ");
-  DEBUG_PRINTLN(rtcMem.bootTimes);
-}*/
-
 
 //---------- IOTappStory FUNCTIONS ----------
 bool iotUpdater(String server, String url, String firmware, bool immediately, bool debugWiFi) {
   bool retValue = true;
-  
-    delay(1000);
-    DEBUG_PRINTLN("");
-    DEBUG_PRINTLN("------------- IOT Appstory MODE -------------------");
-    REMOTEDEBUG_PRINTLN("------------- IOT Appstory Mode -------------------");
+
+  delay(1000);
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("------------- IOT Appstory MODE -------------------");
+  REMOTEDEBUG_PRINTLN("------------- IOT Appstory Mode -------------------");
 
   if (debugWiFi) {
     getMACaddress();
@@ -319,7 +283,7 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
-      if (debugWiFi) DEBUG_PRINTLN("---------- HTTP_UPDATE_NO_UPDATES ------------------");      
+      if (debugWiFi) DEBUG_PRINTLN("---------- HTTP_UPDATE_NO_UPDATES ------------------");
       break;
 
     case HTTP_UPDATE_OK:
@@ -329,8 +293,8 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
   return retValue;
 }
 
-void IOTappStory(){
- // update from IOTappStory.com
+void IOTappStory() {
+  // update from IOTappStory.com
   if (iotUpdater(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true, true) == false) {
     DEBUG_PRINTLN(" Update not succesful");
     if (iotUpdater(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true, true) == false) {
@@ -348,14 +312,14 @@ void IOTappStory(){
 
 void writeConfig() {
   DEBUG_PRINTLN("------------------ Writing Config --------------------------------");
-  if (WiFi.psk()!="") {
-  
-    WiFi.SSID().toCharArray(config.ssid,STRUCT_CHAR_ARRAY_SIZE);
-    WiFi.psk().toCharArray(config.password,STRUCT_CHAR_ARRAY_SIZE);
+  if (WiFi.psk() != "") {
+
+    WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+    WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
     DEBUG_PRINT("Stored ");
     DEBUG_PRINT(config.ssid);
     DEBUG_PRINTLN(" ");
- //   DEBUG_PRINTLN(config.password);
+    //   DEBUG_PRINTLN(config.password);
   }
   EEPROM.begin(EEPROM_SIZE);
   config.magicBytes[0] = MAGICBYTES[0];
