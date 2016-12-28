@@ -48,7 +48,7 @@ $db = array(
 );
 
 if(!isset($db[$_SERVER['HTTP_X_ESP8266_STA_MAC']])) {
-    header($_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates', true, 500);
+    header($_SERVER["SERVER_PROTOCOL"].' 404 ESP MAC not configured for update, no .bin file associated with that mac address.', true, 404);
 }
 
 $localBinary = "./bin/".$db[$_SERVER['HTTP_X_ESP8266_STA_MAC']].".bin";
@@ -62,5 +62,3 @@ if((!check_header('HTTP_X_ESP8266_SDK_VERSION') && $db[$_SERVER['HTTP_X_ESP8266_
 } else {
     header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
 }
-
-//header($_SERVER["SERVER_PROTOCOL"].' 500 no version for ESP MAC', true, 500);
