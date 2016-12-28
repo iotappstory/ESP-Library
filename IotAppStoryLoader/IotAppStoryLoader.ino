@@ -32,8 +32,7 @@
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
 // #define REMOTEDEBUGGING   // telnet is used to present remote debug messages(not implemented)
-#define LEDSONBOARD
-#define BOOTSTATISTICS    // send bootstatistics to Sparkfun
+// #define BOOTSTATISTICS    // send bootstatistics to Sparkfun
 
 
 
