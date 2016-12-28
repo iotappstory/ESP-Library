@@ -1,8 +1,8 @@
-/* This sketch connects to the iopappstory and loads the assigned firmware down. The assignment is done on the server based on the MAC address of the board
+/* This sketch connects to IOTAppStory and downloads the assigned firmware. The firmware assignment is done on the server, and is based on the MAC address of the board
 
-    On the server, you need PHP script "iotappstory.php" and the bin files are in the .\bin folder
+    On the server, you need to upload the PHP script "iotappstory.php", and put your .bin files in the .\bin folder
 
-    This work is based on the ESPhttpUpdate examples
+    This sketch is based on the ESPhttpUpdate examples
 
    To add new constants in WiFiManager search for "NEW CONSTANTS" and insert them according the "boardName" example
 
@@ -31,7 +31,7 @@
 #define FIRMWARE "IOTappStoryLoader "VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
-// #define REMOTEDEBUGGING   // telnet is used to present
+// #define REMOTEDEBUGGING   // telnet is used to present remote debug messages(not implemented)
 #define LEDSONBOARD
 #define BOOTSTATISTICS    // send bootstatistics to Sparkfun
 
@@ -215,11 +215,11 @@ void loopWiFiManager() {  // new
     wifiManager.addParameter(&p_IOTappStoryPHP2);
 
     // Sets timeout in seconds until configuration portal gets turned off.
-    // If not specified device will remain in configuration mode until
-    // switched off via webserver or device is restarted.
+    // If not specified, the device will remain in configuration mode until
+    // switched off via webserver, or device is restarted.
     // wifiManager.setConfigPortalTimeout(600);
 
-    // It starts an access point
+    // Starts an access point
     // and goes into a blocking loop awaiting configuration.
     // Once the user leaves the portal with the exit button
     // processing will continue
@@ -227,7 +227,7 @@ void loopWiFiManager() {  // new
       DEBUG_PRINTLN("Not connected to WiFi but continuing anyway.");
     } else {
       // If you get here you have connected to the WiFi
-      DEBUG_PRINTLN("Connected... :-)");
+      DEBUG_PRINTLN("Connected to WiFi... :-)");
     }
     // Getting posted form values and overriding local variables parameters
 
@@ -250,7 +250,7 @@ void loopWiFiManager() {  // new
 }
 
 void eraseFlash() {
-  Serial.println("Ereasing Flash...");
+  Serial.println("Erasing Flash...");
   EEPROM.begin(EEPROM_SIZE);
   for (unsigned int t = 0; t < EEPROM_SIZE; t++) EEPROM.write(t, 0);
   EEPROM.end();
