@@ -93,13 +93,13 @@ typedef struct {
 } strConfig;
 
 strConfig config = {
-  mySSID,
-  myPASSWORD,
+  "",
+  "",
   "FASTBLINK",
   "iotappstory.org",
-  "ota/esp8266-v1.php",
+  "/ota/esp8266-v1.php",
   "iotappstory.org",
-  "ota/esp8266-v1.php",
+  "/ota/esp8266-v1.php",
   "",
   "CFG"  // Magic Bytes
 };

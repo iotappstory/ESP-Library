@@ -49,16 +49,6 @@ enum ledColorDef {
   RedFastBlink
 };
 
-/*
-  typedef struct {
-  byte markerFlag;
-  long lastSubscribers;
-  int updateSpaces;
-  int runSpaces;
-  int bootTimes;
-  } rtcMemDef __attribute__((aligned(4)));
-  rtcMemDef rtcMem;*/
-
 
 
 //---------- MISC FUNCTIONS ----------
@@ -80,7 +70,7 @@ void espRestart(char mmode, String message) {
 #ifdef REMOTEDEBUGGING
   Debug.println(message);
 #endif
-  while (digitalRead(GPIO0) == OFF) yield();    // wait till GPIOo released
+  while (digitalRead(MODEBUTTON) == OFF) yield();    // wait till GPIOo released
   delay(500);
   system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
   ESP.restart();

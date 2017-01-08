@@ -1,8 +1,6 @@
-/* This sketch connects to iopappstory.com and loads the assigned firmware down. 
+/* This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+  Your code can be filled wherever it is marked.
 
-    This work is based on the ESPhttpUpdate examples
-
-    To add new constants in WiFiManager search for "NEW CONSTANTS" and insert them according the "boardName" example
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -23,61 +21,72 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
+
 */
 
+#define SKETCH "virginSoil "
 #define VERSION "V1.0"
-#define FIRMWARE "SLOWBLINK "VERSION
+#define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG         // Serial is used to present debugging messages 
-#define REMOTEDEBUGGING     // telnet is used to present
-//#define BOOTSTATISTICS    // send bootstatistics to Sparkfun
+#define REMOTEDEBUGGING     // UDP is used to transfer debug messages
 
+#define LEDS_INVERSE   // LEDS on = GND
 
 #include <credentials.h>
 #include <ESP8266WiFi.h>
-#include <EEPROM.h>
 #include <ESP8266httpUpdate.h>
-#include <ESP8266WebServer.h>
 #include <DNSServer.h>
 #include <ESP8266mDNS.h>
-#include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include <WiFiManager.h>        //https://github.com/kentaylor/WiFiManager
 #include <Ticker.h>
+#include <EEPROM.h>
+
+#ifdef REMOTEDEBUGGING
+#include <WiFiUDP.h>
+#endif
 
 extern "C" {
 #include "user_interface.h" // this is for the RTC memory read/write functions
 }
 
+//--------  Sketch Specific -------
+
+
 
 // -------- PIN DEFINITIONS ------------------
 #ifdef ARDUINO_ESP8266_ESP01           // Generic ESP's 
-#define GPIO0 0
+#define MODEBUTTON 0
+#define LEDgreen 13
+//#define LEDred 12
 #else
-#define GPIO0 D3
+#define MODEBUTTON D3
+#define LEDgreen D7
+//#define LEDred D6
 #endif
 
-//---------- CODE DEFINITIONS ----------
-#define MAXDEVICES 5
-#define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
-#define SERVICENAME "SLOWBLINK"  // name of the MDNS service used in this group of ESPs
-#define DELAYSEC 7 *60  // 7 minutes
-#define MAX_WIFI_RETRIES 50
+// --- Sketch Specific -----
 
+
+
+//---------- DEFINES for SKETCH ----------
+#define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
+#define MAX_WIFI_RETRIES 50
 #define RTCMEMBEGIN 68
 #define MAGICBYTE 85
 
+// --- Sketch Specific -----
+// #define SERVICENAME "VIRGIN"  // name of the MDNS service used in this group of ESPs
+
 
 //-------- SERVICES --------------
-
-//WiFiServer server(80);
 Ticker blink;
-WiFiClientSecure client;
 
-// remoteDebug
 #ifdef REMOTEDEBUGGING
-RemoteDebug Debug;
+WiFiUDP UDP;
 #endif
 
+// --- Sketch Specific -----
 
 //--------- ENUMS AND STRUCTURES  -------------------
 
@@ -89,20 +98,24 @@ typedef struct {
   char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
   char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
   char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
+  char udpPort[10];
   // insert NEW CONSTANTS according boardname example HERE!
-  char blinkPin[STRUCT_CHAR_ARRAY_SIZE];
+
+
+
   char magicBytes[4];
+
 } strConfig;
 
 strConfig config = {
   "",
   "",
-  "SLOWBLINK",
+  "yourFirstApp",
+  "192.168.0.200",
+  "/IOTappStory/IOTappStoryv20.php",
   "iotappstory.org",
   "/ota/esp8266-v1.php",
-  "iotappstory.org",
-  "/ota/esp8266-v1.php",
-  "",
+  "8004",
   "CFG"  // Magic Bytes
 };
 
@@ -112,40 +125,49 @@ typedef struct {
 } rtcMemDef __attribute__((aligned(4)));
 rtcMemDef rtcMem;
 
+// --- Sketch Specific -----
+
+
+
 //---------- VARIABLES ----------
 
-String boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2, IFTTTchannel; // add NEW CONSTANTS according boardname example
-
-long delayCount = -1;
-
-char boardMode = 'N';  // Normal operation or Configuration mode?
-
-volatile unsigned long buttonEntry, buttonTime;
+String switchName1, switchName2, boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
+unsigned long debugEntry;
+volatile unsigned long buttonEntry;
+unsigned long buttonTime;
 volatile bool buttonChanged = false;
 volatile int greenTimesOff = 0;
 volatile int redTimesOff = 0;
 volatile int greenTimes = 0;
 volatile int redTimes = 0;
+char boardMode = 'N';  // Normal operation or Configuration mode?
 
-unsigned long infoEntry, blinkEntry;
+#ifdef REMOTEDEBUGGING
+// UDP variables
+char sendBuffer[255];
+IPAddress broadcastIp(255, 255, 255, 255);
+#endif
 
-byte LEDpin;
+// --- Sketch Specific -----
+// String xx; // add NEW CONSTANTS for WiFiManager according the variable "boardname"
 
-
-int delayCounter = 0; // counts every second
 
 
 
 //---------- FUNCTIONS ----------
+// to help the compiler, sometimes, functions have  to be declared here
 void loopWiFiManager(void);
 void readFullConfiguration(void);
 bool readRTCmem(void);
 void printRTCmem(void);
-void switchRelay(bool);
+void initialize(void);
+
 
 //---------- OTHER .H FILES ----------
-#include <ESP_Helpers.h>
-#include "WiFiManager_Helpers.h"
+#include <ESP_Helpers.h>           // General helpers for all IOTappStory sketches
+#include "IOTappStoryHelpers.h"    // Sketch specific helpers for all IOTappStory sketches
+
+
 
 
 //-------------------------- SETUP -----------------------------------------
@@ -154,20 +176,35 @@ void setup() {
   Serial.begin(115200);
   for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
   DEBUG_PRINTLN("Start "FIRMWARE);
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("Start ");
+  UDPDEBUG_PRINTTXT(FIRMWARE);
+  UDPDEBUG_SEND();
 
 
   // ----------- PINS ----------------
-  pinMode(GPIO0, INPUT_PULLUP);  // GPIO0 as input for Config mode selection
+  pinMode(MODEBUTTON, INPUT_PULLUP);  // MODEBUTTON as input for Config mode selection
+
+#ifdef LEDgreen
+  pinMode(LEDgreen, OUTPUT);
+  digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+  pinMode(LEDred, OUTPUT);
+  digitalWrite(LEDred, LEDOFF);
+#endif
+
+  // --- Sketch Specific -----
+
 
 
   // ------------- INTERRUPTS ----------------------------
-
-          Serial.print(GPIO0);
-  attachInterrupt(GPIO0, ISRbuttonStateChanged, CHANGE);
-
+  attachInterrupt(MODEBUTTON, ISRbuttonStateChanged, CHANGE);
+  blink.detach();
 
 
   //------------- LED and DISPLAYS ------------------------
+  LEDswitch(GreenBlink);
 
 
   // --------- BOOT STATISTICS ------------------------
@@ -178,110 +215,102 @@ void setup() {
   printRTCmem();
 
 
-  //---------- BOARD MODE -----------------------------
+  //---------- SELECT BOARD MODE -----------------------------
 
   system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);   // Read the "boardMode" flag RTC memory to decide, if to go to config
   if (boardMode == 'C') configESP();
 
-
-  DEBUG_PRINTLN("------------- Normal Mode -------------------");
+  readFullConfiguration();
 
   // --------- START WIFI --------------------------
-  readFullConfiguration();
-  WiFi.mode(WIFI_STA);
-  WiFi.begin();
 
-  if (!isNetworkConnected()) {
-    DEBUG_PRINTLN("");
-    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
-    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
-  }
-  else {
-    DEBUG_PRINTLN("");
-    DEBUG_PRINTLN("WiFi connected");
-    getMACaddress();
-    printMacAddress();
-    DEBUG_PRINT("IP Address: ");
-    DEBUG_PRINTLN(WiFi.localIP());
+  connectNetwork('N');
 
-#ifdef REMOTEDEBUGGING
-    remoteDebugSetup();
-    REMOTEDEBUG_PRINTLN(config.boardName);
-#endif
+  DEBUG_PRINTLN("------------- Normal Mode -------------------");
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("------------- Normal Mode -------------------");
+  UDPDEBUG_SEND();
 
-    registerDNS();
-    // ----------- SPECIFIC SETUP CODE ----------------------------
-
-    String blinkPin(config.blinkPin);
-    if (blinkPin == "D0")  LEDpin = D0;
-    else {
-      if (blinkPin == "D1")  LEDpin = D1;
-      else {
-        if (blinkPin == "D2")  LEDpin = D2;
-        else {
-          if (blinkPin == "D4")  LEDpin = D4;
-          else {
-            if (blinkPin == "D5")  LEDpin = D5;
-            else {
-              if (blinkPin == "D6")  LEDpin = D6;
-              else {
-                if (blinkPin == "D7")  LEDpin = D7;
-                else LEDpin = D8;
-              }
-            }
-          }
-        }
-      }
-    }
+ // IOTappStory();
 
 
-    pinMode(LEDpin, OUTPUT);
 
-    Serial.print("LED Pin ");
-    Serial.println(LEDpin);
+  // ----------- SPECIFIC SETUP CODE ----------------------------
 
-    // ----------- END SPECIFIC SETUP CODE ----------------------------
+  // add a DNS service
+  // MDNS.addService(SERVICENAME, "tcp", 8080);  // just as an example
 
-  }  // End WiFi necessary
+  // ----------- END SPECIFIC SETUP CODE ----------------------------
 
+  LEDswitch(None);
+  pinMode(MODEBUTTON, INPUT_PULLUP);  // MODEBUTTON as input for Config mode selection
 
-  DEBUG_PRINTLN("setup done");
+  DEBUG_PRINTLN("Setup done");
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("Setup done");
+  UDPDEBUG_SEND();
 }
+
+
+
+
+
 //--------------- LOOP ----------------------------------
-
-
-
 void loop() {
-  //-------- Standard Block ---------------
-  if (buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  // long button press > 4sec
-  if (buttonChanged && buttonTime > 500 && buttonTime < 4000) IOTappStory(); // long button press > 1sec
-  buttonChanged = false;
-#ifdef REMOTEDEBUGGING
-  Debug.handle();
+  //-------- IOTappStory Block ---------------
   yield();
-  //-------- End Standard Block ---------------
+  handleModeButton();   // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
-  // ------- Debug Message --------
-  if (Debug.ative(Debug.INFO) && (millis() - infoEntry) > 2000) {
-    Debug.printf("Firmware: %s", FIRMWARE);
-    Debug.printf(" LED Pin: %d", LEDpin);
-    Debug.printf(" BlinkEntry: %d", blinkEntry);
-    Debug.println(" mSec:");
+  // Normal blind (1 sec): Connecting to network
+  // fast blink: Configuration mode. Please connect to ESP network
+  // Slow Blink: IOTappStore Update in progress
 
-    Debug.print("Heap ");
-    Debug.println(ESP.getFreeHeap());
-    infoEntry = millis();
+  if (millis() - debugEntry > 2000) { // Non-Blocking second counter
+    debugEntry = millis();
+    sendDebugMessage();
   }
-#endif
-  // ------------------------------------
 
-  if (millis() - blinkEntry > 1000) {
-    digitalWrite(LEDpin, !digitalRead(LEDpin));
-    blinkEntry = millis();
-  }
+
+  //-------- Your Sketch ---------------
+
+
+
 }
 //------------------------- END LOOP --------------------------------------------
+
+void sendDebugMessage() {
+  // ------- Debug Message --------
+  DEBUG_PRINT("Board: ");
+  DEBUG_PRINT(config.boardName);
+  DEBUG_PRINT(" Firmware: ");
+  DEBUG_PRINT(FIRMWARE);
+  DEBUG_PRINT(" Heap ");
+  DEBUG_PRINT(ESP.getFreeHeap());
+
+  // -------------- your variables here --------------
+
+
+    DEBUG_PRINTLN();
+
+
+
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("Board: ");
+  UDPDEBUG_PRINTTXT(config.boardName);
+  UDPDEBUG_PRINTTXT(" Firmware: ");
+  UDPDEBUG_PRINTTXT(FIRMWARE);
+  long h1 = ESP.getFreeHeap();
+  UDPDEBUG_PRINT(" Heap ", h1);
+
+  // -------------- your variables here --------------
+
+  UDPDEBUG_SEND();
+}
+
+// ---------------- END LOOP -------------------------
+
+
+
 
 
 void readFullConfiguration() {
@@ -310,4 +339,5 @@ void printRTCmem() {
   DEBUG_PRINT("bootTimes ");
   DEBUG_PRINTLN(rtcMem.bootTimes);
 }
+
 

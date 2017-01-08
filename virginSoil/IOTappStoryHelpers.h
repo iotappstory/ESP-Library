@@ -1,56 +1,42 @@
-extern "C" {
-#include "user_interface.h" // this is for the RTC memory read/write functions
+void initialize() {   // this function is called by IOTappstory() before return. Here, you put a safe startup configuration
+
 }
 
 
-// -------- PIN DEFINITIONS ------------------
-
-
-//---------- CODE DEFINITIONS ----------
-#define MAXDEVICES 5
-#define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
-#define SERVICENAME "SONOFF"  // name of the MDNS service used in this group of ESPs
-
-
-
-//-------- SERVICES --------------
-
-
-
-//--------- ENUMS AND STRUCTURES  -------------------
-
-
-//---------- VARIABLES ----------
-
-
-
-//---------- FUNCTIONS ----------
-
-
-//---------- OTHER .H FILES ----------
-
-
-
-//--------------- START ----------------------------------
 void configESP() {
   Serial.begin(115200);
   for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
-  DEBUG_PRINTLN("Start " FIRMWARE);
-  DEBUG_PRINTLN("------------- Configuration Mode -------------------");
-  for (int i = 0; i < 3; i++) DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("Start "FIRMWARE);
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("Start ");
+  UDPDEBUG_PRINTTXT(FIRMWARE);
+  UDPDEBUG_SEND();
 
-  pinMode(GPIO0, INPUT_PULLUP);  // GPIO0 as input for Config mode selection
-
+  // ----------- PINS ----------------
 #ifdef LEDgreen
   pinMode(LEDgreen, OUTPUT);
-  LEDswitch(GreenFastBlink);
+  digitalWrite(LEDgreen, LEDOFF);
 #endif
 #ifdef LEDred
   pinMode(LEDred, OUTPUT);
+  digitalWrite(LEDred, LEDOFF);
 #endif
 
 
-  readFullConfiguration();  // configuration in EEPROM
+  // ------------- INTERRUPTS ----------------------------
+  blink.detach();
+
+
+  //------------- LED and DISPLAYS ------------------------
+  LEDswitch(GreenFastBlink);
+
+  readFullConfiguration();
+  connectNetwork('C');
+
+  DEBUG_PRINTLN("------------- Configuration Mode -------------------");
+  UDPDEBUG_START();
+  UDPDEBUG_PRINTTXT("------------- Configuration Mode -------------------");
+  UDPDEBUG_SEND();
 
   initWiFiManager();
 
@@ -67,8 +53,8 @@ void configESP() {
 
 void loopWiFiManager() {
 
-  //add all parameters here
-
+  // additional fields
+ 
 
   // Standard
   WiFiManagerParameter p_boardName("boardName", "boardName", config.boardName, STRUCT_CHAR_ARRAY_SIZE);
@@ -76,6 +62,7 @@ void loopWiFiManager() {
   WiFiManagerParameter p_IOTappStoryPHP1("IOTappStoryPHP1", "IOTappStoryPHP1", config.IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE);
   WiFiManagerParameter p_IOTappStory2("IOTappStory2", "IOTappStory2", config.IOTappStory2, STRUCT_CHAR_ARRAY_SIZE);
   WiFiManagerParameter p_IOTappStoryPHP2("IOTappStoryPHP2", "IOTappStoryPHP2", config.IOTappStoryPHP2, STRUCT_CHAR_ARRAY_SIZE);
+  WiFiManagerParameter p_udpPort("udpPort", "udpPort", config.udpPort, 10);
 
   // Just a quick hint
   WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small>");
@@ -83,20 +70,23 @@ void loopWiFiManager() {
   // Initialize WiFIManager
   WiFiManager wifiManager;
   wifiManager.addParameter(&p_hint);
+  wifiManager.addParameter(&p_boardName);
 
   //add all parameters here
+  
 
   // Standard
-  wifiManager.addParameter(&p_boardName);
   wifiManager.addParameter(&p_IOTappStory1);
   wifiManager.addParameter(&p_IOTappStoryPHP1);
   wifiManager.addParameter(&p_IOTappStory2);
   wifiManager.addParameter(&p_IOTappStoryPHP2);
+  wifiManager.addParameter(&p_udpPort);
+
 
   // Sets timeout in seconds until configuration portal gets turned off.
   // If not specified device will remain in configuration mode until
   // switched off via webserver or device is restarted.
-  // wifiManager.setConfigPortalTimeout(600);
+  wifiManager.setConfigPortalTimeout(600);
 
   // It starts an access point
   // and goes into a blocking loop awaiting configuration.
@@ -120,10 +110,16 @@ void loopWiFiManager() {
   strcpy(config.IOTappStoryPHP1, p_IOTappStoryPHP1.getValue());
   strcpy(config.IOTappStory2, p_IOTappStory2.getValue());
   strcpy(config.IOTappStoryPHP2, p_IOTappStoryPHP2.getValue());
+  strcpy(config.udpPort, p_udpPort.getValue());
+
+  //additional fields
+
   writeConfig();
+  readFullConfiguration();  // read back to fill all variables
 
   LEDswitch(None); // Turn LED off as we are not in configuration mode.
 
   espRestart('N', "Configuration finished"); //Normal Operation
 
 }
+

@@ -3,9 +3,7 @@
 #define MAGICBYTES "CFG"
 #define EEPROM_SIZE 1024
 
-#define ON true
-#define OFF false
-  
+
 // macros for debugging
 #ifdef SERIALDEBUG
 #define         DEBUG_PRINT(x)    Serial.print(x)
@@ -17,11 +15,25 @@
 
 
 #ifdef REMOTEDEBUGGING
+
 #define         REMOTEDEBUG_PRINT(x)    Debug.print(x)
 #define         REMOTEDEBUG_PRINTLN(x)  Debug.println(x)
+
+#define         UDPDEBUG_PRINT(x,y)    debugPrint(x,y)
+#define         UDPDEBUG_PRINTTXT(x)   debugPrintTxt(x)
+#define         UDPDEBUG_START()       debugStart()
+#define         UDPDEBUG_SEND()        debugSend()
+
+
 #else
+
 #define         REMOTEDEBUG_PRINT(x)
 #define         REMOTEDEBUG_PRINTLN(x)
+
+#define         UDPDEBUG_PRINT(x,y)    
+#define         UDPDEBUG_PRINTTXT(x)  
+#define         UDPDEBUG_START()   
+#define         UDPDEBUG_SEND() 
 #endif
 
 
@@ -34,6 +46,74 @@
 #define LEDOFF 0
 #endif
 
+
+#ifdef REMOTEDEBUGGING
+
+char debugBuffer[255];
+
+void send_packet(char *text)
+{
+  UDP.beginPacket(broadcastIp, atoi(config.udpPort));
+  UDP.write(text);
+  UDP.endPacket();
+}
+
+boolean connectUDP()
+{
+  Serial.println("");
+  Serial.println("Connecting to UDP");
+  if (UDP.begin(atoi(config.udpPort)) == 1)
+  {
+    Serial.println("Connection successful");
+    return true;
+  }
+  else
+  {
+    Serial.println("Connection failed");
+    return false;
+  }
+}
+
+
+void debugStart() {
+  debugBuffer[0] = '\0';
+}
+
+void debugSend() {
+  send_packet(debugBuffer);
+}
+
+void debugPrint(char*txt, int nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+  delay(100);
+}
+
+void debugPrint(char*txt, long nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+  //  send_packet(buf);
+}
+
+
+void debugPrint(char*txt, float nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+}
+
+void debugPrintTxt(char* buf) {
+  strcat(debugBuffer, buf);
+}
+
+void debugPrintTxt(String hh) {
+  char buf[100];
+  hh.toCharArray(buf, 100);
+  strcat(debugBuffer, buf);
+}
+#endif
 
 //---------- COMMON DEFINITIONS ------------
 enum ledColorDef {
@@ -50,30 +130,163 @@ enum ledColorDef {
 };
 
 /*
-typedef struct {
+  typedef struct {
   byte markerFlag;
   long lastSubscribers;
   int updateSpaces;
   int runSpaces;
   int bootTimes;
-} rtcMemDef __attribute__((aligned(4)));
-rtcMemDef rtcMem;*/
+  } rtcMemDef __attribute__((aligned(4)));
+  rtcMemDef rtcMem;
+*/
 
+
+
+//---------- LED FUNCTIONS ----------
+
+
+
+void tickGreen() {
+#ifdef LEDgreen
+  if (greenTimes % greenTimesOff == 0) digitalWrite(LEDgreen, LEDON);
+  else digitalWrite(LEDgreen, LEDOFF);
+  greenTimes++;
+#endif
+}
+
+void tickRed() {
+#ifdef LEDred
+  if (redTimes % redTimesOff == 0) digitalWrite(LEDred, LEDON);
+  else digitalWrite(LEDred, LEDOFF);
+  redTimes++;
+#endif
+}
+
+void greenFlash(float takt, int timesOff) {
+  greenTimesOff = timesOff;
+  blink.attach(takt, tickGreen);
+}
+
+void redFlash(float takt, int timesOff) {
+  redTimesOff = timesOff;
+  blink.attach(takt, tickRed);
+}
+
+
+void LEDswitch(ledColorDef color) {
+
+  /*
+    none: 0.1 sec on, 3.6 sec off;
+    Green, red, and both: LEDs always on
+    ..SlowBlink: 2 sec on, 2 sec off;
+    ..Blink: 0.5 sec on, o.5 sec off
+    ...FastBlink: 0.1 sec on, 0.1 sec off
+  */
+
+  blink.detach();
+
+  switch (color) {
+    case None:
+#ifdef LEDgreen
+      greenFlash(0.1, 36);
+#endif
+
+      break;
+    case Green:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDON);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
+    case Red:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDON);
+#endif
+      break;
+    case Both:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDON);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDON);
+#endif
+      break;
+    case GreenSlowBlink:
+#ifdef LEDgreen
+      greenFlash(2.0, 2);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
+    case RedSlowBlink:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      redFlash(2.0, 2);
+#endif
+      break;
+    case GreenBlink:
+      greenFlash(0.5, 2);
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
+    case RedBlink:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+      redFlash(0.5, 2);
+      break;
+    case GreenFastBlink:
+#ifdef LEDgreen
+      greenFlash(0.1, 2);
+#endif
+#ifdef LEDred
+      digitalWrite(LEDred, LEDOFF);
+#endif
+      break;
+    case RedFastBlink:
+#ifdef LEDgreen
+      digitalWrite(LEDgreen, LEDOFF);
+#endif
+#ifdef LEDred
+      redFlash(0.1, 2);
+#endif
+      break;
+    default:
+      break;
+  }
+}
+
+
+//---------- RTC MEMORY FUNCTIONS ----------
+
+void writeRTCmem() {
+  rtcMem.markerFlag = MAGICBYTE;
+  system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+}
 
 
 //---------- MISC FUNCTIONS ----------
 
-/*
-void ESPrestart(String message){
-    DEBUG_PRINTLN(message);
-    DEBUG_PRINTLN("R E S E T");
-    #ifdef REMOTEDEBUGGING
-    Debug.println(message);
-    Debug.println("R E S E T");
-    #endif
-    ESP.restart();
+void espRestart(char mmode, char* message) {
+  LEDswitch(GreenFastBlink);
+  DEBUG_PRINTLN(message);
+#ifdef REMOTEDEBUGGING
+  UDPDEBUG_PRINTTXT(message);
+#endif
+  while (digitalRead(MODEBUTTON) == LOW) yield();    // wait till GPIOo released
+  delay(500);
+  system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
+  ESP.restart();
 }
-*/
 
 // Wait till networl is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
 bool isNetworkConnected() {
@@ -84,25 +297,6 @@ bool isNetworkConnected() {
   }
   if (retries <= 0) return false;
   else return true;
-}
-
-void ISRbuttonStateChanged() {
-  if (digitalRead(GPIO0) == 0) buttonEntry = millis();
-  else {
-    buttonTime = millis() - buttonEntry;
-    buttonChanged = true;
-  }
-}
-
-void espRestart(char mmode, String message) {
-   DEBUG_PRINTLN(message);
-#ifdef REMOTEDEBUGGING
-   Debug.println(message);
-#endif
-  while (digitalRead(GPIO0) == OFF) yield();    // wait till GPIOo released
-  delay(500);
-  system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-  ESP.restart();
 }
 
 String getMACaddress() {
@@ -124,173 +318,67 @@ void printMacAddress() {
   Serial.println(mac[5], HEX);
 }
 
+void connectNetwork(char mode) {
+  WiFi.mode(WIFI_STA);
+  if (!isNetworkConnected()) {
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
+    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
+  }
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("WiFi connected");
+    getMACaddress();
+    printMacAddress();
+    DEBUG_PRINT("IP Address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
 
-void registerDNS(){
+    #ifdef REMOTEDEBUGGING
+    if (mode=='N') {
+    // Start UDP
+    broadcastIp = WiFi.localIP();
+    broadcastIp[3] = 255;
+    bool udpConnected = connectUDP();
+    if (udpConnected) DEBUG_PRINTLN("UPD Connected");
+    else DEBUG_PRINTLN("UPD FAILED!");
+    UDPDEBUG_START();
+    UDPDEBUG_PRINTTXT(config.boardName);
+    UDPDEBUG_SEND();
+    DEBUG_PRINT("Debug UDP Port: ");
+    DEBUG_PRINTLN(atoi(config.udpPort));
+    }
+    #endif
+
     // Register host name in WiFi and mDNS
-    String hostNameWifi = boardName;   // boardName is device name
+    String hostNameWifi = config.boardName;   // boardName is device name
     hostNameWifi.concat(".local");
-    WiFi.hostname(hostNameWifi);
+    wifi_station_set_hostname(config.boardName);
+ //   WiFi.hostname(hostNameWifi);
     if (MDNS.begin(config.boardName)) {
       DEBUG_PRINT("* MDNS responder started. http://");
       DEBUG_PRINTLN(hostNameWifi);
-    }
-}
-
-//---------- LED FUNCTIONS ----------
-
-
-
-void tickGreen() {
-  #ifdef LEDgreen
-  if (greenTimes%greenTimesOff==0) digitalWrite(LEDgreen,LEDON);
-  else digitalWrite(LEDgreen,LEDOFF);
-  greenTimes++;
-  #endif
-}
-
-void tickRed() {
-  #ifdef LEDred
-  if (redTimes%redTimesOff==0) digitalWrite(LEDred,LEDON);
-  else digitalWrite(LEDred,LEDOFF);
-  redTimes++;
-  #endif
-}
-
-void greenFlash(float takt, int timesOff){
-  greenTimesOff = timesOff;
-  blink.attach(takt, tickGreen);
-}
-
-void redFlash(float takt, int timesOff){
-  redTimesOff = timesOff;
-  blink.attach(takt, tickRed);
+    } else espRestart('C', "MDNS not started");
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("Network OK");
 }
 
 
-void LEDswitch(ledColorDef color) {
-
-/*
-none: 0.1 sec on, 3.6 sec off;
-Green, red, and both: LEDs always on
-..SlowBlink: 2 sec on, 2 sec off;
-..Blink: 0.5 sec on, o.5 sec off
-...FastBlink: 0.1 sec on, 0.1 sec off
-*/
-
-    blink.detach();
-    
-    switch (color) {
-    case None:
-       #ifdef LEDgreen
-       greenFlash(0.1, 36);
-       #endif
-
-       break;
-    case Green:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDON);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
-    case Red:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDON);
-       #endif
-       break;
-    case Both:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDON);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDON);
-       #endif
-       break;
-    case GreenSlowBlink:
-       #ifdef LEDgreen
-       greenFlash(2.0, 2);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
-    case RedSlowBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       redFlash(2.0, 2);
-       #endif
-       break;
-    case GreenBlink:
-       greenFlash(0.5, 2);
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
-    case RedBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       redFlash(0.5, 2);
-       break;
-    case GreenFastBlink:
-       #ifdef LEDgreen
-       greenFlash(0.1, 2);
-       #endif
-       #ifdef LEDred
-       digitalWrite(LEDred, LEDOFF);
-       #endif
-       break;
-    case RedFastBlink:
-       #ifdef LEDgreen
-       digitalWrite(LEDgreen, LEDOFF);
-       #endif
-       #ifdef LEDred
-       redFlash(0.1, 2);
-       #endif
-       break;
-    default:
-       break;
-    }
-}
-
-
-//---------- RTC MEMORY FUNCTIONS ----------
-/*bool readRTCmem() {
-  bool ret = true;
-  system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-  if (rtcMem.markerFlag != MAGICBYTE ) {
-    rtcMem.markerFlag = MAGICBYTE;
-    rtcMem.bootTimes = 0;
-    system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-    ret = false;
+void ISRbuttonStateChanged() {
+  if (digitalRead(MODEBUTTON) == 0) buttonEntry = millis();
+  else {
+    buttonTime = millis() - buttonEntry;
+    buttonChanged = true;
   }
-  return ret;
-}*/
-
-void writeRTCmem() {
-  rtcMem.markerFlag = MAGICBYTE;
-  system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
 }
-
-/*void printRTCmem() {
-  DEBUG_PRINT("BootTimes ");
-  DEBUG_PRINTLN(rtcMem.bootTimes);
-}*/
 
 
 //---------- IOTappStory FUNCTIONS ----------
 bool iotUpdater(String server, String url, String firmware, bool immediately, bool debugWiFi) {
   bool retValue = true;
-  
-    delay(1000);
-    DEBUG_PRINTLN("------------- IOT Appstory MODE -------------------");
-    REMOTEDEBUG_PRINTLN("------------- IOT Appstory Mode -------------------");
+
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("------------- IOTappStory -------------------");
+  UDPDEBUG_PRINTTXT("------------- IOTappStory -------------------");
 
   if (debugWiFi) {
     getMACaddress();
@@ -316,7 +404,7 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
-      if (debugWiFi) DEBUG_PRINTLN("---------- HTTP_UPDATE_NO_UPDATES ------------------");      
+      if (debugWiFi) DEBUG_PRINTLN("---------- HTTP_UPDATE_NO_UPDATES ------------------");
       break;
 
     case HTTP_UPDATE_OK:
@@ -326,35 +414,45 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
   return retValue;
 }
 
-void IOTappStory(){
- // update from IOTappStory.com
+void IOTappStory() {
+  // update from IOTappStory.com
+  LEDswitch(GreenSlowBlink);
+
   if (iotUpdater(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true, true) == false) {
-   DEBUG_PRINTLN("False !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    DEBUG_PRINTLN(" Update not succesful");
     if (iotUpdater(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true, true) == false) {
       DEBUG_PRINTLN(" Update not succesful");
 #ifdef REMOTEDEBUGGING
-      Debug.println(" Update not succesful");
+      UDPDEBUG_PRINTTXT(" Update not succesful");
 #endif
-      //     WiFi.begin("No", "connection");
-      //     ESPrestart("No Connection");
     }
   }
+  initialize();
+  DEBUG_PRINTLN("Returning from IOTAppstory");
+  DEBUG_PRINTLN("");
+}
+
+void handleModeButton() {
+  if (buttonChanged && buttonTime > 3000) espRestart('C', "Going into Configuration Mode");  // long button press > 4sec
+  if (buttonChanged && buttonTime > 500 && buttonTime < 4000) IOTappStory(); // long button press > 1sec
+  buttonChanged = false;
 }
 
 
 //---------- CONFIGURATION PARAMETERS ----------
 
+
 void writeConfig() {
   DEBUG_PRINTLN("------------------ Writing Config --------------------------------");
-  if (WiFi.psk()!="") {
-  
-    WiFi.SSID().toCharArray(config.ssid,STRUCT_CHAR_ARRAY_SIZE);
-    WiFi.psk().toCharArray(config.password,STRUCT_CHAR_ARRAY_SIZE);
+  if (WiFi.psk() != "") {
+    WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+    WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
     DEBUG_PRINT("Stored ");
     DEBUG_PRINT(config.ssid);
     DEBUG_PRINTLN(" ");
- //   DEBUG_PRINTLN(config.password);
+    //   DEBUG_PRINTLN(config.password);
   }
+
   EEPROM.begin(EEPROM_SIZE);
   config.magicBytes[0] = MAGICBYTES[0];
   config.magicBytes[1] = MAGICBYTES[1];
@@ -419,23 +517,3 @@ void initWiFiManager() {
 void saveConfigCallback () {
   writeConfig();
 }
-
-
-//---------- REMOTE DEBUG ----------
-
-#ifdef REMOTEDEBUGGING
-void remoteDebugSetup() {
-  MDNS.addService("telnet", "tcp", 23);
-  // Initialize the telnet server of RemoteDebug
-  Debug.begin(config.boardName); // Initiaze the telnet server
-  Debug.setResetCmdEnabled(true); // Enable the reset command
-  // Debug.showProfiler(true); // To show profiler - time between messages of Debug
-  // Good to "begin ...." and "end ...." messages
-  // This sample (serial -> educattional use only, not need in production)
-
-  // Debug.showTime(true); // To show time
-}
-#endif
-
-
-

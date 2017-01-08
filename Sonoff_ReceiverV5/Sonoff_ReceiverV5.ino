@@ -118,10 +118,10 @@ strConfig config = {
   mySSID,
   myPASSWORD,
   "SenderINIT",
-  "192.168.0.200",
-  "/IOTappStory/IOTappStoryv20.php",
   "iotappstory.org",
-  "ota/esp8266-v1.php",
+  "/ota/esp8266-v1.php",
+  "iotappstory.org",
+  "/ota/esp8266-v1.php",
   "",
   "",
   "CFG"  // Magic Bytes
