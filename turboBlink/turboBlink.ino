@@ -25,7 +25,7 @@
 */
 
 #define SKETCH "turboBlink "
-#define VERSION "V1.0"
+#define VERSION "V1.1"
 #define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG         // Serial is used to present debugging messages 
@@ -80,13 +80,10 @@ extern "C" {
 
 
 //-------- SERVICES --------------
-Ticker blink;
-
-#ifdef REMOTEDEBUGGING
-WiFiUDP UDP;
-#endif
 
 // --- Sketch Specific -----
+
+
 
 //--------- ENUMS AND STRUCTURES  -------------------
 
@@ -120,11 +117,6 @@ strConfig config = {
   "CFG"  // Magic Bytes
 };
 
-typedef struct {
-  byte markerFlag;
-  int bootTimes;
-} rtcMemDef __attribute__((aligned(4)));
-rtcMemDef rtcMem;
 
 // --- Sketch Specific -----
 
@@ -132,22 +124,16 @@ rtcMemDef rtcMem;
 
 //---------- VARIABLES ----------
 
-String switchName1, switchName2, boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
 unsigned long debugEntry;
-volatile unsigned long buttonEntry;
-unsigned long buttonTime;
-volatile bool buttonChanged = false;
-volatile int greenTimesOff = 0;
-volatile int redTimesOff = 0;
-volatile int greenTimes = 0;
-volatile int redTimes = 0;
 char boardMode = 'N';  // Normal operation or Configuration mode?
+
 
 #ifdef REMOTEDEBUGGING
 // UDP variables
-char sendBuffer[255];
+char debugBuffer[255];
 IPAddress broadcastIp(255, 255, 255, 255);
 #endif
+int counter=0;
 
 // --- Sketch Specific -----
 // String xx; // add NEW CONSTANTS for WiFiManager according the variable "boardname"
@@ -221,7 +207,7 @@ void setup() {
 
   // --------- START WIFI --------------------------
 
-  connectNetwork('N');
+  connectNetwork();
 
   UDPDEBUG_START();
   UDPDEBUG_PRINTTXT("Start ");

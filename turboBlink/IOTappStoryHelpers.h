@@ -26,7 +26,7 @@ void confESP() {
   LEDswitch(GreenFastBlink);
 
   readFullConfiguration();
-  connectNetwork('C');
+  connectNetwork();
 
   DEBUG_PRINTLN("------------- Configuration Mode -------------------");
   UDPDEBUG_START();

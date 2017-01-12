@@ -25,7 +25,7 @@
 */
 
 #define SKETCH "virginSoil "
-#define VERSION "V1.0"
+#define VERSION "V1.1"
 #define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG         // Serial is used to present debugging messages 
@@ -80,13 +80,11 @@ extern "C" {
 
 
 //-------- SERVICES --------------
-Ticker blink;
 
-#ifdef REMOTEDEBUGGING
-WiFiUDP UDP;
-#endif
 
 // --- Sketch Specific -----
+
+
 
 //--------- ENUMS AND STRUCTURES  -------------------
 
@@ -98,10 +96,8 @@ typedef struct {
   char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
   char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
   char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
-  char udpPort[10];
+  char automaticUpdate[2];   // right after boot
   // insert NEW CONSTANTS according boardname example HERE!
-
-
 
   char magicBytes[4];
 
@@ -111,19 +107,13 @@ strConfig config = {
   "",
   "",
   "yourFirstApp",
-  "192.168.0.200",
-  "/IOTappStory/IOTappStoryv20.php",
-  "iotappstory.org",
+  "iotappstory.com",
   "/ota/esp8266-v1.php",
-  "8004",
+  "iotappstory.com",
+  "/ota/esp8266-v1.php",
+  "0",
   "CFG"  // Magic Bytes
 };
-
-typedef struct {
-  byte markerFlag;
-  int bootTimes;
-} rtcMemDef __attribute__((aligned(4)));
-rtcMemDef rtcMem;
 
 // --- Sketch Specific -----
 
@@ -131,22 +121,16 @@ rtcMemDef rtcMem;
 
 //---------- VARIABLES ----------
 
-String switchName1, switchName2, boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
 unsigned long debugEntry;
-volatile unsigned long buttonEntry;
-unsigned long buttonTime;
-volatile bool buttonChanged = false;
-volatile int greenTimesOff = 0;
-volatile int redTimesOff = 0;
-volatile int greenTimes = 0;
-volatile int redTimes = 0;
-char boardMode = 'N';  // Normal operation or Configuration mode?
 
 #ifdef REMOTEDEBUGGING
 // UDP variables
-char sendBuffer[255];
+char debugBuffer[255];
 IPAddress broadcastIp(255, 255, 255, 255);
 #endif
+long counter = 0;
+char boardMode = 'N';  // Normal operation or Configuration mode?
+String sysMessage;
 
 // --- Sketch Specific -----
 // String xx; // add NEW CONSTANTS for WiFiManager according the variable "boardname"
@@ -170,16 +154,12 @@ void initialize(void);
 
 
 
-//-------------------------- SETUP -----------------------------------------
+// ================================== SETUP ================================================
 
 void setup() {
   Serial.begin(115200);
   for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
   DEBUG_PRINTLN("Start "FIRMWARE);
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("Start ");
-  UDPDEBUG_PRINTTXT(FIRMWARE);
-  UDPDEBUG_SEND();
 
 
   // ----------- PINS ----------------
@@ -224,14 +204,11 @@ void setup() {
 
   // --------- START WIFI --------------------------
 
-  connectNetwork('N');
+  connectNetwork();
 
-  DEBUG_PRINTLN("------------- Normal Mode -------------------");
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("------------- Normal Mode -------------------");
-  UDPDEBUG_SEND();
+  sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, "------------- Normal Mode -------------------");
 
- // IOTappStory();
+  if (atoi(config.automaticUpdate) == 1) IOTappStory();
 
 
 
@@ -245,17 +222,14 @@ void setup() {
   LEDswitch(None);
   pinMode(MODEBUTTON, INPUT_PULLUP);  // MODEBUTTON as input for Config mode selection
 
-  DEBUG_PRINTLN("Setup done");
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("Setup done");
-  UDPDEBUG_SEND();
+ sendSysLogMessage(7, 1, config.boardName, FIRMWARE, 10, counter++, "Setup done");
 }
 
 
 
 
 
-//--------------- LOOP ----------------------------------
+//======================= LOOP =========================
 void loop() {
   //-------- IOTappStory Block ---------------
   yield();
@@ -265,7 +239,7 @@ void loop() {
   // fast blink: Configuration mode. Please connect to ESP network
   // Slow Blink: IOTappStore Update in progress
 
-  if (millis() - debugEntry > 2000) { // Non-Blocking second counter
+  if (millis() - debugEntry > 5000) { // Non-Blocking second counter
     debugEntry = millis();
     sendDebugMessage();
   }
@@ -279,36 +253,23 @@ void loop() {
 //------------------------- END LOOP --------------------------------------------
 
 void sendDebugMessage() {
-  // ------- Debug Message --------
-  DEBUG_PRINT("Board: ");
-  DEBUG_PRINT(config.boardName);
-  DEBUG_PRINT(" Firmware: ");
-  DEBUG_PRINT(FIRMWARE);
-  DEBUG_PRINT(" Heap ");
-  DEBUG_PRINT(ESP.getFreeHeap());
+  // ------- Syslog Message --------
 
-  // -------------- your variables here --------------
+  /* severity: 2 critical, 6 info, 7 debug
+    facility: 1 user level
+    String hostName: Board Name
+    app: FIRMWARE
+    procID: unddefined
+    msgID: counter
+    message: Your message
+  */
 
-
-    DEBUG_PRINTLN();
-
-
-
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("Board: ");
-  UDPDEBUG_PRINTTXT(config.boardName);
-  UDPDEBUG_PRINTTXT(" Firmware: ");
-  UDPDEBUG_PRINTTXT(FIRMWARE);
+  sysMessage = "";
   long h1 = ESP.getFreeHeap();
-  UDPDEBUG_PRINT(" Heap ", h1);
-
-  // -------------- your variables here --------------
-
-  UDPDEBUG_SEND();
+  sysMessage += " Heap ";
+  sysMessage += h1;
+  sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, sysMessage);
 }
-
-// ---------------- END LOOP -------------------------
-
 
 
 

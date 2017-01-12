@@ -3,8 +3,6 @@
 #define MAGICBYTES "CFG"
 #define EEPROM_SIZE 1024
 
-#define ON true
-#define OFF false
 
 // macros for debugging
 #ifdef SERIALDEBUG
@@ -17,11 +15,25 @@
 
 
 #ifdef REMOTEDEBUGGING
+
 #define         REMOTEDEBUG_PRINT(x)    Debug.print(x)
 #define         REMOTEDEBUG_PRINTLN(x)  Debug.println(x)
+
+#define         UDPDEBUG_PRINT(x,y)    debugPrint(x,y)
+#define         UDPDEBUG_PRINTTXT(x)   debugPrintTxt(x)
+#define         UDPDEBUG_START()       debugStart()
+#define         UDPDEBUG_SEND()        debugSend()
+
+
 #else
+
 #define         REMOTEDEBUG_PRINT(x)
 #define         REMOTEDEBUG_PRINTLN(x)
+
+#define         UDPDEBUG_PRINT(x,y)    
+#define         UDPDEBUG_PRINTTXT(x)  
+#define         UDPDEBUG_START()   
+#define         UDPDEBUG_SEND() 
 #endif
 
 
@@ -34,6 +46,98 @@
 #define LEDOFF 0
 #endif
 
+
+#define MAX_WIFI_RETRIES 50
+#define RTCMEMBEGIN 68
+#define MAGICBYTE 85
+
+typedef struct {
+  byte markerFlag;
+  int bootTimes;
+} rtcMemDef __attribute__((aligned(4)));
+rtcMemDef rtcMem;
+
+String boardName,IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
+volatile unsigned long buttonEntry;
+unsigned long buttonTime;
+volatile bool buttonChanged = false;
+volatile int greenTimesOff = 0;
+volatile int redTimesOff = 0;
+volatile int greenTimes = 0;
+volatile int redTimes = 0;
+
+#ifdef REMOTEDEBUGGING
+WiFiUDP UDP;
+#endif
+
+Ticker blink;
+
+
+#ifdef REMOTEDEBUGGING
+
+void send_packet(char *text)
+{
+  UDP.beginPacket(broadcastIp, atoi(config.udpPort));
+  UDP.write(text);
+  UDP.endPacket();
+}
+
+boolean connectUDP()
+{
+  Serial.println("");
+  Serial.println("Connecting to UDP");
+  if (UDP.begin(atoi(config.udpPort)) == 1)
+  {
+    Serial.println("Connection successful");
+    return true;
+  }
+  else
+  {
+    Serial.println("Connection failed");
+    return false;
+  }
+}
+
+
+void debugStart() {
+  debugBuffer[0] = '\0';
+}
+
+void debugSend() {
+  send_packet(debugBuffer);
+}
+
+void debugPrint(char*txt, int nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+  delay(100);
+}
+
+void debugPrint(char*txt, long nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+  //  send_packet(buf);
+}
+
+
+void debugPrint(char*txt, float nbr) {
+  char buf[100];
+  sprintf(buf, "%s = %i", txt, nbr);
+  strcat(debugBuffer, buf);
+}
+
+void debugPrintTxt(char* buf) {
+  strcat(debugBuffer, buf);
+}
+
+void debugPrintTxt(String hh) {
+  char buf[100];
+  hh.toCharArray(buf, 100);
+  strcat(debugBuffer, buf);
+}
+#endif
 
 //---------- COMMON DEFINITIONS ------------
 enum ledColorDef {
@@ -49,63 +153,18 @@ enum ledColorDef {
   RedFastBlink
 };
 
+/*
+  typedef struct {
+  byte markerFlag;
+  long lastSubscribers;
+  int updateSpaces;
+  int runSpaces;
+  int bootTimes;
+  } rtcMemDef __attribute__((aligned(4)));
+  rtcMemDef rtcMem;
+*/
 
 
-//---------- MISC FUNCTIONS ----------
-
-// Wait till networl is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
-bool isNetworkConnected() {
-  int retries = MAX_WIFI_RETRIES;
-  while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
-    delay(500);
-    Serial.print(".");
-  }
-  if (retries <= 0) return false;
-  else return true;
-}
-
-
-void espRestart(char mmode, String message) {
-  DEBUG_PRINTLN(message);
-#ifdef REMOTEDEBUGGING
-  Debug.println(message);
-#endif
-  while (digitalRead(MODEBUTTON) == OFF) yield();    // wait till GPIOo released
-  delay(500);
-  system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-  ESP.restart();
-}
-
-String getMACaddress() {
-  uint8_t mac[6];
-  char macStr[18] = {0};
-  WiFi.macAddress(mac);
-  sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],  mac[1], mac[2], mac[3], mac[4], mac[5]);
-  return  String(macStr);
-}
-
-void printMacAddress() {
-  byte mac[6];
-  WiFi.macAddress(mac);
-  Serial.print("MAC: ");
-  for (int i = 0; i < 5; i++) {
-    Serial.print(mac[i], HEX);
-    Serial.print(":");
-  }
-  Serial.println(mac[5], HEX);
-}
-
-
-void registerDNS() {
-  // Register host name in WiFi and mDNS
-  String hostNameWifi = boardName;   // boardName is device name
-  hostNameWifi.concat(".local");
-  WiFi.hostname(hostNameWifi);
-  if (MDNS.begin(config.boardName)) {
-    DEBUG_PRINT("* MDNS responder started. http://");
-    DEBUG_PRINTLN(hostNameWifi);
-  }
-}
 
 //---------- LED FUNCTIONS ----------
 
@@ -233,10 +292,114 @@ void LEDswitch(ledColorDef color) {
 
 //---------- RTC MEMORY FUNCTIONS ----------
 
-
 void writeRTCmem() {
   rtcMem.markerFlag = MAGICBYTE;
   system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+}
+
+
+//---------- MISC FUNCTIONS ----------
+
+void espRestart(char mmode, char* message) {
+  LEDswitch(GreenFastBlink);
+  DEBUG_PRINTLN(message);
+#ifdef REMOTEDEBUGGING
+  UDPDEBUG_PRINTTXT(message);
+#endif
+  while (digitalRead(MODEBUTTON) == LOW) yield();    // wait till GPIOo released
+  delay(500);
+  system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
+  ESP.restart();
+}
+
+void eraseFlash() {
+  Serial.println("Erasing Flash...");
+  EEPROM.begin(EEPROM_SIZE);
+  for (unsigned int t = 0; t < EEPROM_SIZE; t++) EEPROM.write(t, 0);
+  EEPROM.end();
+}
+
+// Wait till networl is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
+bool isNetworkConnected() {
+  int retries = MAX_WIFI_RETRIES;
+  while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
+    delay(500);
+    Serial.print(".");
+  }
+  if (retries <= 0) return false;
+  else return true;
+}
+
+String getMACaddress() {
+  uint8_t mac[6];
+  char macStr[18] = {0};
+  WiFi.macAddress(mac);
+  sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],  mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return  String(macStr);
+}
+
+void printMacAddress() {
+  byte mac[6];
+  WiFi.macAddress(mac);
+  Serial.print("MAC: ");
+  for (int i = 0; i < 5; i++) {
+    Serial.print(mac[i], HEX);
+    Serial.print(":");
+  }
+  Serial.println(mac[5], HEX);
+}
+
+void connectNetwork(char mode) {
+  WiFi.mode(WIFI_STA);
+  if (!isNetworkConnected()) {
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("No Connection. Try to connect with saved PW");
+    WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+    if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
+  }
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("WiFi connected");
+    getMACaddress();
+    printMacAddress();
+    DEBUG_PRINT("IP Address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
+
+    #ifdef REMOTEDEBUGGING
+    if (mode=='N') {
+    // Start UDP
+    broadcastIp = WiFi.localIP();
+    broadcastIp[3] = 255;
+    bool udpConnected = connectUDP();
+    if (udpConnected) DEBUG_PRINTLN("UPD Connected");
+    else DEBUG_PRINTLN("UPD FAILED!");
+    UDPDEBUG_START();
+    UDPDEBUG_PRINTTXT(config.boardName);
+    UDPDEBUG_SEND();
+    DEBUG_PRINT("Debug UDP Port: ");
+    DEBUG_PRINTLN(atoi(config.udpPort));
+    }
+    #endif
+
+    // Register host name in WiFi and mDNS
+    String hostNameWifi = config.boardName;   // boardName is device name
+    hostNameWifi.concat(".local");
+    wifi_station_set_hostname(config.boardName);
+ //   WiFi.hostname(hostNameWifi);
+    if (MDNS.begin(config.boardName)) {
+      DEBUG_PRINT("* MDNS responder started. http://");
+      DEBUG_PRINTLN(hostNameWifi);
+    } else espRestart('C', "MDNS not started");
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("Network OK");
+}
+
+
+void ISRbuttonStateChanged() {
+  if (digitalRead(MODEBUTTON) == 0) buttonEntry = millis();
+  else {
+    buttonTime = millis() - buttonEntry;
+    buttonChanged = true;
+  }
 }
 
 
@@ -244,10 +407,9 @@ void writeRTCmem() {
 bool iotUpdater(String server, String url, String firmware, bool immediately, bool debugWiFi) {
   bool retValue = true;
 
-  delay(1000);
   DEBUG_PRINTLN("");
-  DEBUG_PRINTLN("------------- IOT Appstory MODE -------------------");
-  REMOTEDEBUG_PRINTLN("------------- IOT Appstory Mode -------------------");
+  DEBUG_PRINTLN("------------- IOTappStory -------------------");
+  UDPDEBUG_PRINTTXT("------------- IOTappStory -------------------");
 
   if (debugWiFi) {
     getMACaddress();
@@ -285,25 +447,35 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
 
 void IOTappStory() {
   // update from IOTappStory.com
+  LEDswitch(GreenSlowBlink);
+
   if (iotUpdater(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true, true) == false) {
     DEBUG_PRINTLN(" Update not succesful");
     if (iotUpdater(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true, true) == false) {
       DEBUG_PRINTLN(" Update not succesful");
 #ifdef REMOTEDEBUGGING
-      REMOTEDEBUG_PRINTLN(" Update not succesful");
+      UDPDEBUG_PRINTTXT(" Update not succesful");
 #endif
     }
   }
+  initialize();
   DEBUG_PRINTLN("Returning from IOTAppstory");
+  DEBUG_PRINTLN("");
+}
+
+void handleModeButton() {
+  if (buttonChanged && buttonTime > 3000) espRestart('C', "Going into Configuration Mode");  // long button press > 4sec
+  if (buttonChanged && buttonTime > 500 && buttonTime < 4000) IOTappStory(); // long button press > 1sec
+  buttonChanged = false;
 }
 
 
 //---------- CONFIGURATION PARAMETERS ----------
 
+
 void writeConfig() {
   DEBUG_PRINTLN("------------------ Writing Config --------------------------------");
   if (WiFi.psk() != "") {
-
     WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
     WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
     DEBUG_PRINT("Stored ");
@@ -311,6 +483,7 @@ void writeConfig() {
     DEBUG_PRINTLN(" ");
     //   DEBUG_PRINTLN(config.password);
   }
+
   EEPROM.begin(EEPROM_SIZE);
   config.magicBytes[0] = MAGICBYTES[0];
   config.magicBytes[1] = MAGICBYTES[1];
@@ -375,23 +548,3 @@ void initWiFiManager() {
 void saveConfigCallback () {
   writeConfig();
 }
-
-
-//---------- REMOTE DEBUG ----------
-
-#ifdef REMOTEDEBUGGING
-void remoteDebugSetup() {
-  MDNS.addService("telnet", "tcp", 23);
-  // Initialize the telnet server of RemoteDebug
-  Debug.begin(config.boardName); // Initiaze the telnet server
-  Debug.setResetCmdEnabled(true); // Enable the reset command
-  // Debug.showProfiler(true); // To show profiler - time between messages of Debug
-  // Good to "begin ...." and "end ...." messages
-  // This sample (serial -> educattional use only, not need in production)
-
-  // Debug.showTime(true); // To show time
-}
-#endif
-
-
-

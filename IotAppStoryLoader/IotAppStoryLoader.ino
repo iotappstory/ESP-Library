@@ -71,7 +71,6 @@ extern "C" {
 
 //-------- SERVICES --------------
 
-Ticker blink;
 
 
 //--------- ENUMS AND STRUCTURES  -------------------
@@ -99,24 +98,9 @@ strConfig config = {
   "CFG"  // Magic Bytes
 };
 
-typedef struct {
-  byte markerFlag;
-  int bootTimes;
-} rtcMemDef __attribute__((aligned(4)));
-rtcMemDef rtcMem;
 
 
 //---------- VARIABLES ----------
-String switchName1, switchName2, boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
-unsigned long debugEntry;
-volatile unsigned long buttonEntry;
-unsigned long buttonTime;
-volatile bool buttonChanged = false;
-volatile int greenTimesOff = 0;
-volatile int redTimesOff = 0;
-volatile int greenTimes = 0;
-volatile int redTimes = 0;
-char boardMode = 'N';  // Normal operation or Configuration mode?
 
 
 
@@ -181,11 +165,3 @@ void loop() {
 
 //------------------------ END LOOP ------------------------------------------------
 
-
-
-void eraseFlash() {
-  Serial.println("Erasing Flash...");
-  EEPROM.begin(EEPROM_SIZE);
-  for (unsigned int t = 0; t < EEPROM_SIZE; t++) EEPROM.write(t, 0);
-  EEPROM.end();
-}

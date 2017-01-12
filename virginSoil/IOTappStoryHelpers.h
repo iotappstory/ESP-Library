@@ -6,11 +6,6 @@ void initialize() {   // this function is called by IOTappstory() before return.
 void configESP() {
   Serial.begin(115200);
   for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
-  DEBUG_PRINTLN("Start "FIRMWARE);
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("Start ");
-  UDPDEBUG_PRINTTXT(FIRMWARE);
-  UDPDEBUG_SEND();
 
   // ----------- PINS ----------------
 #ifdef LEDgreen
@@ -31,12 +26,11 @@ void configESP() {
   LEDswitch(GreenFastBlink);
 
   readFullConfiguration();
-  connectNetwork('C');
+  connectNetwork();
 
   DEBUG_PRINTLN("------------- Configuration Mode -------------------");
-  UDPDEBUG_START();
-  UDPDEBUG_PRINTTXT("------------- Configuration Mode -------------------");
-  UDPDEBUG_SEND();
+ sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, "------------- Configuration Mode -------------------");
+
 
   initWiFiManager();
 
@@ -62,7 +56,7 @@ void loopWiFiManager() {
   WiFiManagerParameter p_IOTappStoryPHP1("IOTappStoryPHP1", "IOTappStoryPHP1", config.IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE);
   WiFiManagerParameter p_IOTappStory2("IOTappStory2", "IOTappStory2", config.IOTappStory2, STRUCT_CHAR_ARRAY_SIZE);
   WiFiManagerParameter p_IOTappStoryPHP2("IOTappStoryPHP2", "IOTappStoryPHP2", config.IOTappStoryPHP2, STRUCT_CHAR_ARRAY_SIZE);
-  WiFiManagerParameter p_udpPort("udpPort", "udpPort", config.udpPort, 10);
+  WiFiManagerParameter p_automaticUpdate("automaticUpdate", "Automatic Update", config.automaticUpdate, 2);
 
   // Just a quick hint
   WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small>");
@@ -80,7 +74,7 @@ void loopWiFiManager() {
   wifiManager.addParameter(&p_IOTappStoryPHP1);
   wifiManager.addParameter(&p_IOTappStory2);
   wifiManager.addParameter(&p_IOTappStoryPHP2);
-  wifiManager.addParameter(&p_udpPort);
+  wifiManager.addParameter(&p_automaticUpdate);
 
 
   // Sets timeout in seconds until configuration portal gets turned off.
@@ -110,7 +104,7 @@ void loopWiFiManager() {
   strcpy(config.IOTappStoryPHP1, p_IOTappStoryPHP1.getValue());
   strcpy(config.IOTappStory2, p_IOTappStory2.getValue());
   strcpy(config.IOTappStoryPHP2, p_IOTappStoryPHP2.getValue());
-  strcpy(config.udpPort, p_udpPort.getValue());
+  strcpy(config.automaticUpdate, p_automaticUpdate.getValue());
 
   //additional fields
 
