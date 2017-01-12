@@ -76,15 +76,15 @@ Ticker blink;
 
 bool connectUDP(){
 #ifdef REMOTEDEBUGGING
-  DEBUG_PRINTLN("");
-  DEBUG_PRINTLN("Connecting to UDP");
+//  DEBUG_PRINTLN("");
+//  DEBUG_PRINTLN("Connecting to UDP");
   if (UDP.begin(UDP_PORT) == 1)
   {
-    DEBUG_PRINTLN("UDP Connect successful");
+//    DEBUG_PRINTLN("UDP Connect successful");
     return true;
   }
   else {
-    DEBUG_PRINTLN("UDP Connect failed!");
+ //   DEBUG_PRINTLN("UDP Connect failed!");
     return false;
   }
 #endif
@@ -98,8 +98,8 @@ void debugStart() {
 
 void debugSend() {
 bool udpConnected = connectUDP();
-if (udpConnected) Serial.println("UPD Connected");
-  else Serial.println("UPD FAILED!");
+// if (udpConnected) Serial.println("UPD Connected");
+//   else Serial.println("UPD FAILED!");
   UDP.beginPacket(broadcastIp, UDP_PORT);
   UDP.write(debugBuffer);
   UDP.endPacket();
@@ -392,7 +392,7 @@ void connectNetwork() {
  if (MDNS.begin(config.boardName)) {
       DEBUG_PRINT("* MDNS responder started. http://");
       DEBUG_PRINTLN(hostNameWifi);
- } else espRestart('C', "MDNS not started");
+ } else espRestart('N', "MDNS not started");
 }
 
 
