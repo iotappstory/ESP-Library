@@ -110,7 +110,7 @@ strConfig config = {
   "yourFirstApp",
   "192.168.0.200",
   "/IOTappStory/IOTappStoryv20.php",
-  "iotappstory.org",
+  "iotappstory.com",
   "/ota/esp8266-v1.php",
   "8004",
   "D4",
