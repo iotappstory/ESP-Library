@@ -7,6 +7,13 @@
 
 
 // macros for debugging
+
+#ifdef DEBUG_PORT
+    #define DEBUG_MSG(...) DEBUG_PORT.printf( __VA_ARGS__ )
+#else
+    #define DEBUG_MSG(...)
+#endif
+
 #ifdef SERIALDEBUG
 #define         DEBUG_PRINT(x)    Serial.print(x)
 #define         DEBUG_PRINTLN(x)  Serial.println(x)
@@ -74,7 +81,7 @@ WiFiUDP UDP;
 
 Ticker blink;
 
-bool connectUDP(){
+bool connectUDP() {
 #ifdef REMOTEDEBUGGING
 //  DEBUG_PRINTLN("");
 //  DEBUG_PRINTLN("Connecting to UDP");
@@ -329,6 +336,7 @@ void espRestart(char mmode, char* message) {
   while (digitalRead(MODEBUTTON) == LOW) yield();    // wait till GPIOo released
   delay(500);
   system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
+  system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1); 
   ESP.restart();
 }
 
@@ -402,6 +410,35 @@ void ISRbuttonStateChanged() {
     buttonTime = millis() - buttonEntry;
     buttonChanged = true;
   }
+}
+
+// prints important parametes
+
+void welcome() {
+
+  delay(2000);
+  DEBUG_MSG("%s %s\n", (char *) SKETCH, (char *) VERSION);
+  //DEBUG_MSG("Device: %s\n", (char *) getIdentifier().c_str());
+  DEBUG_MSG("ChipID: %06X\n", ESP.getChipId());
+  DEBUG_MSG("CPU frequency: %d MHz\n", ESP.getCpuFreqMHz());
+  DEBUG_MSG("Last reset reason: %s\n", (char *) ESP.getResetReason().c_str());
+  DEBUG_MSG("Memory size: %d bytes\n", ESP.getFlashChipSize());
+  DEBUG_MSG("Free heap: %d bytes\n", ESP.getFreeHeap());
+  DEBUG_MSG("Firmware size: %d bytes\n", ESP.getSketchSize());
+  DEBUG_MSG("Free firmware space: %d bytes\n", ESP.getFreeSketchSpace());
+  #ifdef SPIFFS
+  FSInfo fs_info;
+  if (SPIFFS.info(fs_info)) {
+    DEBUG_MSG("File system total size: %d bytes\n", fs_info.totalBytes);
+    DEBUG_MSG("            used size : %d bytes\n", fs_info.usedBytes);
+    DEBUG_MSG("            block size: %d bytes\n", fs_info.blockSize);
+    DEBUG_MSG("            page size : %d bytes\n", fs_info.pageSize);
+    DEBUG_MSG("            max files : %d\n", fs_info.maxOpenFiles);
+    DEBUG_MSG("            max length: %d\n", fs_info.maxPathLength);
+  }
+  #endif
+  DEBUG_MSG("\n\n");
+
 }
 
 
