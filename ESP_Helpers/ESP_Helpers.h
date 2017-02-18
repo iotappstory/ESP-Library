@@ -486,10 +486,12 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
+      retValue = true;
       if (debugWiFi) DEBUG_PRINTLN("---------- SPIFFS_UPDATE_NO_UPDATES ------------------");
       break;
 
     case HTTP_UPDATE_OK:
+      retValue = true;
       if (debugWiFi) DEBUG_PRINTLN("SPIFFS_UPDATE_OK");
       break;
   }
@@ -512,6 +514,7 @@ void IOTappStory() {
   initialize();
   DEBUG_PRINTLN("Returning from IOTAppstory");
   DEBUG_PRINTLN("");
+  boardMode = 'N';
   ESP.restart();
 }
 
