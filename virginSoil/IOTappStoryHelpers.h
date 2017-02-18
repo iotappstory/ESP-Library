@@ -26,7 +26,7 @@ void configESP() {
   LEDswitch(GreenFastBlink);
 
   readFullConfiguration();
-  connectNetwork();
+  //connectNetwork();
 
   DEBUG_PRINTLN("------------- Configuration Mode -------------------");
  sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, "------------- Configuration Mode -------------------");
