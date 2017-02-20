@@ -443,8 +443,8 @@ void welcome() {
 
 
 //---------- IOTappStory FUNCTIONS ----------
-bool iotUpdaterSketch(String server, String url, String firmware, bool immediately) {
-  bool retValue = true;
+byte iotUpdaterSketch(String server, String url, String firmware, bool immediately) {
+  byte retValue;
   DEBUG_PRINTLN("Updating Sketch from...");
   DEBUG_PRINT("Update_server ");
   DEBUG_PRINTLN(server);
@@ -455,26 +455,28 @@ bool iotUpdaterSketch(String server, String url, String firmware, bool immediate
   t_httpUpdate_return ret = ESPhttpUpdate.update(server, 80, url, firmware);
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      retValue = false;
 #ifdef SERIALDEBUG
       Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
 #endif
       DEBUG_PRINTLN();
+      retValue = 'F';
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
       DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");
+      retValue = 'A';
       break;
 
     case HTTP_UPDATE_OK:
       DEBUG_PRINTLN("SKETCH_UPDATE_OK");
+      retValue = 'U';
       break;
   }
   return retValue;
 }
 
-bool iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately) {
-  bool retValue = true;
+byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately) {
+  byte retValue;
   DEBUG_PRINTLN("Updating SPIFFS from...");
   DEBUG_PRINT("Update_server ");
   DEBUG_PRINTLN(server);
@@ -483,23 +485,25 @@ bool iotUpdaterSPIFFS(String server, String url, String firmware, bool immediate
   DEBUG_PRINT("FIRMWARE_VERSION ");
   DEBUG_PRINTLN(firmware);
 
-  t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), "SPIFFS_" + firmware);
+  t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), firmware);
   switch (retspiffs) {
     case HTTP_UPDATE_FAILED:
 #ifdef SERIALDEBUG
       Serial.printf("SPIFFS_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
 #endif
       DEBUG_PRINTLN();
+       retValue = 'F';
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
-      retValue = true;
       DEBUG_PRINTLN("---------- SPIFFS_UPDATE_NO_UPDATES ------------------");
+       retValue = 'A';
       break;
 
     case HTTP_UPDATE_OK:
       retValue = true;
       DEBUG_PRINTLN("SPIFFS_UPDATE_OK");
+      retValue = 'U';
       break;
   }
   return retValue;
@@ -509,6 +513,8 @@ bool iotUpdaterSPIFFS(String server, String url, String firmware, bool immediate
 
 void IOTappStory(bool spiffs) {
   // update from IOTappStory.com
+  bool updateHappened=false;
+  byte res1, res2;
 
   sendSysLogMessage(7, 1, config.boardName, FIRMWARE, 10, counter++, "------------- IOTappStory -------------------");
   LEDswitch(GreenSlowBlink);
@@ -521,33 +527,44 @@ void IOTappStory(bool spiffs) {
   DEBUG_PRINTLN("");
 
   ESPhttpUpdate.rebootOnUpdate(false);
-  if (iotUpdaterSketch(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true) == false) {
+  
+  res1 = iotUpdaterSketch(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true);
+  if (res1 == 'F') {
     String message = IOTappStory1 + ": Update not succesful";
     sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
-    if (iotUpdaterSketch(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) == false) {
+    res2 = iotUpdaterSketch(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) ;
+    if (res2 == 'F') {
       message = IOTappStory2 + ": Update not succesful";
       sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
-    }
+    } 
   }
+  if (res1 == 'U' || res2 == 'U')  updateHappened = true;
   
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("");
 
   if (spiffs) {
-    if (iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true) == false) {
+  res1 = iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true);
+    if (res1 == false) {
       String message = IOTappStory1 + ": Update not succesful";
       sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
-      if (iotUpdaterSPIFFS(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) == false) {
+      res2 = iotUpdaterSPIFFS(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true);
+      if (res2 == false) {
         message = IOTappStory2 + ": Update not succesful";
         sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
       }
     }
-  }
-  initialize();
+  } 
+  if (res1 == 'U' || res2 == 'U')  updateHappened = true;
+  
   DEBUG_PRINTLN("Returning from IOTAppstory");
   DEBUG_PRINTLN("");
-  boardMode = 'N';
-  ESP.restart();
+  
+  if (updateHappened) {
+  	initialize();
+  	boardMode = 'N';
+  	ESP.restart();
+  }
 }
 
 
