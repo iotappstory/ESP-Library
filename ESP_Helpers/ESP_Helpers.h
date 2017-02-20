@@ -553,6 +553,7 @@ bool readConfig() {
   DEBUG_PRINTLN("Reading Config");
   boolean ret = false;
   EEPROM.begin(EEPROM_SIZE);
+  long magicBytesBegin = sizeof(config) - 4; // Magic bytes at the end of the structure
 
   if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
     DEBUG_PRINTLN("EEPROM Configuration found");
