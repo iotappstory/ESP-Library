@@ -9,9 +9,9 @@
 // macros for debugging
 
 #ifdef DEBUG_PORT
-    #define DEBUG_MSG(...) DEBUG_PORT.printf( __VA_ARGS__ )
+#define DEBUG_MSG(...) DEBUG_PORT.printf( __VA_ARGS__ )
 #else
-    #define DEBUG_MSG(...)
+#define DEBUG_MSG(...)
 #endif
 
 #ifdef SERIALDEBUG
@@ -39,10 +39,10 @@
 #define         REMOTEDEBUG_PRINT(x)
 #define         REMOTEDEBUG_PRINTLN(x)
 
-#define         UDPDEBUG_PRINT(x,y)    
-#define         UDPDEBUG_PRINTTXT(x)  
-#define         UDPDEBUG_START()   
-#define         UDPDEBUG_SEND() 
+#define         UDPDEBUG_PRINT(x,y)
+#define         UDPDEBUG_PRINTTXT(x)
+#define         UDPDEBUG_START()
+#define         UDPDEBUG_SEND()
 #endif
 
 
@@ -66,7 +66,7 @@ typedef struct {
 } rtcMemDef __attribute__((aligned(4)));
 rtcMemDef rtcMem;
 
-String boardName,IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
+String boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
 volatile unsigned long buttonEntry;
 unsigned long buttonTime;
 volatile bool buttonChanged = false;
@@ -83,15 +83,15 @@ Ticker blink;
 
 bool connectUDP() {
 #ifdef REMOTEDEBUGGING
-//  DEBUG_PRINTLN("");
-//  DEBUG_PRINTLN("Connecting to UDP");
+  //  DEBUG_PRINTLN("");
+  //  DEBUG_PRINTLN("Connecting to UDP");
   if (UDP.begin(UDP_PORT) == 1)
   {
-//    DEBUG_PRINTLN("UDP Connect successful");
+    //    DEBUG_PRINTLN("UDP Connect successful");
     return true;
   }
   else {
- //   DEBUG_PRINTLN("UDP Connect failed!");
+    //   DEBUG_PRINTLN("UDP Connect failed!");
     return false;
   }
 #endif
@@ -104,9 +104,9 @@ void debugStart() {
 }
 
 void debugSend() {
-bool udpConnected = connectUDP();
-// if (udpConnected) Serial.println("UPD Connected");
-//   else Serial.println("UPD FAILED!");
+  bool udpConnected = connectUDP();
+  // if (udpConnected) Serial.println("UPD Connected");
+  //   else Serial.println("UPD FAILED!");
   UDP.beginPacket(broadcastIp, UDP_PORT);
   UDP.write(debugBuffer);
   UDP.endPacket();
@@ -163,10 +163,10 @@ void sendSysLogMessageReal(int severity, int facility, String hostName, String a
 }
 #endif
 
-void sendSysLogMessage(int severity, int facility, String hostName, String app, int procID, int msgID, String message){
-    #ifdef REMOTEDEBUGGING
-    sendSysLogMessageReal(severity, facility, hostName, app, procID, msgID, message);
-    #endif
+void sendSysLogMessage(int severity, int facility, String hostName, String app, int procID, int msgID, String message) {
+#ifdef REMOTEDEBUGGING
+  sendSysLogMessageReal(severity, facility, hostName, app, procID, msgID, message);
+#endif
 }
 
 //---------- COMMON DEFINITIONS ------------
@@ -336,7 +336,7 @@ void espRestart(char mmode, char* message) {
   while (digitalRead(MODEBUTTON) == LOW) yield();    // wait till GPIOo released
   delay(500);
   system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-  system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1); 
+  system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);
   ESP.restart();
 }
 
@@ -392,15 +392,15 @@ void connectNetwork() {
   DEBUG_PRINT("IP Address: ");
   DEBUG_PRINTLN(WiFi.localIP());
 
-    // Register host name in WiFi and mDNS
+  // Register host name in WiFi and mDNS
   String hostNameWifi = config.boardName;   // boardName is device name
   hostNameWifi.concat(".local");
   wifi_station_set_hostname(config.boardName);
- //   WiFi.hostname(hostNameWifi);
- if (MDNS.begin(config.boardName)) {
-      DEBUG_PRINT("* MDNS responder started. http://");
-      DEBUG_PRINTLN(hostNameWifi);
- } else espRestart('N', "MDNS not started");
+  //   WiFi.hostname(hostNameWifi);
+  if (MDNS.begin(config.boardName)) {
+    DEBUG_PRINT("* MDNS responder started. http://");
+    DEBUG_PRINTLN(hostNameWifi);
+  } else espRestart('N', "MDNS not started");
 }
 
 
@@ -426,7 +426,7 @@ void welcome() {
   DEBUG_MSG("Free heap: %d bytes\n", ESP.getFreeHeap());
   DEBUG_MSG("Firmware size: %d bytes\n", ESP.getSketchSize());
   DEBUG_MSG("Free firmware space: %d bytes\n", ESP.getFreeSketchSpace());
-  #ifdef SPIFFS
+#ifdef SPIFFS
   FSInfo fs_info;
   if (SPIFFS.info(fs_info)) {
     DEBUG_MSG("File system total size: %d bytes\n", fs_info.totalBytes);
@@ -436,7 +436,7 @@ void welcome() {
     DEBUG_MSG("            max files : %d\n", fs_info.maxOpenFiles);
     DEBUG_MSG("            max length: %d\n", fs_info.maxPathLength);
   }
-  #endif
+#endif
   DEBUG_MSG("\n\n");
 
 }
@@ -456,14 +456,14 @@ bool iotUpdaterSketch(String server, String url, String firmware, bool immediate
   switch (ret) {
     case HTTP_UPDATE_FAILED:
       retValue = false;
-      #ifdef SERIALDEBUG
-       Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-      #endif
+#ifdef SERIALDEBUG
+      Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+#endif
       DEBUG_PRINTLN();
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
-    DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");
+      DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");
       break;
 
     case HTTP_UPDATE_OK:
@@ -483,12 +483,12 @@ bool iotUpdaterSPIFFS(String server, String url, String firmware, bool immediate
   DEBUG_PRINT("FIRMWARE_VERSION ");
   DEBUG_PRINTLN(firmware);
 
-  t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://"+String(server+url),"SPIFFS_"+firmware);
+  t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), "SPIFFS_" + firmware);
   switch (retspiffs) {
     case HTTP_UPDATE_FAILED:
-      #ifdef SERIALDEBUG
+#ifdef SERIALDEBUG
       Serial.printf("SPIFFS_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-      #endif
+#endif
       DEBUG_PRINTLN();
       break;
 
@@ -507,44 +507,52 @@ bool iotUpdaterSPIFFS(String server, String url, String firmware, bool immediate
 
 
 
-void IOTappStory() {
+void IOTappStory(bool spiffs) {
   // update from IOTappStory.com
-  
+
   sendSysLogMessage(7, 1, config.boardName, FIRMWARE, 10, counter++, "------------- IOTappStory -------------------");
   LEDswitch(GreenSlowBlink);
-  
-    getMACaddress();
-    printMacAddress();
-    DEBUG_PRINT("IP = ");
-    DEBUG_PRINTLN(WiFi.localIP());
-    DEBUG_PRINTLN("");
-    DEBUG_PRINTLN("");
+
+  getMACaddress();
+  printMacAddress();
+  DEBUG_PRINT("IP = ");
+  DEBUG_PRINTLN(WiFi.localIP());
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("");
 
   ESPhttpUpdate.rebootOnUpdate(false);
   if (iotUpdaterSketch(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true) == false) {
     String message = IOTappStory1 + ": Update not succesful";
     sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
     if (iotUpdaterSketch(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) == false) {
-      message =IOTappStory2 + ": Update not succesful";
+      message = IOTappStory2 + ": Update not succesful";
       sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
     }
   }
   
-  #ifdef INCL_SPIFFS
-  if (iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true) == false) {
-  	String message = IOTappStory1 + ": Update not succesful";
-  	sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
-  	if (iotUpdaterSPIFFS(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) == false) {
-  		message =IOTappStory2 + ": Update not succesful";
-        	sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
-  	}
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("");
+
+  if (spiffs) {
+    if (iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, FIRMWARE, true) == false) {
+      String message = IOTappStory1 + ": Update not succesful";
+      sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
+      if (iotUpdaterSPIFFS(config.IOTappStory2, config.IOTappStoryPHP2, FIRMWARE, true) == false) {
+        message = IOTappStory2 + ": Update not succesful";
+        sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, message);
+      }
+    }
   }
-  #endif
   initialize();
   DEBUG_PRINTLN("Returning from IOTAppstory");
   DEBUG_PRINTLN("");
   boardMode = 'N';
   ESP.restart();
+}
+
+
+void IOTappStory() {
+  IOTappStory(true);
 }
 
 
@@ -589,7 +597,7 @@ bool readConfig() {
     DEBUG_PRINTLN("EEPROM Configuration found");
     for (unsigned int t = 0; t < sizeof(config); t++) *((char*)&config + t) = EEPROM.read(t);
     EEPROM.end();
-    // Standard    
+    // Standard
     boardName = String(config.boardName);
     IOTappStory1 = String(config.IOTappStory1);
     IOTappStoryPHP1 = String(config.IOTappStoryPHP1);
