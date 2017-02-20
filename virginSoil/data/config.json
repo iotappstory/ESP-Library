@@ -1,0 +1,9 @@
+{
+  "magicBytes": "CFG",
+  "boardName": "SonoffSC",
+  "IOTappStory1": "192.168.0.200",
+  "IOTappStoryPHP1": "/iotappstory/iotappstoryv20.php",
+  "IOTappStory2": "iotappstory.com",
+  "IOTappStoryPHP2": "/ota/esp8266-v1.php",
+  "automaticUpdate": "0"
+}

@@ -25,7 +25,7 @@
 */
 
 #define SKETCH "virginSoil "
-#define VERSION "V1.1"
+#define VERSION "V2.0"
 #define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG         // Serial is used to present debugging messages 
@@ -41,6 +41,8 @@
 #include <WiFiManager.h>        //https://github.com/kentaylor/WiFiManager
 #include <Ticker.h>
 #include <EEPROM.h>
+#include <ArduinoJson.h>
+#include <FS.h>
 
 #ifdef REMOTEDEBUGGING
 #include <WiFiUDP.h>
@@ -269,14 +271,6 @@ void sendDebugMessage() {
   sysMessage += " Heap ";
   sysMessage += h1;
   sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, sysMessage);
-}
-
-
-
-
-void readFullConfiguration() {
-  readConfig();  // configuration in EEPROM
-  // insert NEW CONSTANTS according switchName1 example
 }
 
 
