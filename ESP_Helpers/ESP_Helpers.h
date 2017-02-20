@@ -461,20 +461,38 @@ bool iotUpdater(String server, String url, String firmware, bool immediately, bo
     DEBUG_PRINT("FIRMWARE_VERSION ");
     DEBUG_PRINTLN(firmware);
   }
+  ESPhttpUpdate.rebootOnUpdate(false);
   t_httpUpdate_return ret = ESPhttpUpdate.update(server, 80, url, firmware);
   switch (ret) {
     case HTTP_UPDATE_FAILED:
       retValue = false;
-      if (debugWiFi) Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+      if (debugWiFi) Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
       DEBUG_PRINTLN();
       break;
 
     case HTTP_UPDATE_NO_UPDATES:
-      if (debugWiFi) DEBUG_PRINTLN("---------- HTTP_UPDATE_NO_UPDATES ------------------");
+      if (debugWiFi) DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");
       break;
 
     case HTTP_UPDATE_OK:
-      if (debugWiFi) DEBUG_PRINTLN("HTTP_UPDATE_OK");
+      if (debugWiFi) DEBUG_PRINTLN("SKETCH_UPDATE_OK");
+      break;
+  }
+  t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://"+String(server+url),"SPIFFS_"+firmware);
+  switch (retspiffs) {
+    case HTTP_UPDATE_FAILED:
+      if (debugWiFi) Serial.printf("SPIFFS_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+      DEBUG_PRINTLN();
+      break;
+
+    case HTTP_UPDATE_NO_UPDATES:
+      retValue = true;
+      if (debugWiFi) DEBUG_PRINTLN("---------- SPIFFS_UPDATE_NO_UPDATES ------------------");
+      break;
+
+    case HTTP_UPDATE_OK:
+      retValue = true;
+      if (debugWiFi) DEBUG_PRINTLN("SPIFFS_UPDATE_OK");
       break;
   }
   return retValue;
@@ -496,6 +514,8 @@ void IOTappStory() {
   initialize();
   DEBUG_PRINTLN("Returning from IOTAppstory");
   DEBUG_PRINTLN("");
+  boardMode = 'N';
+  ESP.restart();
 }
 
 void handleModeButton() {

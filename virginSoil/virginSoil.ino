@@ -145,7 +145,7 @@ void readFullConfiguration(void);
 bool readRTCmem(void);
 void printRTCmem(void);
 void initialize(void);
-
+void sendDebugMessage(void);
 
 //---------- OTHER .H FILES ----------
 #include <ESP_Helpers.h>           // General helpers for all IOTappStory sketches

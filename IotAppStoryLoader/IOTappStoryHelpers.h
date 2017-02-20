@@ -27,7 +27,7 @@ void configESP() {
   //------------- LED and DISPLAYS ------------------------
   LEDswitch(GreenBlink);
 
-  connectNetwork();
+  //connectNetwork();
 
   DEBUG_PRINTLN("------------- Configuration Mode -------------------");
 
