@@ -1,4 +1,4 @@
-<img src="https://github.com/Onno-Dirkzwager/IOTAppstory.com/blob/master/readme.jpg"/>
+<img src="https://github.com/SensorsIot/IOTAppstory.com/blob/master/readme.jpg"/>
 
 Download and update Infrastructure for IOT devices, currenlty the ESP8266
 
