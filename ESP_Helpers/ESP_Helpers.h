@@ -66,6 +66,9 @@ typedef struct {
 } rtcMemDef __attribute__((aligned(4)));
 rtcMemDef rtcMem;
 
+char boardMode = 'N';  // Normal operation or Configuration mode?
+long counter = 0;
+
 String boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
 volatile unsigned long buttonEntry;
 unsigned long buttonTime;
@@ -118,7 +121,6 @@ void debugPrint(char*txt, int nbr) {
   char buf[100];
   sprintf(buf, "%s%i", txt, nbr);
   strcat(debugBuffer, buf);
-  delay(100);
 }
 
 void debugPrint(char*txt, long nbr) {
