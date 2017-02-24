@@ -28,7 +28,7 @@
 */
 
 #define SKETCH "IOTappStoryLoader "
-#define VERSION "V1.0"
+#define VERSION "V1.1"
 #define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 

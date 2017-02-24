@@ -130,8 +130,7 @@ unsigned long debugEntry;
 char debugBuffer[255];
 IPAddress broadcastIp(255, 255, 255, 255);
 #endif
-long counter = 0;
-char boardMode = 'N';  // Normal operation or Configuration mode?
+
 String sysMessage;
 
 // --- Sketch Specific -----

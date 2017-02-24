@@ -1,0 +1,10 @@
+{
+  "magicBytes": "CFG",
+  "boardName": "FastBlink",
+  "IOTappStory1": "iotappstory.com",
+  "IOTappStoryPHP1": "/ota/esp8266-v1.php",
+  "IOTappStory2": "iotappstory.com",
+  "IOTappStoryPHP2": "/ota/esp8266-v1.php",
+  "automaticUpdate": "0",
+  "blinkPin": "D2"
+}
