@@ -61,6 +61,14 @@ extern "C" {
 #define MODEBUTTON 0
 #define LEDgreen 13
 //#define LEDred 12
+#define D0 16 
+#define D1 5 
+#define D2 4 
+#define D4 2
+#define D5 14 
+#define D6 12 
+#define D7 13 
+#define D8 15
 #else
 #define MODEBUTTON D3
 #define LEDgreen D7
@@ -219,20 +227,21 @@ void setup() {
 
   // ----------- SPECIFIC SETUP CODE ----------------------------
 
+
   String blinkPin(config.blinkPin);
-  if (blinkPin == "D0")  LEDpin = D0;
+  if (blinkPin == "D0" || blinkPin == "16")  LEDpin = D0;
   else {
-    if (blinkPin == "D1")  LEDpin = D1;
+    if (blinkPin == "D1"|| blinkPin == "5")  LEDpin = D1;
     else {
-      if (blinkPin == "D2")  LEDpin = D2;
+      if (blinkPin == "D2"|| blinkPin == "4")  LEDpin = D2;
       else {
-        if (blinkPin == "D4")  LEDpin = D4;
+        if (blinkPin == "D4"|| blinkPin == "2")  LEDpin = D4;
         else {
-          if (blinkPin == "D5")  LEDpin = D5;
+          if (blinkPin == "D5"|| blinkPin == "14")  LEDpin = D5;
           else {
-            if (blinkPin == "D6")  LEDpin = D6;
+            if (blinkPin == "D6"|| blinkPin == "12")  LEDpin = D6;
             else {
-              if (blinkPin == "D7")  LEDpin = D7;
+              if (blinkPin == "D7"|| blinkPin == "13")  LEDpin = D7;
               else LEDpin = D8;
             }
           }
@@ -240,7 +249,6 @@ void setup() {
       }
     }
   }
-
 
   pinMode(LEDpin, OUTPUT);
 
