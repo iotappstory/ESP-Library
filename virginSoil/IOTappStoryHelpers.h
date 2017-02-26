@@ -70,6 +70,13 @@ void loopWiFiManager() {
 
 
   // Standard
+
+ /*
+you have to decide if you want to update your constants with Wi-Fi Manager or from JSON. If you want to use JSON, comment the next few lines and all
+ other lines down in the code
+ If you want to use WiFiManager to update, then comment the respective lines in readFullConfiguration()
+ */
+ 
   wifiManager.addParameter(&p_IOTappStory1);
   wifiManager.addParameter(&p_IOTappStoryPHP1);
   wifiManager.addParameter(&p_IOTappStory2);
@@ -149,6 +156,12 @@ void readFullConfiguration() {
             strcpy(config.magicBytes, json["magicBytes"]);
             Serial.println("1");
             strcpy(config.boardName, json["boardName"]);
+
+/*
+You have to decide if you want to update your constants with Wi-Fi Manager or from JSON. If you want to use WiFiManager, comment the next few lines 
+If you want to use WiFiManager to update, then comment the respective lines in readFullConfiguration()
+ */
+ 
             strcpy(config.IOTappStory1, json["IOTappStory1"]);
             strcpy(config.IOTappStoryPHP1, json["IOTappStoryPHP1"]);
             strcpy(config.IOTappStory2, json["IOTappStory2"]);
