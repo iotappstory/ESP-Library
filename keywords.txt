@@ -1,0 +1,33 @@
+#######################################
+# Syntax Coloring Map For IOTAppStory #
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+IOTAppStory	KEYWORD1
+IAS_Xtra_Func	KEYWORD1
+
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+serialdebug	KEYWORD2
+preSetConfig	KEYWORD2
+boot	KEYWORD2
+routine	KEYWORD2
+ISRbuttonStateChanged	KEYWORD2
+callHome	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+SKETCH	LITERAL1
+VERSION	LITERAL1
+MODEBUTTON	LITERAL1
+LEDS_INVERSE	LITERAL1
+LEDgreen	LITERAL1
+LEDred	LITERAL1
