@@ -28,7 +28,7 @@
 */
 
 #define SKETCH "IOTappStoryLoader "
-#define VERSION "V1.1"
+#define VERSION "V1.2"
 #define FIRMWARE SKETCH VERSION
 
 #define SERIALDEBUG       // Serial is used to present debugging messages 
@@ -43,6 +43,7 @@
 #include <WiFiManager.h>        //https://github.com/kentaylor/WiFiManager
 #include <Ticker.h>
 #include <EEPROM.h>
+#include "FS.h"
 
 extern "C" {
 #include "user_interface.h" // this is for the RTC memory read/write functions
@@ -148,6 +149,10 @@ void setup() {
     for (int i = 0; i < 2; i++) Serial.println("");
     delay(5000);
   }
+  getMACaddress();
+  printMacAddress();
+  
+  initSpiffs();
 
   eraseFlash();
   writeConfig();  // configuration in EEPROM
@@ -164,4 +169,18 @@ void loop() {
 }
 
 //------------------------ END LOOP ------------------------------------------------
+
+
+void  initSpiffs() {
+
+  SPIFFS.begin();
+  SPIFFS.format();
+  FSInfo fs_info;
+  SPIFFS.info(fs_info);
+  Serial.print("initializing SPIFFS size:");
+  Serial.println(fs_info.totalBytes);
+  Serial.println();
+  Serial.println();
+  SPIFFS.end();
+}
 
