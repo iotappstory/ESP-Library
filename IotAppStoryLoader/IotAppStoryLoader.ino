@@ -35,7 +35,7 @@
 
 #define LEDS_INVERSE   // LEDS on = GND
 
-#include <credentials.h>
+// #include <credentials.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266httpUpdate.h>
 #include <DNSServer.h>
