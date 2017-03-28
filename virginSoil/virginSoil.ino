@@ -125,12 +125,6 @@ strConfig config = {
 
 unsigned long debugEntry;
 
-#ifdef REMOTEDEBUGGING
-// UDP variables
-char debugBuffer[255];
-IPAddress broadcastIp(255, 255, 255, 255);
-#endif
-
 String sysMessage;
 
 // --- Sketch Specific -----
@@ -209,7 +203,7 @@ void setup() {
 
   sendSysLogMessage(2, 1, config.boardName, FIRMWARE, 10, counter++, "------------- Normal Mode -------------------");
 
-  if (atoi(config.automaticUpdate) == 1) IOTappStory();
+  if (atoi(config.automaticUpdate) == 1) IOTappStory(false);  // replace false with true if you want tu update the SPIFFS, too
 
 
 

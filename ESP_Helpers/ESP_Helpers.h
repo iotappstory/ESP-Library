@@ -78,6 +78,8 @@ volatile int redTimesOff = 0;
 volatile int greenTimes = 0;
 volatile int redTimes = 0;
 
+int tim=0;
+
 #ifdef REMOTEDEBUGGING
 WiFiUDP UDP;
 #endif
@@ -101,6 +103,9 @@ bool connectUDP() {
 }
 
 #ifdef REMOTEDEBUGGING
+
+char debugBuffer[255];
+IPAddress broadcastIp(255, 255, 255, 255);
 
 void debugStart() {
   debugBuffer[0] = '\0';
@@ -574,10 +579,13 @@ void IOTappStory() {
 }
 
 
-void handleModeButton() {
+int handleModeButton() {
   if (buttonChanged && buttonTime > 3000) espRestart('C', "Going into Configuration Mode");  // long button press > 4sec
   if (buttonChanged && buttonTime > 500 && buttonTime < 4000) IOTappStory(); // long button press > 1sec
+  if (buttonChanged) tim=buttonTime;
+  else tim=0;
   buttonChanged = false;
+  return tim;
 }
 
 
