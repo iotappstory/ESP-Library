@@ -51,12 +51,12 @@ void setup() {
   IAS.serialdebug(true);                                                                                      // 1st parameter: true or false for serial debugging. Default: false
   //IAS.serialdebug(true,115200);                                                                             // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
-  //IAS.preSetConfig("WireDirk","luchtschip");                                                                // preset Wifi
-  //IAS.preSetConfig("WireDirk","luchtschip",true);                                                           // preset Wifi & automaticUpdate
-  //IAS.preSetConfig("WireDirk","luchtschip","testboard");                                                    // preset Wifi & boardName
-  //IAS.preSetConfig("WireDirk","luchtschip","testboard",true);                                               // preset Wifi, boardName & automaticUpdate
-  //IAS.preSetConfig("WireDirk","luchtschip","testboard","iotappstory.com","/ota/esp8266-v1.php");            // preset Wifi, boardName, IOTappStory1 & IOTappStoryPHP1
-  //IAS.preSetConfig("WireDirk","luchtschip","testboard","iotappstory.com","/ota/esp8266-v1.php",true);       // preset Wifi, boardName, IOTappStory1, IOTappStoryPHP1 & automaticUpdate
+  //IAS.preSetConfig("ssid","password");                                                                // preset Wifi
+  //IAS.preSetConfig("ssid","password",true);                                                           // preset Wifi & automaticUpdate
+  //IAS.preSetConfig("ssid","password","testboard");                                                    // preset Wifi & boardName
+  //IAS.preSetConfig("ssid","password","testboard",true);                                               // preset Wifi, boardName & automaticUpdate
+  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php");            // preset Wifi, boardName, IOTappStory1 & IOTappStoryPHP1
+  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php",true);       // preset Wifi, boardName, IOTappStory1, IOTappStoryPHP1 & automaticUpdate
 
   //IAS.addField("ledpin", "Led Pin", &ledPin, 1);		<- this does not work yet
   //IAS.addField("btnpin", "Button Pin", &btnPin, 1);	<- this does not work yet
