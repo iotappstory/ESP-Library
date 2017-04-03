@@ -49,7 +49,7 @@ void setup() {
   /* TIP! delete the above lines when not used */
   
 
-  IAS.boot(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
