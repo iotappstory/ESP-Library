@@ -16,7 +16,8 @@ IAS_Xtra_Func	KEYWORD1
 #######################################
 serialdebug	KEYWORD2
 preSetConfig	KEYWORD2
-boot	KEYWORD2
+addField	KEYWORD2
+begin	KEYWORD2
 routine	KEYWORD2
 ISRbuttonStateChanged	KEYWORD2
 callHome	KEYWORD2
