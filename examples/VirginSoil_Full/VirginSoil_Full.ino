@@ -44,26 +44,34 @@
 #include <IAS_Xtra_Func.h>
 IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
 
-
+// ================================================ EXAMPLE VARS =========================================
+char* lbl1 = "Light Show";                                                                                    // default value | this gets stored to eeprom and gets updated if changed from wifi config
+char* lbl2 = "Living Room";
+char* lbl3 = "Bath Room";
+char* lbl4 = "Test Room";
+char* lbl5 = "Another Room";
 
 // ================================================ SETUP ================================================
 void setup() {
   IAS.serialdebug(true);                                                                                      // 1st parameter: true or false for serial debugging. Default: false
   //IAS.serialdebug(true,115200);                                                                             // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
-  //IAS.preSetConfig("ssid","password");                                                                // preset Wifi
-  //IAS.preSetConfig("ssid","password",true);                                                           // preset Wifi & automaticUpdate
-  //IAS.preSetConfig("ssid","password","testboard");                                                    // preset Wifi & boardName
-  //IAS.preSetConfig("ssid","password","testboard",true);                                               // preset Wifi, boardName & automaticUpdate
-  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php");            // preset Wifi, boardName, IOTappStory1 & IOTappStoryPHP1
-  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php",true);       // preset Wifi, boardName, IOTappStory1, IOTappStoryPHP1 & automaticUpdate
+  //IAS.preSetConfig("yourBoardName");                                                                        // preset Boardname
+  //IAS.preSetConfig("ssid","password");                                                                      // preset Wifi
+  //IAS.preSetConfig("ssid","password",true);                                                                 // preset Wifi & automaticUpdate
+  //IAS.preSetConfig("ssid","password","testboard");                                                          // preset Wifi & boardName
+  //IAS.preSetConfig("ssid","password","testboard",true);                                                     // preset Wifi, boardName & automaticUpdate
+  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php");                  // preset Wifi, boardName, IOTappStory1 & IOTappStoryPHP1
+  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php",true);             // preset Wifi, boardName, IOTappStory1, IOTappStoryPHP1 & automaticUpdate
 
-  //IAS.addField("ledpin", "Led Pin", &ledPin, 1);		<- this does not work yet
-  //IAS.addField("btnpin", "Button Pin", &btnPin, 1);	<- this does not work yet
-  //IAS.addField("rstpin", "Reset Pin", &rstPin, 1);    <- this does not work yet
+  IAS.addField(lbl1, "label1", "Label 1", 16);                                                                // reference to org variable | field name | field label value | max char return
+  IAS.addField(lbl2, "label2", "Label 2", 16);
+  IAS.addField(lbl3, "label3", "Label 3", 16);
+  IAS.addField(lbl4, "label4", "Label 4", 16);
+  IAS.addField(lbl5, "label5", "Label 5", 16);
   /* TIP! delete the above lines when not used */
 
-  IAS.boot(p,true,LEDgreen);                                                                                    // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
@@ -74,7 +82,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine(org_buttonEntry,org_buttonTime,org_buttonChanged);                                              // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.routine(org_buttonEntry,org_buttonTime,org_buttonChanged);                                               // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
