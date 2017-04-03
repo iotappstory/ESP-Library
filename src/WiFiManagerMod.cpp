@@ -18,6 +18,7 @@ WiFiManagerParameter::WiFiManagerParameter() {
   _placeholder = NULL;
   _length = 0;
   _value = NULL;
+  _labelPlacement = WFM_LABEL_BEFORE;
 
   _customHTML = NULL;
 }
@@ -56,7 +57,13 @@ void WiFiManagerParameter::init(const char *id, const char *placeholder, const c
   if (defaultValue != NULL) {
     strncpy(_value, defaultValue, length);
   }
-
+  /*
+	Serial.println("--------**------------");
+	Serial.println(defaultValue);
+	Serial.println(_value);
+	Serial.println("--------**------------");
+  */
+	
   _customHTML = custom;
 }
 
@@ -90,6 +97,11 @@ WiFiManager::~WiFiManager() {
 
 void WiFiManager::addParameter(WiFiManagerParameter *p) {
   _params[_paramsCount] = p;
+  /*
+  Serial.println("\/\/\/\/\/");
+  Serial.println(_paramsCount);
+  Serial.println("\/\/\/\/\/");
+  */
   _paramsCount++;
   DEBUG_WM("Adding parameter");
   DEBUG_WM(p->getID());
@@ -513,9 +525,21 @@ void WiFiManager::handleWifi() {
     if (_params[i] == NULL) {
       break;
     }
-
+	
+	// workaround for strange labelplacement: 1073675348
+	int lblplc = _params[i]->getLabelPlacement();
+	if(lblplc = 1073675348){lblplc = 1;}
+	
+	/*
+	Serial.println("--Labelplacement--");
+	Serial.println(_params[i]->getLabelPlacement());
+	Serial.println(lblplc);
+	Serial.println("------------------");
+	*/
+	
+	
 	String pitem;
-	switch (_params[i]->getLabelPlacement()) {
+	switch (lblplc) {
     case WFM_LABEL_BEFORE:
 	  pitem = FPSTR(HTTP_FORM_LABEL);
 	  pitem += FPSTR(HTTP_FORM_PARAM);
