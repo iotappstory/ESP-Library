@@ -1,0 +1,13 @@
+{
+  "name": "IOTAppStory.com",
+  "keywords": "wifi, wi-fi, OTA",
+  "description": "Update your ESP8266 modules over the air(OTA)",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/Onno-Dirkzwager/IOTAppstory.com.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif8266",
+  "version": "2.00"
+}
