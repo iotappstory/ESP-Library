@@ -132,18 +132,21 @@ void IOTAppStory::writeRTCmem() {
 }
 
 void IOTAppStory::printRTCmem() {
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("rtcMem ");
-	DEBUG_PRINT("markerFlag ");
-	DEBUG_PRINTLN(rtcMem.markerFlag);
-	DEBUG_PRINT("bootTimes ");
-	DEBUG_PRINTLN(rtcMem.bootTimes);
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("rtcMem ");
+		DEBUG_PRINT("markerFlag ");
+		DEBUG_PRINTLN(rtcMem.markerFlag);
+		DEBUG_PRINT("bootTimes ");
+		DEBUG_PRINTLN(rtcMem.bootTimes);
+	}
 }
 
 void IOTAppStory::configESP() {
 	//Serial.begin(115200);
-	for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
-
+	if(_serialDebug == true){
+		for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
+	}
 	// ----------- PINS ----------------
 	/*
 	#ifdef LEDgreen
@@ -249,7 +252,9 @@ void IOTAppStory::printMacAddress() {
 		Serial.print(mac[i], HEX);
 		Serial.print(":");
 	}
-	Serial.println(mac[5], HEX);
+	if(_serialDebug == true){
+		Serial.println(mac[5], HEX);
+	}
 }
 
 //---------- IOTappStory FUNCTIONS ----------
@@ -263,11 +268,12 @@ void IOTAppStory::callHome(bool spiffs) {
 
 	getMACaddress();
 	printMacAddress();
-	DEBUG_PRINT("IP = ");
-	DEBUG_PRINTLN(WiFi.localIP());
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
-
+	if(_serialDebug == true){
+		DEBUG_PRINT("IP = ");
+		DEBUG_PRINTLN(WiFi.localIP());
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+	}
 	ESPhttpUpdate.rebootOnUpdate(false);
 	res1 = iotUpdaterSketch(config.IOTappStory1, config.IOTappStoryPHP1, _firmware, true);
 	
@@ -281,9 +287,11 @@ void IOTAppStory::callHome(bool spiffs) {
 		} 
 	}
 	if (res1 == 'U' || res2 == 'U')  updateHappened = true;
-
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
+	
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+	}
 
 	if (spiffs) {
 		res1 = iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, _firmware, true);
@@ -299,8 +307,10 @@ void IOTAppStory::callHome(bool spiffs) {
 	} 
 	if (res1 == 'U' || res2 == 'U')  updateHappened = true;
 
-	DEBUG_PRINTLN("Returning from IOTAppstory");
-	DEBUG_PRINTLN("");
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("Returning from IOTAppstory");
+		DEBUG_PRINTLN("");
+	}
 
 	if (updateHappened) {
 		initialize();
@@ -319,29 +329,31 @@ void IOTAppStory::initialize() {   // this function is called by callHome() befo
 
 byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, bool immediately) {
 	byte retValue;
-	DEBUG_PRINTLN("Updating Sketch from...");
-	DEBUG_PRINT("Update_server ");
-	DEBUG_PRINTLN(server);
-	DEBUG_PRINT("UPDATE_URL ");
-	DEBUG_PRINTLN(url);
-	DEBUG_PRINT("FIRMWARE_VERSION ");
-	DEBUG_PRINTLN(firmware);
+	
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("Updating Sketch from...");
+		DEBUG_PRINT("Update_server ");
+		DEBUG_PRINTLN(server);
+		DEBUG_PRINT("UPDATE_URL ");
+		DEBUG_PRINTLN(url);
+		DEBUG_PRINT("FIRMWARE_VERSION ");
+		DEBUG_PRINTLN(firmware);
+	}
 	
 	t_httpUpdate_return ret = ESPhttpUpdate.update(server, 80, url, firmware);
 	switch (ret) {
 		case HTTP_UPDATE_FAILED:
-			#ifdef SERIALDEBUG
+			if(_serialDebug == true){
 				Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-			#endif
-			DEBUG_PRINTLN();
+			}
 			retValue = 'F';
 		break;
 		case HTTP_UPDATE_NO_UPDATES:
-			DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");
+			if(_serialDebug == true){DEBUG_PRINTLN("---------- SKETCH_UPDATE_NO_UPDATES ------------------");}
 			retValue = 'A';
 		break;
 		case HTTP_UPDATE_OK:
-			DEBUG_PRINTLN("SKETCH_UPDATE_OK");
+			if(_serialDebug == true){DEBUG_PRINTLN("SKETCH_UPDATE_OK");}
 			retValue = 'U';
 		break;
 	}
@@ -350,29 +362,31 @@ byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, b
 
 byte IOTAppStory::iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately) {
 	byte retValue;
-	DEBUG_PRINTLN("Updating SPIFFS from...");
-	DEBUG_PRINT("Update_server ");
-	DEBUG_PRINTLN(server);
-	DEBUG_PRINT("UPDATE_URL ");
-	DEBUG_PRINTLN(url);
-	DEBUG_PRINT("FIRMWARE_VERSION ");
-	DEBUG_PRINTLN(firmware);
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("Updating SPIFFS from...");
+		DEBUG_PRINT("Update_server ");
+		DEBUG_PRINTLN(server);
+		DEBUG_PRINT("UPDATE_URL ");
+		DEBUG_PRINTLN(url);
+		DEBUG_PRINT("FIRMWARE_VERSION ");
+		DEBUG_PRINTLN(firmware);
+	}
 
 	t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), firmware);
 	switch (retspiffs) {
 		case HTTP_UPDATE_FAILED:
-			#ifdef SERIALDEBUG
+			if(_serialDebug == true){
 				Serial.printf("SPIFFS_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-			#endif
-			DEBUG_PRINTLN();
+				DEBUG_PRINTLN();
+			}
 			retValue = 'F';
 		break;
 		case HTTP_UPDATE_NO_UPDATES:
-			DEBUG_PRINTLN("---------- SPIFFS_UPDATE_NO_UPDATES ------------------");
+			if(_serialDebug == true){DEBUG_PRINTLN("---------- SPIFFS_UPDATE_NO_UPDATES ------------------");}
 			retValue = 'A';
 		break;
 		case HTTP_UPDATE_OK:
-			DEBUG_PRINTLN("SPIFFS_UPDATE_OK");
+			if(_serialDebug == true){DEBUG_PRINTLN("SPIFFS_UPDATE_OK");}
 			retValue = 'U';
 		break;
 	}
@@ -384,23 +398,27 @@ void IOTAppStory::initWiFiManager() {
 	WiFi.printDiag(Serial); //Remove this line if you do not want to see WiFi password printed
 
 	if (WiFi.SSID() == "") {
-		DEBUG_PRINTLN("We haven't got any access point credentials, so get them now");
+		if(_serialDebug == true){DEBUG_PRINTLN("We haven't got any access point credentials, so get them now");}
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
-		DEBUG_PRINT("After waiting ");
+			if(_serialDebug == true){DEBUG_PRINT("After waiting ");}
 		int connRes = WiFi.waitForConnectResult();
 		float waited = (millis() - startedAt);
-		DEBUG_PRINT(waited / 1000);
-		DEBUG_PRINT(" secs in setup() connection result is ");
-		DEBUG_PRINTLN(connRes);
+		if(_serialDebug == true){
+			DEBUG_PRINT(waited / 1000);
+			DEBUG_PRINT(" secs in setup() connection result is ");
+			DEBUG_PRINTLN(connRes);
+		}
 	}
 
 	if (WiFi.status() != WL_CONNECTED) {
-		DEBUG_PRINTLN("Failed to connect");
+		if(_serialDebug == true){DEBUG_PRINTLN("Failed to connect");}
 	}else{
-		DEBUG_PRINT("Local ip: ");
-		DEBUG_PRINTLN(WiFi.localIP());
+		if(_serialDebug == true){
+			DEBUG_PRINT("Local ip: ");
+			DEBUG_PRINTLN(WiFi.localIP());
+		}
 	}
 }
 
@@ -556,15 +574,16 @@ void IOTAppStory::loopWiFiManager() {
 	// Once the user leaves the portal with the exit button
 	// processing will continue
 	if (!wifiManager.startConfigPortal(config.boardName)) {
-		DEBUG_PRINTLN("Not connected to WiFi but continuing anyway.");
+		if(_serialDebug == true){DEBUG_PRINTLN("Not connected to WiFi but continuing anyway.");}
 	}else{
 		// If you get here you have connected to the WiFi
-		DEBUG_PRINTLN("Connected... :-)");
+		if(_serialDebug == true){DEBUG_PRINTLN("Connected... :-)");}
 	}
 	// Getting posted form values and overriding local variables parameters
 	// Config file is written
 
-	Serial.println("---------------------------");
+	if(_serialDebug == true){Serial.println("---------------------------");}
+	
 	//add all parameters here
 	if(_nrXF > 0){
 		for(unsigned int i = 0; i < _nrXF; i++){
@@ -587,7 +606,7 @@ void IOTAppStory::loopWiFiManager() {
 //---------- MISC FUNCTIONS ----------
 void IOTAppStory::espRestart(char mmode, char* message) {
 	//LEDswitch(GreenFastBlink);
-	DEBUG_PRINTLN(message);
+	if(_serialDebug == true){DEBUG_PRINTLN(message);}
 	while (digitalRead(_modeButton) == LOW) yield();    // wait till GPIOo released
 	delay(500);
 	system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
@@ -596,7 +615,7 @@ void IOTAppStory::espRestart(char mmode, char* message) {
 }
 
 void IOTAppStory::eraseFlash() {
-	Serial.println("Erasing Flash...");
+	if(_serialDebug == true){Serial.println("Erasing Flash...");}
 	EEPROM.begin(EEPROM_SIZE);
 	for (unsigned int t = 0; t < EEPROM_SIZE; t++) EEPROM.write(t, 0);
 	EEPROM.end();
@@ -604,14 +623,16 @@ void IOTAppStory::eraseFlash() {
 
 //---------- CONFIGURATION PARAMETERS ----------
 void IOTAppStory::writeConfig() {
-	DEBUG_PRINTLN("------------------ Writing Config --------------------------------");
+	if(_serialDebug == true){DEBUG_PRINTLN("------------------ Writing Config --------------------------------");}
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		DEBUG_PRINT("Stored ");
-		DEBUG_PRINT(config.ssid);
-		DEBUG_PRINTLN(" ");
-		//   DEBUG_PRINTLN(config.password);
+		if(_serialDebug == true){
+			DEBUG_PRINT("Stored ");
+			DEBUG_PRINT(config.ssid);
+			DEBUG_PRINTLN(" ");
+			//   DEBUG_PRINTLN(config.password);
+		}
 	}
 
 	EEPROM.begin(EEPROM_SIZE);
@@ -677,13 +698,13 @@ void IOTAppStory::writeConfig() {
 }
 
 bool IOTAppStory::readConfig() {
-	DEBUG_PRINTLN("Reading Config");
+	if(_serialDebug == true){DEBUG_PRINTLN("Reading Config");}
 	boolean ret = false;
 	EEPROM.begin(EEPROM_SIZE);
 	long magicBytesBegin = sizeof(config) - 4; 													// Magic bytes at the end of the structure
 
 	if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
-		DEBUG_PRINTLN("EEPROM Configuration found");
+		if(_serialDebug == true){DEBUG_PRINTLN("EEPROM Configuration found");}
 		for (unsigned int t = 0; t < sizeof(config); t++) *((char*)&config + t) = EEPROM.read(t);
 		EEPROM.end();
 
@@ -697,7 +718,7 @@ bool IOTAppStory::readConfig() {
 		ret = true;
 
 	} else {
-		DEBUG_PRINTLN("EEPROM Configurarion NOT FOUND!!!!");
+		if(_serialDebug == true){DEBUG_PRINTLN("EEPROM Configurarion NOT FOUND!!!!");}
 		writeConfig();
 		//LEDswitch(RedFastBlink);
 		ret = false;
@@ -717,15 +738,17 @@ void IOTAppStory::routine(volatile unsigned long org_buttonEntry, unsigned long 
 	if(_serialDebug == true){
 		if (millis() - debugEntry > 5000) { 														// Non-Blocking second counter
 			debugEntry = millis();
-			Serial.println("running...");
+			if(_serialDebug == true){Serial.println("running...");}
 			sendDebugMessage();
 		}
 	}
 }
 
 void IOTAppStory::JSONerror(String err) {
-	DEBUG_PRINTLN(err);
-	DEBUG_PRINTLN("Restoring default values");
+	if(_serialDebug == true){
+		DEBUG_PRINTLN(err);
+		DEBUG_PRINTLN("Restoring default values");
+	}
 	writeConfig();
 	//LEDswitch(RedFastBlink);
 }
