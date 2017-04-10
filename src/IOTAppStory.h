@@ -8,7 +8,7 @@
     #define FIELDSTRUCTBUF 16
     #define MAGICEEP "%"
     #define UDP_PORT 514
-	#define COMPDATE __DATE__ __TIME__
+    #define COMPDATE __DATE__ __TIME__
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -124,7 +124,7 @@
                 char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
 
                 char automaticUpdate[2];   // right after boot
-				char compDate[20];
+                char compDate[20];
 				
                 char magicBytes[4];
             } strConfig;
@@ -138,7 +138,7 @@
                 "iotappstory.com",
                 "/ota/esp8266-v1.php",
                 "0",
-				"",
+                "",
 				
                 "CFG"  // Magic Bytes
             };
@@ -168,7 +168,7 @@
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate);
 
             void begin(void(*ptr)(void), int feedBackLed=-1, bool bootstats=true);
-			void firstBoot();
+            void firstBoot();
 
             bool readRTCmem();
             void writeRTCmem();
