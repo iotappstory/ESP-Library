@@ -414,51 +414,110 @@ void IOTAppStory::addField(int &defaultVal,const char *fieldIdName,const char *f
 // add char array field to the wifi configuration page and add value to eeprom
 void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length){
 	_nrXF++;
-	char* eepVal;
+
+	char* eepVal = new char[length + 1];
+	char* tmpVal = new char[length + 1];
+	for (int i = 0; i < length; i++) {
+		eepVal[i] = 0;
+		tmpVal[i] = 0;
+	}
+	if (defaultVal != NULL) {
+		strncpy(tmpVal, defaultVal, length);
+	}
 	
 	EEPROM.begin(EEPROM_SIZE);
+	delay(100);
 	const int sizeOfVal = length-1;
-	const int sizeOfConfig = sizeof(config)+1;
-	const int eeBeg = sizeOfConfig+((_nrXF-1) * sizeOfVal)+_nrXF;
-	const int eeEnd = sizeOfConfig+(_nrXF * sizeOfVal)+_nrXF+1;
-
-	// check for MAGICEEP
+	const int sizeOfConfig = sizeof(config)+2;
+	const int eeBeg = sizeOfConfig+((_nrXF-1) * sizeOfVal)+_nrXF+((_nrXF-1)*2);
+	const int eeEnd = sizeOfConfig+(_nrXF * sizeOfVal)+_nrXF+1+((_nrXF-1)*2);
+					
+	/*				
+	Serial.print("Write EEPROM");
+	Serial.print(eeBeg);
+	Serial.print(" | ");
+	Serial.print(eeEnd);
+	Serial.println("");
+	Serial.println("");
+	*/			
+					
+					
+	// check for MAGICEEP and get the updated value if present
 	if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(length) == '\0'){
 		// read eeprom
+		Serial.println("Read eeprom");
+		
 		for (unsigned int t = eeBeg; t <= eeEnd; t++){
 			// start after MAGICEEP
-			if(t != eeBeg){
-				*((char*)&eepVal + (t-eeBeg)-1) = EEPROM.read(t);
+			
+			if(t != eeBeg && EEPROM.read(t) != 0){
+				Serial.println(EEPROM.read(t));
+				*((char*)eepVal + (t-eeBeg)-1) = EEPROM.read(t);
 			}
 		}
-
+		
+		/*
+		Serial.println("*");
+		Serial.println("*");
+		
+		Serial.println(defaultVal);
+		Serial.println(eepVal);
+		
+		Serial.println("*");
+		Serial.println("*");
+		*/
+		
 		// if eeprom value is different update the ret value
 		if(eepVal != defaultVal){
 			defaultVal = eepVal;
+			//Serial.println("--");
 		}
 	}else{
+		/*
+		Serial.println("Write eeprom");
+		Serial.println(tmpVal);
+		Serial.println("------------");
+		*/
+		
 		// add MAGICEEP to value and write to eeprom
 		for (unsigned int t = eeBeg; t <= eeEnd; t++){
+			Serial.print(t);
+			Serial.print(" | ");
 			if(t == eeBeg){
 				EEPROM.put(t, MAGICEEP);
+				//Serial.print(MAGICEEP);
+
 			}else{
-				EEPROM.put(t, *((char*)&defaultVal + (t-eeBeg)-1));
+				EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));
+				//Serial.print(*((char*)tmpVal + (t-eeBeg)-1));
+					
 			}
+			//Serial.println("");
 		}
+		
+		//Serial.println("------------");
 	}
+	
 	EEPROM.end();
 	
+	// add values to the fieldstruct
 	fieldStruct[_nrXF-1].fieldIdName = fieldIdName;
 	fieldStruct[_nrXF-1].fieldLabel = fieldLabel;
 	fieldStruct[_nrXF-1].varPointer = defaultVal;
 	fieldStruct[_nrXF-1].length = length;
+	
 	//Serial.println(fieldStruct[_nrXF-1].varPointer);
 }
 
 void IOTAppStory::loopWiFiManager() {
-	WiFiManagerParameter parArray[_nrXF-1];
-	unsigned int i;
-	for(i = 0; i < _nrXF; i++){
+	unsigned int arrLen = 1;
+	if(_nrXF > 0){
+		arrLen = _nrXF-1;
+	}
+
+	WiFiManagerParameter parArray[arrLen];
+	
+	for(unsigned int i = 0; i < _nrXF; i++){
 		// add the WiFiManagerParameter to parArray so it can be referenced to later
 		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, fieldStruct[i].varPointer, fieldStruct[i].length);
 
@@ -472,7 +531,7 @@ void IOTAppStory::loopWiFiManager() {
 		Serial.println("");
 		*/
 	}
-
+	
 	// Just a quick hint
 	WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small></br></br>");
 
@@ -481,8 +540,10 @@ void IOTAppStory::loopWiFiManager() {
 	wifiManager.addParameter(&p_hint);
 
 	//add all parameters here
-	for(i = 0; i < _nrXF; i++){
-		wifiManager.addParameter(&parArray[i]);
+	if(_nrXF > 0){
+		for(unsigned int i = 0; i < _nrXF; i++){
+			wifiManager.addParameter(&parArray[i]);
+		}
 	}
 
 	// Sets timeout in seconds until configuration portal gets turned off.
@@ -503,10 +564,19 @@ void IOTAppStory::loopWiFiManager() {
 	// Getting posted form values and overriding local variables parameters
 	// Config file is written
 
+	Serial.println("---------------------------");
 	//add all parameters here
-	for(i = 0; i < _nrXF; i++){
-		strcpy(fieldStruct[i].varPointer, parArray[0].getValue());
+	if(_nrXF > 0){
+		for(unsigned int i = 0; i < _nrXF; i++){
+			/*
+			Serial.println(fieldStruct[i].varPointer);
+			Serial.println(parArray[i].getValue());
+			Serial.println("---------------------------");
+			*/
+			strcpy(fieldStruct[i].varPointer, parArray[i].getValue());
+		}
 	}
+	
 
 	writeConfig();
 	readFullConfiguration();  // read back to fill all variables
@@ -549,7 +619,60 @@ void IOTAppStory::writeConfig() {
 	config.magicBytes[1] = MAGICBYTES[1];
 	config.magicBytes[2] = MAGICBYTES[2];
 
+	// WRITE CONFIG TO EEPROM
 	for (unsigned int t = 0; t < sizeof(config); t++) EEPROM.write(t, *((char*)&config + t));
+	
+	if(_nrXF > 0){
+		// LOOP THREW ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
+		for (unsigned int nr = 1; nr <= _nrXF; nr++){
+			
+			/*
+			Serial.println(fieldStruct[nr-1].fieldIdName);
+			Serial.println(fieldStruct[nr-1].fieldLabel);
+			Serial.println(fieldStruct[nr-1].varPointer);
+			Serial.println(fieldStruct[nr-1].length);
+			Serial.println("----/ write to fieldstruct[] /---");
+			*/
+			
+			const int sizeOfVal = fieldStruct[nr-1].length-1;
+			const int sizeOfConfig = sizeof(config)+2;
+			const int eeBeg = sizeOfConfig+((nr-1) * sizeOfVal)+nr+((nr-1)*2);
+			const int eeEnd = sizeOfConfig+(nr * sizeOfVal)+nr+1+((nr-1)*2);
+			
+			/*
+			Serial.print("Write EEPROM");
+			Serial.print(eeBeg);
+			Serial.print(" | ");
+			Serial.print(eeEnd);
+			Serial.println("");
+			*/
+
+
+			// check for MAGICEEP
+			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(fieldStruct[nr-1].length) == '\0'){
+				// add MAGICEEP to value and write to eeprom
+				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+					if(t == eeBeg){
+						EEPROM.put(t, MAGICEEP);
+						//Serial.print(MAGICEEP);
+
+					}else{
+						EEPROM.put(t, *((char*)fieldStruct[nr-1].varPointer + (t-eeBeg)-1));
+						//Serial.print(*((char*)fieldStruct[nr-1].varPointer + (t-eeBeg)-1));
+							
+					}
+				}
+			}
+			EEPROM.commit();
+			/*
+			Serial.println(fieldStruct[nr-1].varPointer);
+			Serial.println("----/ read updated fieldstruct[] /---");
+			Serial.println("");
+			Serial.println("");
+			*/
+		}
+	}
+	
 	EEPROM.end();
 }
 
