@@ -10,6 +10,20 @@ IOTAppStory::IOTAppStory(String appName, String appVersion, int modeButton){
 	_modeButton = modeButton;
 }
 
+void IOTAppStory::firstBoot(){
+	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
+	
+	// get json config......
+	
+	// erase eeprom after config (delete extra field data etc.)
+	eraseFlash((sizeof(config)+2),EEPROM_SIZE);
+	
+	// update first boot config flag (date)
+	String tmpdate = COMPDATE;
+	tmpdate.toCharArray(config.compDate, 20);
+	writeConfig();
+}
+
 void IOTAppStory::serialdebug(bool onoff,int speed){
 	_serialDebug = onoff;
 	if(_serialDebug == true){
@@ -69,6 +83,8 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 		Serial.println(config.boardName);
 		Serial.println("*----------------------------------------------------------------------*");
 	}
+	
+	
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     // MODEBUTTON as input for Config mode selection
@@ -99,6 +115,9 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 
 	// --------- READ FULL CONFIG --------------------------
 	readFullConfiguration();
+	
+	// on first boot of the app run the firstBoot() function
+	if(String(config.compDate) != COMPDATE){firstBoot();}
 
 	// --------- START WIFI --------------------------
 	connectNetwork();
@@ -112,6 +131,7 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	// LEDswitch(None);
 	// sendSysLogMessage(7, 1, config.boardName, _firmware, 10, counter++, "Setup done");
 }
+
 
 //---------- RTC MEMORY FUNCTIONS ----------
 bool IOTAppStory::readRTCmem() {
@@ -463,13 +483,13 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char 
 	// check for MAGICEEP and get the updated value if present
 	if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(length) == '\0'){
 		// read eeprom
-		Serial.println("Read eeprom");
+		//Serial.println("Read eeprom");
 		
 		for (unsigned int t = eeBeg; t <= eeEnd; t++){
 			// start after MAGICEEP
 			
 			if(t != eeBeg && EEPROM.read(t) != 0){
-				Serial.println(EEPROM.read(t));
+				//Serial.println(EEPROM.read(t));
 				*((char*)eepVal + (t-eeBeg)-1) = EEPROM.read(t);
 			}
 		}
@@ -499,8 +519,8 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char 
 		
 		// add MAGICEEP to value and write to eeprom
 		for (unsigned int t = eeBeg; t <= eeEnd; t++){
-			Serial.print(t);
-			Serial.print(" | ");
+			//Serial.print(t);
+			//Serial.print(" | ");
 			if(t == eeBeg){
 				EEPROM.put(t, MAGICEEP);
 				//Serial.print(MAGICEEP);
@@ -614,10 +634,17 @@ void IOTAppStory::espRestart(char mmode, char* message) {
 	ESP.restart();
 }
 
-void IOTAppStory::eraseFlash() {
-	if(_serialDebug == true){Serial.println("Erasing Flash...");}
+void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
+	if(_serialDebug == true){
+		Serial.println("Erasing Flash...");
+		Serial.print("From ");
+		Serial.print(eepFrom);
+		Serial.print(" To ");
+		Serial.print(eepTo);
+		Serial.println("");
+	}
 	EEPROM.begin(EEPROM_SIZE);
-	for (unsigned int t = 0; t < EEPROM_SIZE; t++) EEPROM.write(t, 0);
+	for (unsigned int t = eepFrom; t < eepTo; t++) EEPROM.write(t, 0);
 	EEPROM.end();
 }
 
