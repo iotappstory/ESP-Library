@@ -8,6 +8,7 @@
     #define FIELDSTRUCTBUF 16
     #define MAGICEEP "%"
     #define UDP_PORT 514
+	#define COMPDATE __DATE__ __TIME__
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -118,13 +119,13 @@
                 char password[STRUCT_CHAR_ARRAY_SIZE];
                 char boardName[STRUCT_CHAR_ARRAY_SIZE];
                 char IOTappStory1[STRUCT_CHAR_ARRAY_SIZE];
-
                 char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
                 char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
                 char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
-                char automaticUpdate[2];   // right after boot
-                // insert NEW CONSTANTS according boardname example HERE!
 
+                char automaticUpdate[2];   // right after boot
+				char compDate[20];
+				
                 char magicBytes[4];
             } strConfig;
 
@@ -137,6 +138,8 @@
                 "iotappstory.com",
                 "/ota/esp8266-v1.php",
                 "0",
+				"",
+				
                 "CFG"  // Magic Bytes
             };
 
@@ -165,6 +168,7 @@
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate);
 
             void begin(void(*ptr)(void), int feedBackLed=-1, bool bootstats=true);
+			void firstBoot();
 
             bool readRTCmem();
             void writeRTCmem();
@@ -191,7 +195,7 @@
             void loopWiFiManager();
 
             void espRestart(char mmode, char* message);
-            void eraseFlash();
+            void eraseFlash(unsigned int eepFrom = 0, unsigned int eepTo = EEPROM_SIZE);
 
             void writeConfig();
             bool readConfig();
@@ -208,7 +212,6 @@
             int     _modeButton;
             int     _nrXF = 0;			// nr of extra fields required in the config manager
             bool    _serialDebug;
-
     };
 
 #endif
