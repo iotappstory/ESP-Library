@@ -53,6 +53,7 @@ char* lbl5 = "Another Room";
 
 // ================================================ SETUP ================================================
 void setup() {
+  /* TIP! delete lines below when not used */
   IAS.serialdebug(true);                                                                                      // 1st parameter: true or false for serial debugging. Default: false
   //IAS.serialdebug(true,115200);                                                                             // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
@@ -69,7 +70,7 @@ void setup() {
   IAS.addField(lbl3, "label3", "Label 3", 16);
   IAS.addField(lbl4, "label4", "Label 4", 16);
   IAS.addField(lbl5, "label5", "Label 5", 16);
-  /* TIP! delete the above lines when not used */
+  /* TIP! delete the lines above when not used */
 
   IAS.begin(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
