@@ -1,6 +1,43 @@
 #ifndef IOTAppStory_h
     #define IOTAppStory_h
 
+
+    /* ------ ------ ------ DEFINES for librairy ------ ------ ------ */
+    #define MAGICBYTES "CFG"
+    #define EEPROM_SIZE 1024
+    #define FIELDSTRUCTBUF 16
+    #define MAGICEEP "%"
+    #define UDP_PORT 514
+
+    // macros for debugging
+    #ifdef DEBUG_PORT
+        #define DEBUG_MSG(...) DEBUG_PORT.printf( __VA_ARGS__ )
+    #else
+        #define DEBUG_MSG(...)
+    #endif
+
+    //#ifdef SERIALDEBUG
+    #define         DEBUG_PRINT(x)    Serial.print(x)
+    #define         DEBUG_PRINTLN(x)  Serial.println(x)
+    //#else
+    //#define         DEBUG_PRINT(x)
+    //#define         DEBUG_PRINTLN(x)
+    //#endif
+
+    #ifdef LEDS_INVERSE
+        #define LEDON  0
+        #define LEDOFF 1
+    #else
+        #define LEDON  1
+        #define LEDOFF 0
+    #endif
+
+    #define MAX_WIFI_RETRIES 50
+    #define RTCMEMBEGIN 68
+    #define MAGICBYTE 85
+    #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
+
+
     /* ------ ------ ------ Arduino library ------ ------ ------ */
     #include "Arduino.h"
 
@@ -54,40 +91,7 @@
         #endif
     }
 
-    /* ------ ------ ------ DEFINES for librairy ------ ------ ------ */
-    #define MAGICBYTES "CFG"
-    #define EEPROM_SIZE 1024
-    #define FIELDSTRUCTBUF 16
-    #define MAGICEEP "%"
-    #define UDP_PORT 514
 
-    // macros for debugging
-    #ifdef DEBUG_PORT
-        #define DEBUG_MSG(...) DEBUG_PORT.printf( __VA_ARGS__ )
-    #else
-        #define DEBUG_MSG(...)
-    #endif
-
-    //#ifdef SERIALDEBUG
-    #define         DEBUG_PRINT(x)    Serial.print(x)
-    #define         DEBUG_PRINTLN(x)  Serial.println(x)
-    //#else
-    //#define         DEBUG_PRINT(x)
-    //#define         DEBUG_PRINTLN(x)
-    //#endif
-
-    #ifdef LEDS_INVERSE
-        #define LEDON  0
-        #define LEDOFF 1
-    #else
-        #define LEDON  1
-        #define LEDOFF 0
-    #endif
-
-    #define MAX_WIFI_RETRIES 50
-    #define RTCMEMBEGIN 68
-    #define MAGICBYTE 85
-    #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
 
 
     class IOTAppStory {
