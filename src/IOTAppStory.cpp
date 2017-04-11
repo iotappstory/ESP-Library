@@ -548,12 +548,12 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char 
 }
 
 void IOTAppStory::loopWiFiManager() {
-	unsigned int arrLen = 1;
-	if(_nrXF > 0){
-		arrLen = _nrXF-1;
-	}
+	//unsigned int arrLen = 1;
+	//if(_nrXF > 0){
+	//	arrLen = _nrXF-1;
+	//}
 
-	WiFiManagerParameter parArray[arrLen];
+	//WiFiManagerParameter parArray[arrLen];
 	
 	for(unsigned int i = 0; i < _nrXF; i++){
 		// add the WiFiManagerParameter to parArray so it can be referenced to later
