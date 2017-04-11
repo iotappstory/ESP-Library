@@ -145,6 +145,7 @@
 
             char boardMode = 'N';  // Normal operation or Configuration mode?
             eFields fieldStruct[FIELDSTRUCTBUF];
+	    WiFiManagerParameter parArray[FIELDSTRUCTBUF];
             volatile unsigned long buttonEntry;
             unsigned long buttonTime;
             volatile bool buttonChanged = false;
