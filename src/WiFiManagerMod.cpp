@@ -8,6 +8,7 @@
    https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortalAdvanced/
    Forked from Tzapu https://github.com/tzapu/WiFiManager
    Built by Ken Taylor https://github.com/kentaylor
+   Modified by IOTAppStory.com
    Licensed under MIT license
  **************************************************************/
 
@@ -159,6 +160,8 @@ void WiFiManager::setupConfigPortal() {
   server->on("/r", std::bind(&WiFiManager::handleReset, this));
   server->on("/state", std::bind(&WiFiManager::handleState, this));
   server->on("/scan", std::bind(&WiFiManager::handleScan, this));
+  server->on("/addpage", std::bind(&WiFiManager::handleAddPage, this));
+  server->on("/add", std::bind(&WiFiManager::handleAdd, this));
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
   DEBUG_WM(F("HTTP server started"));
@@ -477,6 +480,33 @@ void WiFiManager::handleRoot() {
 
 }
 
+/** IOTAppStory config page handler */
+void WiFiManager::handleAddPage() {
+  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  server->sendHeader("Pragma", "no-cache");
+  server->sendHeader("Expires", "-1");
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Add Device to IOTAppStory.com");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("<h2>IOTAppStory</h2>");
+  page += FPSTR(HTTP_FORM_ADD_DEV);
+  
+  page += FPSTR(HTTP_FORM_BTN);
+  page.replace("{t}", "submit");
+  page.replace("{b}", "Add Device");
+  page += FPSTR(HTTP_END);
+
+  server->send(200, "text/html", page);
+
+  DEBUG_WM(F("Sent Add Device to IAS page"));
+}
+
+
+
 /** Wifi config page handler */
 void WiFiManager::handleWifi() {
   server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -525,21 +555,9 @@ void WiFiManager::handleWifi() {
     if (_params[i] == NULL) {
       break;
     }
-	
-	// workaround for strange labelplacement: 1073675348
-	int lblplc = _params[i]->getLabelPlacement();
-	if(lblplc = 1073675348){lblplc = 1;}
-	
-	/*
-	Serial.println("--Labelplacement--");
-	Serial.println(_params[i]->getLabelPlacement());
-	Serial.println(lblplc);
-	Serial.println("------------------");
-	*/
-	
-	
+
 	String pitem;
-	switch (lblplc) {
+	switch (_params[i]->getLabelPlacement()) {
     case WFM_LABEL_BEFORE:
 	  pitem = FPSTR(HTTP_FORM_LABEL);
 	  pitem += FPSTR(HTTP_FORM_PARAM);
@@ -604,7 +622,9 @@ void WiFiManager::handleWifi() {
     page += "<br/>";
   }
 
-  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_FORM_BTN);
+  page.replace("{t}", "submit");
+  page.replace("{b}", "Save");
 
   page += FPSTR(HTTP_END);
 
@@ -711,10 +731,28 @@ void WiFiManager::handleInfo() {
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   page += FPSTR(HTTP_HEAD_END);
-  page += F("<h2>WiFi Information</h2>");
-  page += F("Android app from <a href=\"https://play.google.com/store/apps/details?id=au.com.umranium.espconnect\">https://play.google.com/store/apps/details?id=au.com.umranium.espconnect</a> provides easier ESP WiFi configuration.<p/>");
+  page += F("<h2>Information</h2>");			// removed "Wifi" from the title
+  //page += F("Android app from <a href=\"https://play.google.com/store/apps/details?id=au.com.umranium.espconnect\">https://play.google.com/store/apps/details?id=au.com.umranium.espconnect</a> provides easier ESP WiFi configuration.<p/>");
+  // removed this add because the app refered to won't work with the IAS loader
   reportStatus(page);
-  page += F("<h3>Device Data</h3>");
+
+  // seperated AccesPoint from Device Data
+  page += F("<br><h3>AccessPoint Data</h3>");
+  page += F("<table class=\"table\">");
+  page += F("<thead><tr><th>Name</th><th>Value</th></tr></thead><tbody>");
+  page += F("<tr><td>SSID</td><td>");
+  page += WiFi.SSID();
+  page += F("</td></tr>");
+  page += F("<tr><td>Access Point IP</td><td>");
+  page += WiFi.softAPIP().toString();
+  page += F("</td></tr>");
+  page += F("<tr><td>Access Point MAC</td><td>");
+  page += WiFi.softAPmacAddress();
+  page += F("</td></tr>");
+  page += F("</tbody></table>");
+  
+  
+  page += F("<br><h3>Device Data</h3>");
   page += F("<table class=\"table\">");
   page += F("<thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>Chip ID</td><td>");
   page += ESP.getChipId();
@@ -728,27 +766,18 @@ void WiFiManager::handleInfo() {
   page += F("<tr><td>Real Flash Size</td><td>");
   page += ESP.getFlashChipRealSize();
   page += F(" bytes</td></tr>");
-  page += F("<tr><td>Access Point IP</td><td>");
-  page += WiFi.softAPIP().toString();
-  page += F("</td></tr>");
-  page += F("<tr><td>Access Point MAC</td><td>");
-  page += WiFi.softAPmacAddress();
-  page += F("</td></tr>");
 
-  page += F("<tr><td>SSID</td><td>");
-  page += WiFi.SSID();
-  page += F("</td></tr>");
 
-  page += F("<tr><td>Station IP</td><td>");
+  page += F("<tr><td>Device IP</td><td>");		// changed station to device
   page += WiFi.localIP().toString();
   page += F("</td></tr>");
 
-  page += F("<tr><td>Station MAC</td><td>");
+  page += F("<tr><td>Device MAC</td><td>");		// changed station to device
   page += WiFi.macAddress();
   page += F("</td></tr>");
   page += F("</tbody></table>");
 
-  page += F("<h3>Available Pages</h3>");
+  page += F("<br><h3>Available Pages</h3>");
   page += F("<table class=\"table\">");
   page += F("<thead><tr><th>Page</th><th>Function</th></tr></thead><tbody>");
   page += F("<tr><td><a href=\"/\">/</a></td>");
@@ -844,6 +873,113 @@ void WiFiManager::handleScan() {
   server->send(200, "application/json", page);
   DEBUG_WM(F("Sent WiFi scan data ordered by signal strength in json format"));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Handle the add device to IAS request */				// added for IAS
+void WiFiManager::handleAdd() {
+	// form parameters
+	String IASid = server->arg("d").c_str();
+	String devName = server->arg("n").c_str();
+	devName.replace(" ", "%20");
+  
+  
+	DEBUG_WM(F("Connect to IAS and add device"));
+	server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+	server->sendHeader("Pragma", "no-cache");
+	server->sendHeader("Expires", "-1");
+	
+	const char* host = "iotappstory.com";
+	
+	Serial.print("connecting to ");
+	Serial.println(host);
+
+	// Use WiFiClient class to create TCP connections
+	WiFiClient client;
+	
+	if (!client.connect(host, 80)) {
+		Serial.println("connection failed");
+		return;
+	}
+
+	// We now create a URI for the request
+	String url = "/ota/add-device.php";
+	url += "?ias_id=";
+	url += IASid;
+	url += "&name=";
+	url += devName;
+	url += "&chip_id=";
+	url += ESP.getChipId();
+	url += "&flash_chip_id=";
+	url += ESP.getFlashChipId();
+	url += "&flash_size=";
+	url += ESP.getFlashChipRealSize();
+	url += "&mac=";
+	url += WiFi.macAddress();
+
+	Serial.print("Requesting URL: ");
+	Serial.println(url);
+
+	// This will send the request to the server
+	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+	unsigned long timeout = millis();
+	while (client.available() == 0) {
+		if (millis() - timeout > 5000) {
+			Serial.println(">>> Client Timeout !");
+			client.stop();
+			return;
+		}
+	}
+
+	// Read all the lines of the reply from server and print them to Serial
+	while(client.available()){
+		String line = client.readStringUntil('\r');
+		Serial.print(line);
+	}
+
+	Serial.println();
+	Serial.print("closing connection to ");
+	Serial.println(host);
+	
+	String page = FPSTR(HTTP_HEAD);
+	page.replace("{v}", "Adding Device");
+	page += FPSTR(HTTP_SCRIPT);
+	page += FPSTR(HTTP_STYLE);
+	page += _customHeadElement;
+	page += FPSTR(HTTP_HEAD_END);
+	
+	page += FPSTR(HTTP_FORM_BACK);
+	page += F("<h2>Succes</h2>");
+	page += String("You device was added to IOTAppStory.com<br>You can find it in the \"My Devices\" page of the Control Panel.<br><br>");
+	page += FPSTR(HTTP_FORM_BTN);
+	page.replace("{t}", "submit");
+	page.replace("{b}", "Main Page");
+	page += FPSTR(HTTP_FORM_END);
+	
+	page += FPSTR(HTTP_END);
+	
+	server->send(200, "text/html", page);
+  
+	DEBUG_WM(F("Sent add device result page."));
+}
+
+
+
+
+
+
+
 
 /** Handle the reset page */
 void WiFiManager::handleReset() {
