@@ -24,7 +24,7 @@
 
 */
 
-#define SKETCH "virginSoil "
+#define SKETCH "INITLoader "
 #define VERSION "V2.1.1"
 //#define LEDS_INVERSE          // LEDS on = GND
 
