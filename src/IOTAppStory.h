@@ -161,7 +161,7 @@
             void serialdebug(bool onoff,int speed=115200);
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
-            void preSetConfig(String boardName);
+            void preSetConfig(String boardName, bool automaticUpdate);
             void preSetConfig(String ssid, String password);
             void preSetConfig(String ssid, String password, bool automaticUpdate);
             void preSetConfig(String ssid, String password, String boardName);
@@ -183,8 +183,8 @@
             String getMACaddress();
             void printMacAddress();
 
-            void callHome(bool spiffs);
-            void callHome();
+            bool callHome(bool spiffs);
+            bool callHome();
             void initialize();
             byte iotUpdaterSketch(String server, String url, String firmware, bool immediately);
             byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately);

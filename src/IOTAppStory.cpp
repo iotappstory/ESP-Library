@@ -33,8 +33,15 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 }
 
 
-void IOTAppStory::preSetConfig(String boardName){
+void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
 	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
+	if(automaticUpdate == true){
+		strcpy(config.automaticUpdate,"1");
+	}else{
+		strcpy(config.automaticUpdate,"0");
+	}
+	Serial.print(atoi(config.automaticUpdate));
+	Serial.println(" ==============");
 }
 void IOTAppStory::preSetConfig(String ssid, String password){
 	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
@@ -125,7 +132,10 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, "------------- Normal Mode -------------------");
 
 	// --------- if automaticUpdate Update --------------------------
-	if (atoi(config.automaticUpdate) == 1){callHome();}
+	if (atoi(config.automaticUpdate) == 1){
+	Serial.print(config.automaticUpdate);
+	Serial.println(" Automatic-----------------------------------");
+	callHome();}
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	// LEDswitch(None);
@@ -278,7 +288,7 @@ void IOTAppStory::printMacAddress() {
 }
 
 //---------- IOTappStory FUNCTIONS ----------
-void IOTAppStory::callHome(bool spiffs) {
+bool IOTAppStory::callHome(bool spiffs) {
 	// update from IOTappStory.com
 	bool updateHappened=false;
 	byte res1, res2;
@@ -337,10 +347,11 @@ void IOTAppStory::callHome(bool spiffs) {
 		boardMode = 'N';
 		ESP.restart();
 	}
+	return updateHappened;
 }
 
-void IOTAppStory::callHome() {
-	callHome(true);
+bool IOTAppStory::callHome() {
+	return callHome(true);
 }
 
 void IOTAppStory::initialize() {   // this function is called by callHome() before return. Here, you put a safe startup configuration
@@ -364,7 +375,7 @@ byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, b
 	switch (ret) {
 		case HTTP_UPDATE_FAILED:
 			if(_serialDebug == true){
-				Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+				Serial.printf("SKETCH_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
 			}
 			retValue = 'F';
 		break;

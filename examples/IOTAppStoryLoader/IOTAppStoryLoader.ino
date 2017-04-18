@@ -25,23 +25,23 @@
 */
 
 #define SKETCH "INITLoader "
-#define VERSION "V2.1.1"
+#define VERSION "V1.0.0"
 //#define LEDS_INVERSE          // LEDS on = GND
 
 // ================================================ PIN DEFINITIONS ======================================
 #ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
-  #define MODEBUTTON 0
-  #define LEDgreen 13
-  //#define LEDred 12
+#define MODEBUTTON 0
+#define LEDgreen 13
+//#define LEDred 12
 #else
-  #define MODEBUTTON D3
-  #define LEDgreen D7
-  //#define LEDred D6
+#define MODEBUTTON D3
+#define LEDgreen D7
+//#define LEDred D6
 #endif
-  
+
 #include <IOTAppStory.h>
 #include <IAS_Xtra_Func.h>
-IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
+IOTAppStory IAS(SKETCH, VERSION, MODEBUTTON);
 
 
 
@@ -49,21 +49,24 @@ IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
 void setup() {
   IAS.serialdebug(true);                  // 1st parameter: true or false for serial debugging. Default: false
   //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.preSetConfig("INITLoader", false);         // preset Boardname, automatic upload false
 
-  IAS.preSetConfig("INITLoader");         // preset Boardname
-
-  IAS.begin(p,true,LEDgreen);             // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
-
+  IAS.begin(p, true, LEDgreen);           // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  if (IAS.callHome(false)==false) {
+    Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
+    Serial.println( "\n----------------  P L E A S E  C R E A T E   P R O J E C T   O N   I O T A P P S T O R Y . C O M   ----------------\n");
+    delay(50000);
+  }
 
   //-------- Your Setup starts from here ---------------
-  
+
 }
 
 
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine(org_buttonEntry,org_buttonTime,org_buttonChanged);                                               // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.routine(org_buttonEntry, org_buttonTime, org_buttonChanged);                                             // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
