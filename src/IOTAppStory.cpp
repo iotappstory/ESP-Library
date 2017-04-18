@@ -32,7 +32,9 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	}
 }
 
-
+void IOTAppStory::preSetConfig(String boardName){
+    boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
+}
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
 	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
 	if(automaticUpdate == true){
