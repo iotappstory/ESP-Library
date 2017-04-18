@@ -161,6 +161,7 @@
             void serialdebug(bool onoff,int speed=115200);
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
+	    void preSetConfig(String boardName);
             void preSetConfig(String boardName, bool automaticUpdate);
             void preSetConfig(String ssid, String password);
             void preSetConfig(String ssid, String password, bool automaticUpdate);
