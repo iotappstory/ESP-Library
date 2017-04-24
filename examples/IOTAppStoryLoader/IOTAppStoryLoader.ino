@@ -52,11 +52,7 @@ void setup() {
   IAS.preSetConfig("INITLoader", false);         // preset Boardname, automatic upload false
 
   IAS.begin(p, true, LEDgreen);           // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
-  if (IAS.callHome(false)==false) {
-    Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
-    Serial.println( "\n----------------  P L E A S E  C R E A T E   P R O J E C T   O N   I O T A P P S T O R Y . C O M   ----------------\n");
-    delay(50000);
-  }
+  IAS.callHome(false);
 
   //-------- Your Setup starts from here ---------------
 
@@ -66,9 +62,10 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine(org_buttonEntry, org_buttonTime, org_buttonChanged);                                             // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
-
-
-  //-------- Your Sketch starts from here ---------------
-
+  IAS.routine(org_buttonEntry, org_buttonTime, org_buttonChanged);       // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+ 
+  // if the scetch reaches this spot, no project was defined. Otherwise, it would load the defined sketch already before...
+  Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
+  Serial.println( "\n----------------  P L E A S E  C R E A T E   P R O J E C T   O N   I O T A P P S T O R Y . C O M   ----------------\n");
+  delay(5000);
 }
