@@ -131,6 +131,13 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 
 	//---------- SELECT BOARD MODE -----------------------------
 	system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);   // Read the "boardMode" flag RTC memory to decide, if to go to config
+	
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("*---------------------------------*---------------------------------------*");
+		DEBUG_PRINTLN(boardMode);
+		DEBUG_PRINTLN("*---------------------------------*---------------------------------------*");
+	}
+	
 	if (boardMode == 'C') configESP();
 
 	// --------- READ FULL CONFIG --------------------------
@@ -218,7 +225,7 @@ void IOTAppStory::configESP() {
 		yield();
 		loopWiFiManager();
 	}
-}
+} 
 
 void IOTAppStory::readFullConfiguration() {
 	readConfig();  // configuration in EEPROM
@@ -270,14 +277,20 @@ void IOTAppStory::connectNetwork() {
 
 // Wait till networl is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
 bool IOTAppStory::isNetworkConnected() {
-	byte retries = MAX_WIFI_RETRIES;
+	int retries = MAX_WIFI_RETRIES;
 	DEBUG_PRINT(" ");
 	while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
 		delay(500);
 		DEBUG_PRINT(".");
 	}
-	if (retries <= 0) return false;
-	else return true;
+	
+	if (retries <= 0){
+		DEBUG_PRINT("FALSE");
+		return false;
+	}else{
+		DEBUG_PRINT("TRUE");
+		return true;
+	}
 }
 
 String IOTAppStory::getMACaddress() {
@@ -634,11 +647,20 @@ void IOTAppStory::loopWiFiManager() {
 //---------- MISC FUNCTIONS ----------
 void IOTAppStory::espRestart(char mmode, char* message) {
 	//LEDswitch(GreenFastBlink);
-	if(_serialDebug == true){DEBUG_PRINTLN(message);}
 	while (digitalRead(_modeButton) == LOW) yield();    // wait till GPIOo released
 	delay(500);
+	
 	system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-	system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);
+	system_rtc_mem_read(RTCMEMBEGIN + 100, boardMode, 1);
+	
+	if(_serialDebug == true){
+		DEBUG_PRINTLN(mmode);
+		DEBUG_PRINTLN(boardMode);
+		DEBUG_PRINTLN(message);
+		DEBUG_PRINTLN(RTCMEMBEGIN);
+		DEBUG_PRINTLN("---------------");
+	}
+	
 	ESP.restart();
 }
 
