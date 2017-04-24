@@ -5,10 +5,20 @@
     /* ------ ------ ------ DEFINES for librairy ------ ------ ------ */
     #define MAGICBYTES "CFG"
     #define EEPROM_SIZE 1024
-    #define FIELDSTRUCTBUF 16
+    #define MAXNUMEXTRAFIELDS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
     #define COMPDATE __DATE__ __TIME__
+    #define MAX_WIFI_RETRIES 50
+    #define RTCMEMBEGIN 68
+    #define MAGICBYTE 85
+    #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
+    #define STRUCT_COMPDATE_SIZE 20
+    #define STRUCT_HOST_SIZE 24
+    #define STRUCT_FILE_SIZE 32
+	
+	
+	
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -33,10 +43,6 @@
         #define LEDOFF 0
     #endif
 
-    #define MAX_WIFI_RETRIES 50
-    #define RTCMEMBEGIN 68
-    #define MAGICBYTE 85
-    #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
 
 
     /* ------ ------ ------ Arduino library ------ ------ ------ */
@@ -118,13 +124,13 @@
                 char ssid[STRUCT_CHAR_ARRAY_SIZE];
                 char password[STRUCT_CHAR_ARRAY_SIZE];
                 char boardName[STRUCT_CHAR_ARRAY_SIZE];
-                char IOTappStory1[STRUCT_CHAR_ARRAY_SIZE];
-                char IOTappStoryPHP1[STRUCT_CHAR_ARRAY_SIZE];
-                char IOTappStory2[STRUCT_CHAR_ARRAY_SIZE];
-                char IOTappStoryPHP2[STRUCT_CHAR_ARRAY_SIZE];
+                char IOTappStory1[STRUCT_HOST_SIZE];
+                char IOTappStoryPHP1[STRUCT_FILE_SIZE];
+                char IOTappStory2[STRUCT_HOST_SIZE];
+                char IOTappStoryPHP2[STRUCT_FILE_SIZE];
 
-                char automaticUpdate[2];   // right after boot
-                char compDate[20];
+                bool automaticUpdate;	// right after boot
+                char compDate[STRUCT_COMPDATE_SIZE];
 				
                 char magicBytes[4];
             } strConfig;
@@ -137,22 +143,21 @@
                 "/ota/esp8266-v1.php",
                 "iotappstory.com",
                 "/ota/esp8266-v1.php",
-                "0",
+                false,
                 "",
 				
                 "CFG"  // Magic Bytes
             };
 
             char boardMode = 'N';  // Normal operation or Configuration mode?
-            eFields fieldStruct[FIELDSTRUCTBUF];
-	    WiFiManagerParameter parArray[FIELDSTRUCTBUF];
+            eFields fieldStruct[MAXNUMEXTRAFIELDS];
+            WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             volatile unsigned long buttonEntry;
             unsigned long buttonTime;
             volatile bool buttonChanged = false;
             unsigned long debugEntry;
-            String sysMessage; 
+            //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
-            String boardName, IOTappStory1, IOTappStoryPHP1, IOTappStory2, IOTappStoryPHP2;
 
 
             /* ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ */
@@ -161,7 +166,7 @@
             void serialdebug(bool onoff,int speed=115200);
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
-	    void preSetConfig(String boardName);
+            void preSetConfig(String boardName);
             void preSetConfig(String boardName, bool automaticUpdate);
             void preSetConfig(String ssid, String password);
             void preSetConfig(String ssid, String password, bool automaticUpdate);
@@ -214,6 +219,7 @@
             int     _modeButton;
             int     _nrXF = 0;			// nr of extra fields required in the config manager
             bool    _serialDebug;
+            bool    _setPreSet = false;		// ;)
     };
 
 #endif
