@@ -24,8 +24,8 @@
 
 */
 
-#define SKETCH "virginSoil "
-#define VERSION "V2.1.1"
+#define SKETCH "WebAppToggleBtn "
+#define VERSION "V2.0.0"
 
 // ================================================ PIN DEFINITIONS ======================================
 #ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
