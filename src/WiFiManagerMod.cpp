@@ -58,12 +58,6 @@ void WiFiManagerParameter::init(const char *id, const char *placeholder, const c
   if (defaultValue != NULL) {
     strncpy(_value, defaultValue, length);
   }
-  /*
-	Serial.println("--------**------------");
-	Serial.println(defaultValue);
-	Serial.println(_value);
-	Serial.println("--------**------------");
-  */
 	
   _customHTML = custom;
 }
@@ -98,13 +92,8 @@ WiFiManager::~WiFiManager() {
 
 void WiFiManager::addParameter(WiFiManagerParameter *p) {
   _params[_paramsCount] = p;
-  /*
-  Serial.println("\/\/\/\/\/");
-  Serial.println(_paramsCount);
-  Serial.println("\/\/\/\/\/");
-  */
   _paramsCount++;
-  DEBUG_WM("Adding parameter");
+  DEBUG_WM(" Adding parameter");
   DEBUG_WM(p->getID());
 }
 
@@ -216,14 +205,14 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
   int connRes = WiFi.waitForConnectResult();
   if (connRes == WL_CONNECTED){
 	  WiFi.mode(WIFI_AP_STA); //Dual mode works fine if it is connected to WiFi
-	  DEBUG_WM("SET AP STA");
+	  DEBUG_WM(" SET AP STA");
   	}
   	else {
     WiFi.mode(WIFI_AP); // Dual mode becomes flaky if not connected to a WiFi network.
     // When ESP8266 station is trying to find a target AP, it will scan on every channel,
     // that means ESP8266 station is changing its channel to scan. This makes the channel of ESP8266 softAP keep changing too..
     // So the connection may break. From http://bbs.espressif.com/viewtopic.php?t=671#p2531
-    DEBUG_WM("SET AP");
+    DEBUG_WM(" SET AP");
 	}
   _apName = apName;
   _apPassword = apPassword;
@@ -1094,7 +1083,7 @@ int WiFiManager::scanWifiNetworks(int **indicesptr) {
           cssid = WiFi.SSID(indices[i]);
           for (int j = i + 1; j < n; j++) {
             if(cssid == WiFi.SSID(indices[j])){
-              DEBUG_WM("DUP AP: " + WiFi.SSID(indices[j]));
+              DEBUG_WM(" DUP AP: " + WiFi.SSID(indices[j]));
               indices[j] = -1; // set dup aps to index -1
             }
           }
@@ -1118,7 +1107,7 @@ int WiFiManager::scanWifiNetworks(int **indicesptr) {
 template <typename Generic>
 void WiFiManager::DEBUG_WM(Generic text) {
   if (_debug) {
-    Serial.print("*WM: ");
+    Serial.print(" *WM: ");
     Serial.println(text);
   }
 }
