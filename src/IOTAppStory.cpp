@@ -758,11 +758,12 @@ bool IOTAppStory::readConfig() {
 void IOTAppStory::routine(volatile unsigned long org_buttonEntry, unsigned long org_buttonTime, volatile bool org_buttonChanged) {
 	buttonEntry = org_buttonEntry;
 	buttonTime = org_buttonTime;
+	buttonChanged = org_buttonChanged;
 
-	if (org_buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
-//	Serial.print("buttonChanged ");
-//	Serial.println(org_buttonChanged);
-//	if (org_buttonChanged && buttonTime > 500 && buttonTime < 4000) callHome(); 				// long button press > 1sec
+	if (buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
+	Serial.print("buttonChanged ");
+	Serial.println(org_buttonChanged);
+	if (buttonChanged && buttonTime > 500 && buttonTime < 4000) callHome(); 				// long button press > 1sec
 	org_buttonChanged = false;
 
 	if(_serialDebug == true){
