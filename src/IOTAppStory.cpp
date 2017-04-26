@@ -118,10 +118,12 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	//------------- LED and DISPLAYS ------------------------
 	//LEDswitch(GreenBlink);
 
+	// Read the "bootTime" & "boardMode" flag RTC memory
+	readRTCmem();
+	
 	// --------- BOOT STATISTICS ------------------------
 	// read and increase boot statistics (optional)
 	if(bootstats == true){
-		readRTCmem();
 		rtcMem.bootTimes++;
 		writeRTCmem();
 		if(_serialDebug == true){
@@ -130,15 +132,7 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	}
 
 	//---------- SELECT BOARD MODE -----------------------------
-	system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);   // Read the "boardMode" flag RTC memory to decide, if to go to config
-	
-	if(_serialDebug == true){
-		DEBUG_PRINTLN("*---------------------------------*---------------------------------------*");
-		DEBUG_PRINTLN(boardMode);
-		DEBUG_PRINTLN("*---------------------------------*---------------------------------------*");
-	}
-	
-	if (boardMode == 'C') configESP();
+	if (rtcMem.boardMode == 'C') configESP();
 
 	// --------- READ FULL CONFIG --------------------------
 	readFullConfiguration();
@@ -168,6 +162,7 @@ bool IOTAppStory::readRTCmem() {
 	if (rtcMem.markerFlag != MAGICBYTE) {
 		rtcMem.markerFlag = MAGICBYTE;
 		rtcMem.bootTimes = 0;
+		rtcMem.boardMode = 'N';
 		system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
 		ret = false;
 	}
@@ -186,6 +181,8 @@ void IOTAppStory::printRTCmem() {
 		DEBUG_PRINTLN(rtcMem.markerFlag);
 		DEBUG_PRINT(" bootTimes since powerup: ");
 		DEBUG_PRINTLN(rtcMem.bootTimes);
+		DEBUG_PRINT(" boardMode: ");
+		DEBUG_PRINTLN(rtcMem.boardMode);
 		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 	}
 }
@@ -213,8 +210,8 @@ void IOTAppStory::configESP() {
 	//connectNetwork();
 
 	if(_serialDebug == true){
-		for (int i = 0; i < 5; i++) DEBUG_PRINTLN("");
-		DEBUG_PRINTLN(" CONFIGURATION MODE");
+		for (int i = 0; i < 4; i++) DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("CONFIGURATION MODE");
 	}
 	//sendSysLogMessage(6, 1, config.boardName, _firmware, 10, counter++, "------------- Configuration Mode -------------------");
 	initWiFiManager();
@@ -285,10 +282,8 @@ bool IOTAppStory::isNetworkConnected() {
 	}
 	
 	if (retries <= 0){
-		DEBUG_PRINT("FALSE");
 		return false;
 	}else{
-		DEBUG_PRINT("TRUE");
 		return true;
 	}
 }
@@ -365,8 +360,8 @@ bool IOTAppStory::callHome(bool spiffs) {
 	}
 
 	if (updateHappened) {
-		initialize();
-		boardMode = 'N';
+		//initialize();
+		rtcMem.boardMode = 'N';
 		ESP.restart();
 	}
 	return updateHappened;
@@ -375,11 +370,11 @@ bool IOTAppStory::callHome(bool spiffs) {
 bool IOTAppStory::callHome() {
 	return callHome(true);
 }
-
+/*
 void IOTAppStory::initialize() {   // this function is called by callHome() before return. Here, you put a safe startup configuration
 
 }
-
+*/
 byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, bool immediately) {
 	byte retValue;
 	
@@ -445,10 +440,10 @@ byte IOTAppStory::iotUpdaterSPIFFS(String server, String url, String firmware, b
 
 //---------- WIFIMANAGER COMMON FUNCTIONS
 void IOTAppStory::initWiFiManager() {
-	WiFi.printDiag(Serial); //Remove this line if you do not want to see WiFi password printed
+	if(_serialDebug == true){WiFi.printDiag(Serial);} //Remove this line if you do not want to see WiFi password printed
 
 	if (WiFi.SSID() == "") {
-		if(_serialDebug == true){DEBUG_PRINTLN(" We haven't got any access point credentials, so get them now");}
+		if(_serialDebug == true){DEBUG_PRINTLN("We haven't got any access point credentials, so get them now");}
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
@@ -457,13 +452,13 @@ void IOTAppStory::initWiFiManager() {
 		float waited = (millis() - startedAt);
 		if(_serialDebug == true){
 			DEBUG_PRINT(waited / 1000);
-			DEBUG_PRINT(" secs in setup() connection result is ");
+			DEBUG_PRINT("secs in setup() connection result is ");
 			DEBUG_PRINTLN(connRes);
 		}
 	}
 
 	if (WiFi.status() != WL_CONNECTED) {
-		if(_serialDebug == true){DEBUG_PRINTLN(" Failed to connect");}
+		if(_serialDebug == true){DEBUG_PRINTLN("Failed to connect");}
 	}else{
 		if(_serialDebug == true){
 			DEBUG_PRINT("Local ip: ");
@@ -650,15 +645,14 @@ void IOTAppStory::espRestart(char mmode, char* message) {
 	while (digitalRead(_modeButton) == LOW) yield();    // wait till GPIOo released
 	delay(500);
 	
-	system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-	system_rtc_mem_read(RTCMEMBEGIN + 100, boardMode, 1);
+	rtcMem.boardMode = mmode;
+	writeRTCmem();
+	//system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
+	//system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);
 	
 	if(_serialDebug == true){
-		DEBUG_PRINTLN(mmode);
-		DEBUG_PRINTLN(boardMode);
+		DEBUG_PRINTLN("");
 		DEBUG_PRINTLN(message);
-		DEBUG_PRINTLN(RTCMEMBEGIN);
-		DEBUG_PRINTLN("---------------");
 	}
 	
 	ESP.restart();
