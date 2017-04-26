@@ -211,7 +211,7 @@ void IOTAppStory::configESP() {
 
 	if(_serialDebug == true){
 		for (int i = 0; i < 4; i++) DEBUG_PRINTLN("");
-		DEBUG_PRINTLN("CONFIGURATION MODE");
+		DEBUG_PRINTLN("C O N F I G U R A T I O N    M O D E");
 	}
 	//sendSysLogMessage(6, 1, config.boardName, _firmware, 10, counter++, "------------- Configuration Mode -------------------");
 	initWiFiManager();
@@ -758,11 +758,12 @@ bool IOTAppStory::readConfig() {
 void IOTAppStory::routine(volatile unsigned long org_buttonEntry, unsigned long org_buttonTime, volatile bool org_buttonChanged) {
 	buttonEntry = org_buttonEntry;
 	buttonTime = org_buttonTime;
-	buttonChanged = org_buttonChanged;
 
-	if (buttonChanged && buttonTime > 3000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
-	if (buttonChanged && buttonTime > 500 && buttonTime < 4000) callHome(); 				// long button press > 1sec
-	buttonChanged = false;
+	if (org_buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
+//	Serial.print("buttonChanged ");
+//	Serial.println(org_buttonChanged);
+//	if (org_buttonChanged && buttonTime > 500 && buttonTime < 4000) callHome(); 				// long button press > 1sec
+	org_buttonChanged = false;
 
 	if(_serialDebug == true){
 		if (millis() - debugEntry > 5000) { 								// Non-Blocking second counter
