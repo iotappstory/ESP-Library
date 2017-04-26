@@ -107,6 +107,7 @@
             typedef struct {
                 byte markerFlag;
                 int bootTimes;
+				char boardMode = 'N';  	// Normal operation or Configuration mode?
             } rtcMemDef __attribute__((aligned(4)));
             rtcMemDef rtcMem;
 
@@ -149,7 +150,7 @@
                 "CFG"  // Magic Bytes
             };
 
-            char boardMode = 'N';  // Normal operation or Configuration mode?
+            
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
             WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             volatile unsigned long buttonEntry;
@@ -191,7 +192,7 @@
 
             bool callHome(bool spiffs);
             bool callHome();
-            void initialize();
+            //void initialize();
             byte iotUpdaterSketch(String server, String url, String firmware, bool immediately);
             byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately);
 
