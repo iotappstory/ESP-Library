@@ -108,12 +108,11 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
-
 	if(feedBackLed > -1){
 		//pinMode(feedBackLed, OUTPUT);         	// LEDgreen feedback
 		//digitalWrite(feedBackLed, LEDOFF);
 	}
-	attachInterrupt(_modeButton, ptr, CHANGE);
+//	attachInterrupt(_modeButton, ptr, CHANGE);
 
 	//------------- LED and DISPLAYS ------------------------
 	//LEDswitch(GreenBlink);
@@ -148,6 +147,7 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	if(config.automaticUpdate == true){
 		callHome();
 	}
+	buttonEntry = millis()+10000;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	// LEDswitch(None);
@@ -359,8 +359,8 @@ bool IOTAppStory::callHome(bool spiffs) {
 		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 	}
 	
-	(*buttonTime) = 0;
-	(*buttonChanged) = false;
+//	(*buttonTime) = 0;
+//	(*buttonChanged) = false;
 	
 	if (updateHappened) {
 		//initialize();
@@ -759,6 +759,7 @@ bool IOTAppStory::readConfig() {
 	return ret;
 }
 
+/*
 void IOTAppStory::routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged)) {
 	buttonEntry = org_buttonEntry;
 	buttonTime = org_buttonTime;
@@ -781,14 +782,42 @@ void IOTAppStory::routine(volatile unsigned long (*org_buttonEntry), unsigned lo
 		}
 	}
 }
+*/
 
-void IOTAppStory::JSONerror(String err) {
-	if(_serialDebug == true){
-		DEBUG_PRINTLN(err);
-		DEBUG_PRINTLN(" Restoring default values");
-	}
-	writeConfig();
-	//LEDswitch(RedFastBlink);
+
+void IOTAppStory::routine() {
+  unsigned long _buttonTime = -1;
+  	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
+  
+  int _buttonState = digitalRead(_modeButton);
+  
+
+  
+  if (buttonStateOld != _buttonState) {
+    Serial.println("button changed...");
+    delay(100);
+    
+    if (_buttonState == 0) {
+      buttonEntry = millis();
+    } else {
+        _buttonTime = millis() - buttonEntry;
+        buttonEntry = millis();
+    }
+    if (_serialDebug == true) {
+       Serial.print("Time ");
+       Serial.println(_buttonTime);
+    }
+    if (_buttonTime > 4000 && _buttonTime < 10000) espRestart('C', "Going into Configuration Mode");     // long button press > 4sec
+    if (_buttonTime >  500 && _buttonTime < 4000) callHome();         // long button press > 1sec
+  }
+  if (_serialDebug == true && millis() - debugEntry > 5000) {
+     debugEntry = millis();
+     DEBUG_PRINT("inside loop()... ");
+     DEBUG_PRINT("Heap ");
+     DEBUG_PRINTLN(ESP.getFreeHeap());
+        //sendDebugMessage();
+  }
+  buttonStateOld = _buttonState;
 }
 
 void IOTAppStory::saveConfigCallback () {        								// <<-- could be deleted ?
