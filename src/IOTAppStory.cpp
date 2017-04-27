@@ -152,6 +152,13 @@ void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	// LEDswitch(None);
 	// sendSysLogMessage(7, 1, config.boardName, _firmware, 10, counter++, "Setup done");
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+	}
 }
 
 
@@ -812,10 +819,10 @@ void IOTAppStory::routine() {
   }
   if (_serialDebug == true && millis() - debugEntry > 5000) {
      debugEntry = millis();
-     DEBUG_PRINT("inside loop()... ");
-     DEBUG_PRINT("Heap ");
-     DEBUG_PRINTLN(ESP.getFreeHeap());
-        //sendDebugMessage();
+     //DEBUG_PRINT("inside loop()... ");
+     //DEBUG_PRINT("Heap ");
+     //DEBUG_PRINTLN(ESP.getFreeHeap());
+     //sendDebugMessage();
   }
   buttonStateOld = _buttonState;
 }
