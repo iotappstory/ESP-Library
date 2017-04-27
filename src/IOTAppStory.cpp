@@ -218,7 +218,7 @@ void IOTAppStory::configESP() {
 
 	//--------------- LOOP ----------------------------------
 	while (1) {
-		if (buttonChanged && buttonTime > 4000) espRestart('N', "Back to normal mode");  // long button press > 4sec
+		//if ((*buttonChanged) && (*buttonTime) > 4000) espRestart('N', "Back to normal mode");  // long button press > 4sec
 		yield();
 		loopWiFiManager();
 	}
@@ -358,7 +358,10 @@ bool IOTAppStory::callHome(bool spiffs) {
 		DEBUG_PRINTLN(" Returning from IOTAppStory.com");
 		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 	}
-
+	
+	(*buttonTime) = 0;
+	(*buttonChanged) = false;
+	
 	if (updateHappened) {
 		//initialize();
 		rtcMem.boardMode = 'N';
@@ -585,10 +588,11 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char 
 }
 
 void IOTAppStory::loopWiFiManager() {
-	
-	for(unsigned int i = 0; i < _nrXF; i++){
-		// add the WiFiManagerParameter to parArray so it can be referenced to later
-		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, fieldStruct[i].varPointer, fieldStruct[i].length);
+	if(_nrXF > 0){
+		for(unsigned int i = 0; i < _nrXF; i++){
+			// add the WiFiManagerParameter to parArray so it can be referenced to later
+			parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, fieldStruct[i].varPointer, fieldStruct[i].length);
+		}
 	}
 	
 	// Just a quick hint
@@ -755,24 +759,23 @@ bool IOTAppStory::readConfig() {
 	return ret;
 }
 
-void IOTAppStory::routine(volatile unsigned long org_buttonEntry, unsigned long org_buttonTime, volatile bool org_buttonChanged) {
+void IOTAppStory::routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged)) {
 	buttonEntry = org_buttonEntry;
 	buttonTime = org_buttonTime;
 	buttonChanged = org_buttonChanged;
 
-	if (buttonChanged && buttonTime > 4000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
-	Serial.print("buttonChanged ");
-	Serial.println(org_buttonChanged);
-	if (buttonChanged && buttonTime > 500 && buttonTime < 4000) callHome(); 				// long button press > 1sec
-	org_buttonChanged = false;
+	if ((*buttonChanged) && (*buttonTime) > 3000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
+	if ((*buttonChanged) && (*buttonTime) > 500 && (*buttonTime) < 4000) callHome(); 				// long button press > 1sec
+	buttonChanged = false;
 
 	if(_serialDebug == true){
-		if (millis() - debugEntry > 5000) { 								// Non-Blocking second counter
-			debugEntry = millis();
+		if (millis() - (*buttonEntry) > 5000) { 								// Non-Blocking second counter
+			(*buttonEntry) = millis();
 			if(_serialDebug == true){
 				DEBUG_PRINTLN("loop() running...");
 				DEBUG_PRINT("Heap ");
 				DEBUG_PRINTLN(ESP.getFreeHeap());
+				DEBUG_PRINTLN((*buttonTime));
 			}
 			//sendDebugMessage();
 		}
