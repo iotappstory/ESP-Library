@@ -99,8 +99,6 @@
     }
 
 
-
-
     class IOTAppStory {
         public:
             /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
@@ -153,10 +151,10 @@
             
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
             WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
-            volatile unsigned long buttonEntry;
-            unsigned long buttonTime;
-            volatile bool buttonChanged = false;
-            unsigned long debugEntry;
+            volatile unsigned long (*buttonEntry);
+            unsigned long (*buttonTime);
+            volatile bool (*buttonChanged);
+            //unsigned long debugEntry;
             //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
 
@@ -208,7 +206,7 @@
             void writeConfig();
             bool readConfig();
 
-            void routine(volatile unsigned long org_buttonEntry, unsigned long org_buttonTime, volatile bool org_buttonChanged);
+			void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
