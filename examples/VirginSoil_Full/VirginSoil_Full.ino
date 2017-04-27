@@ -44,35 +44,45 @@
 #include <IAS_Xtra_Func.h>
 IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
 
+
+
 // ================================================ EXAMPLE VARS =========================================
-char* lbl1 = "Light Show";                                                                                    // default value | this gets stored to eeprom and gets updated if changed from wifi config
-char* lbl2 = "Living Room";
-char* lbl3 = "Bath Room";
-char* lbl4 = "Test Room";
-char* lbl5 = "Another Room";
+volatile unsigned long lastPrint;
+
+// We want to be able to edit these example variables from the wifi config manager
+// Currently only char arrays are supported. Use functions like atoi() and atof() to transform the char array to integers or floats
+char* lbl1        = "Light Show";
+char* lbl2        = "Living Room";
+char* exampleURL  = "http://someapi.com/getdata.php?userid=1234&key=7890abc";
+char* timeZone    = "0.0";
+char* ledPin      = "2";
+
+
 
 // ================================================ SETUP ================================================
 void setup() {
   /* TIP! delete lines below when not used */
-  IAS.serialdebug(true);                                                                                      // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                                                                             // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.serialdebug(true);                                             // 1st parameter: true or false for serial debugging. Default: false
+  //IAS.serialdebug(true,115200);                                    // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
-  //IAS.preSetConfig("yourBoardName");                                                                        // preset Boardname
-  //IAS.preSetConfig("ssid","password");                                                                      // preset Wifi
-  //IAS.preSetConfig("ssid","password",true);                                                                 // preset Wifi & automaticUpdate
-  //IAS.preSetConfig("ssid","password","testboard");                                                          // preset Wifi & boardName
-  //IAS.preSetConfig("ssid","password","testboard",true);                                                     // preset Wifi, boardName & automaticUpdate
-  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php");                  // preset Wifi, boardName, IOTappStory1 & IOTappStoryPHP1
-  //IAS.preSetConfig("ssid","password","testboard","iotappstory.com","/ota/esp8266-v1.php",true);             // preset Wifi, boardName, IOTappStory1, IOTappStoryPHP1 & automaticUpdate
 
-  IAS.addField(lbl1, "label1", "Label 1", 16);                                                                // reference to org variable | field name | field label value | max char return
-  IAS.addField(lbl2, "label2", "Label 2", 16);
-  IAS.addField(lbl3, "label3", "Label 3", 16);
-  IAS.addField(lbl4, "label4", "Label 4", 16);
-  IAS.addField(lbl5, "label5", "Label 5", 16);
+  //IAS.preSetConfig("yourBoardName");                               // preset Boardname
+  //IAS.preSetConfig("ssid","password");                             // preset Wifi
+  //IAS.preSetConfig("ssid","password",true);                        // preset Wifi & automaticUpdate
+  //IAS.preSetConfig("ssid","password","testboard");                 // preset Wifi & boardName
+  //IAS.preSetConfig("ssid","password","testboard",true);            // preset Wifi, boardName & automaticUpdate
+  /* TIP! Delete Wifi cred. when you publish your App. */
+
+
+  IAS.addField(lbl1, "label1", "Label 1", 16);                       // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(lbl2, "label2", "Label 2", 16);                       // reference to org variable | field name | field label value | max char return
+  IAS.addField(exampleURL, "url", "Example url", 80);
+  IAS.addField(timeZone, "timezone", "Timezone", 5);
+  IAS.addField(ledPin, "ledpin", "ledPin", 2);
   /* TIP! delete the lines above when not used */
 
-  IAS.begin(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+
+  IAS.begin(p,true,LEDgreen);                                        // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
@@ -80,12 +90,34 @@ void setup() {
 }
 
 
+
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine(&org_buttonEntry,&org_buttonTime,&org_buttonChanged);                                            // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.routine();     // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
+
+  if (millis() - lastPrint > 5000) {                                    // Serial.print the example variables every 5 seconds
+    lastPrint = millis();
+
+    Serial.print("Label 1: ");
+    Serial.println(lbl1);
+
+    Serial.print("Label 2: ");
+    Serial.println(lbl2);
+
+    Serial.print("Example url: ");
+    Serial.println(exampleURL);
+
+    Serial.print("Timezone: ");
+    Serial.println(atof(timeZone));
+
+    Serial.print("Led pin: ");
+    Serial.println(atoi(ledPin));
+    
+    Serial.print("-------------------------------------------");
+  }
 
 }
