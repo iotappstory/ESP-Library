@@ -77,12 +77,12 @@ void setup() {
   IAS.addField(lbl1, "label1", "Label 1", 16);                       // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(lbl2, "label2", "Label 2", 16);                       // reference to org variable | field name | field label value | max char return
   IAS.addField(exampleURL, "url", "Example url", 80);
-  IAS.addField(timeZone, "timezone", "Timezone", 5);
-  IAS.addField(ledPin, "ledpin", "ledPin", 2);
+  IAS.addField(timeZone, "timezone", "Timezone", 8);
+  IAS.addField(ledPin, "ledpin", "ledPin", 8);
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(p,true,LEDgreen);                                        // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true,LEDgreen);                                        // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
