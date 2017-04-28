@@ -79,7 +79,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 }
 
 
-void IOTAppStory::begin(void(*ptr)(), int feedBackLed, bool bootstats){
+void IOTAppStory::begin(int feedBackLed, bool bootstats){
 	if(_setPreSet == true){
 		writeConfig();
 		if(_serialDebug == true){
