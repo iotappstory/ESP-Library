@@ -175,7 +175,7 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate);
 
-            void begin(void(*ptr)(void), int feedBackLed=-1, bool bootstats=true);
+            void begin(int feedBackLed=-1, bool bootstats=true);
             void firstBoot();
 
             bool readRTCmem();
