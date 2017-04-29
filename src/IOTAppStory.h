@@ -8,7 +8,6 @@
     #define MAXNUMEXTRAFIELDS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
-    #define COMPDATE __DATE__ __TIME__
     #define MAX_WIFI_RETRIES 50
     #define RTCMEMBEGIN 68
     #define MAGICBYTE 85
@@ -112,7 +111,7 @@
             typedef struct  {
                 const char *fieldIdName;
                 const char *fieldLabel;
-                char* varPointer;
+                char* (*varPointer);
                 int length;
 
                 //char *custom;
@@ -162,7 +161,7 @@
 
 
             /* ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ */
-            IOTAppStory(String appName, String appVersion, int modeButton);
+            IOTAppStory(String appName, String appVersion, String compDate, int modeButton);
 
             void serialdebug(bool onoff,int speed=115200);
 
@@ -198,6 +197,7 @@
 
             //void addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
+			void processField();
 
             void initWiFiManager();
             void loopWiFiManager();
@@ -205,7 +205,7 @@
             void espRestart(char mmode, char* message);
             void eraseFlash(unsigned int eepFrom = 0, unsigned int eepTo = EEPROM_SIZE);
 
-            void writeConfig();
+            void writeConfig(bool wifiSave=false);
             bool readConfig();
             void routine();
 //	    void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
@@ -217,6 +217,7 @@
             String  _appName;
             String  _appVersion;
             String  _firmware;
+            String  _compDate;
             int     _modeButton;
             int     _nrXF = 0;			// nr of extra fields required in the config manager
             bool    _serialDebug;
