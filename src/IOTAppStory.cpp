@@ -2,11 +2,12 @@
 	#include "IOTAppStory.h"
 #endif
 
-IOTAppStory::IOTAppStory(String appName, String appVersion, int modeButton){
+IOTAppStory::IOTAppStory(String appName, String appVersion, String compDate, int modeButton){
 	// initiating object
 	_appName = appName;
 	_appVersion = appVersion;
 	_firmware = appName+appVersion;
+	_compDate = compDate;
 	_modeButton = modeButton;
 	readFullConfiguration();
 }
@@ -24,8 +25,8 @@ void IOTAppStory::firstBoot(){
 	eraseFlash((sizeof(config)+2),EEPROM_SIZE);
 	
 	// update first boot config flag (date)
-	String tmpdate = COMPDATE;
-	tmpdate.toCharArray(config.compDate, 20);
+	//String tmpdate = _compDate;
+	String(_compDate).toCharArray(config.compDate, 20);
 	writeConfig();
 	
 	
@@ -80,6 +81,10 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 
 
 void IOTAppStory::begin(int feedBackLed, bool bootstats){
+	if(_serialDebug == true){
+		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("");
+	}
 	if(_setPreSet == true){
 		writeConfig();
 		if(_serialDebug == true){
@@ -101,9 +106,6 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats){
 		DEBUG_PRINTLN(config.automaticUpdate);
 		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 	}
-	
-	// on first boot of the app run the firstBoot() function
-	if(String(config.compDate) != String(COMPDATE)){firstBoot();}
 	
 
 	// ----------- PINS ----------------
@@ -130,6 +132,13 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats){
 		}
 	}
 
+	// on first boot of the app run the firstBoot() function
+	if(String(config.compDate) != String(_compDate)){firstBoot();}
+
+	// process added fields
+	processField();
+	
+	
 	//---------- SELECT BOARD MODE -----------------------------
 	if (rtcMem.boardMode == 'C') configESP();
 
@@ -487,119 +496,153 @@ void IOTAppStory::addField(int &defaultVal,const char *fieldIdName,const char *f
 // add char array field to the wifi configuration page and add value to eeprom
 void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length){
 	_nrXF++;
-
-	char* eepVal = new char[length + 1];
-	char* tmpVal = new char[length + 1];
-	for (int i = 0; i < length; i++) {
-		eepVal[i] = 0;
-		tmpVal[i] = 0;
-	}
-	if (defaultVal != NULL) {
-		strncpy(tmpVal, defaultVal, length);
-	}
-	
-	EEPROM.begin(EEPROM_SIZE);
-	delay(100);
-	const int sizeOfVal = length-1;
-	const int sizeOfConfig = sizeof(config)+2;
-	const int eeBeg = sizeOfConfig+((_nrXF-1) * sizeOfVal)+_nrXF+((_nrXF-1)*2);
-	const int eeEnd = sizeOfConfig+(_nrXF * sizeOfVal)+_nrXF+1+((_nrXF-1)*2);
-	
-	if(_serialDebug == true){
-		DEBUG_PRINT(" addField nr: ");
-		DEBUG_PRINTLN(_nrXF);
-		DEBUG_PRINT(" Default value: ");
-		DEBUG_PRINTLN(defaultVal);
-		DEBUG_PRINT(" Field name: ");
-		DEBUG_PRINTLN(fieldIdName);
-		DEBUG_PRINT(" Field Label: ");
-		DEBUG_PRINTLN(fieldLabel);
-		DEBUG_PRINT(" Maximum length: ");
-		DEBUG_PRINTLN(length);		
-		DEBUG_PRINT(" EEPROM space: ");
-		DEBUG_PRINT(eeBeg);
-		DEBUG_PRINT("  to ");
-		DEBUG_PRINTLN(eeEnd);
-		DEBUG_PRINTLN(" ");
-	}	
-					
-					
-	// check for MAGICEEP and get the updated value if present
-	if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(length) == '\0'){
-		// read eeprom
-		for (unsigned int t = eeBeg; t <= eeEnd; t++){
-			// start after MAGICEEP
-			if(t != eeBeg && EEPROM.read(t) != 0){
-				//DEBUG_PRINTLN(EEPROM.read(t));
-				*((char*)eepVal + (t-eeBeg)-1) = EEPROM.read(t);
-			}
-		}
-		
-		if(_serialDebug == true){
-			DEBUG_PRINT(" Existing EEPROM value found: ");
-			DEBUG_PRINTLN(eepVal);
-		}
-		
-		// if eeprom value is different update the ret value
-		if(eepVal != defaultVal){
-			defaultVal = eepVal;
-			
-			if(_serialDebug == true){
-				DEBUG_PRINT(" Overwriting default value \"");
-				DEBUG_PRINT(defaultVal);
-				DEBUG_PRINT(" \" with: ");
-				DEBUG_PRINTLN(eepVal);
-			}
-		}else{
-			if(_serialDebug == true){
-				DEBUG_PRINT(" Unchainged, keeping default value: ");
-				DEBUG_PRINTLN(defaultVal);
-			}
-		}
-	}else{
-		if(_serialDebug == true){
-			DEBUG_PRINTLN(" NO existing EEPROM value found.");
-			DEBUG_PRINTLN(" Writing value to EEPROM.");
-		}
-		
-		// add MAGICEEP to value and write to eeprom
-		for (unsigned int t = eeBeg; t <= eeEnd; t++){
-			//DEBUG_PRINT(t);
-			//DEBUG_PRINT("  | ");
-			if(t == eeBeg){
-				EEPROM.put(t, MAGICEEP);
-				//DEBUG_PRINT(MAGICEEP);
-
-			}else{
-				EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));
-				//DEBUG_PRINT(*((char*)tmpVal + (t-eeBeg)-1));
-					
-			}
-			//DEBUG_PRINTLN(" ");
-		}
-		
-		//DEBUG_PRINTLN(" ------------");
-	}
-	
-	EEPROM.end();
 	
 	// add values to the fieldstruct
 	fieldStruct[_nrXF-1].fieldIdName = fieldIdName;
 	fieldStruct[_nrXF-1].fieldLabel = fieldLabel;
-	fieldStruct[_nrXF-1].varPointer = defaultVal;
-	fieldStruct[_nrXF-1].length = length;
-	
-	if(_serialDebug == true){
-		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	fieldStruct[_nrXF-1].varPointer = &defaultVal;
+	fieldStruct[_nrXF-1].length = length+1;
+}
+
+// add char array field to the wifi configuration page and add value to eeprom
+void IOTAppStory::processField(){
+
+	// to prevent longer then default values overwriting each other
+	// temp save value, overwrite variable with longest value posible
+	// and then resave the temp value to the original variable
+	if(_nrXF > 0){
+		char* tempValue[_nrXF];
+		
+		for(unsigned int nr = 0; nr < _nrXF; nr++){
+			tempValue[nr] = (*fieldStruct[nr].varPointer);
+			
+			char* tmpVal = new char[fieldStruct[nr].length];
+			for (int i = 0; i < fieldStruct[nr].length-1; i++) {
+				tmpVal[i] = 't';
+			}
+			
+			(*fieldStruct[nr].varPointer) = tmpVal;
+		}
+		
+		for(unsigned int nr = 0; nr < _nrXF; nr++){
+			String(tempValue[nr]).toCharArray((*fieldStruct[nr].varPointer), fieldStruct[nr].length);
+		}
+	}
+		
+	if(_nrXF > 0){
+		if(_serialDebug == true){DEBUG_PRINTLN(" Processing added fields");}
+
+		EEPROM.begin(EEPROM_SIZE);
+		
+		for (unsigned int nr = 1; nr <= _nrXF; nr++){
+			delay(100);
+			// loop threw the fields struc array	
+			
+			int prevTotLength = 0;
+			for(unsigned int i = 0; i < (nr-1); i++){
+				prevTotLength += fieldStruct[i].length;
+			}
+			const int sizeOfVal = fieldStruct[nr-1].length;
+			const int sizeOfConfig = sizeof(config)+2;
+			const int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
+			const int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
+			
+			if(_serialDebug == true){
+
+				DEBUG_PRINT(" ");
+				DEBUG_PRINT(nr);
+				DEBUG_PRINT(" | ");
+				DEBUG_PRINT(fieldStruct[nr-1].fieldLabel);
+				DEBUG_PRINT(" | Default value: ");
+				DEBUG_PRINT((*fieldStruct[nr-1].varPointer));
+				DEBUG_PRINT(" | Max. length: ");
+				DEBUG_PRINT(fieldStruct[nr-1].length-1);		
+				DEBUG_PRINT(" | EEPROM loc: ");
+				DEBUG_PRINT(eeBeg);
+				DEBUG_PRINT(" to ");
+				DEBUG_PRINT(eeEnd);
+			}
+
+			char* eepVal = new char[fieldStruct[nr-1].length + 1];
+			char* tmpVal = new char[fieldStruct[nr-1].length + 1];
+			for (int i = 0; i < fieldStruct[nr-1].length; i++) {
+				eepVal[i] = 0;
+				tmpVal[i] = 0;
+			}
+			if ((*fieldStruct[nr-1].varPointer) != NULL) {
+				strncpy(tmpVal, (*fieldStruct[nr-1].varPointer), fieldStruct[nr-1].length);
+			}
+			
+
+			// read eeprom, check for MAGICEEP and get the updated value if present
+			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
+
+				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+					// start after MAGICEEP
+					if(t != eeBeg && t != eeEnd && EEPROM.read(t) != 0){
+						//DEBUG_PRINTLN(EEPROM.read(t));
+						*((char*)eepVal + (t-eeBeg)-1) = EEPROM.read(t);
+					}
+				}
+				
+				// if eeprom value is different update the ret value
+				if(String(eepVal) != String((*fieldStruct[nr-1].varPointer))){
+					if(_serialDebug == true){
+						DEBUG_PRINT(" | Overwriting default with eeprom value: ");
+						DEBUG_PRINT(eepVal);
+					}
+					(*fieldStruct[nr-1].varPointer) = eepVal;
+				}else{
+					if(_serialDebug == true){
+						DEBUG_PRINT(" | Unchainged, keeping default value");
+						//DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
+					}
+				}
+				
+			}else{
+				
+				if(_serialDebug == true){
+					//DEBUG_PRINTLN(" NO existing EEPROM value found.");
+					DEBUG_PRINT(" | Writing default value to EEPROM.");
+				}
+				
+				// add MAGICEEP to value and write to eeprom
+				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+					//DEBUG_PRINT(t);
+					//DEBUG_PRINT("  | ");
+					if(t == eeBeg){
+						EEPROM.put(t, MAGICEEP[0]);						// magic begin marker
+						//DEBUG_PRINT(MAGICEEP[0]);
+					}else  if(t == eeEnd){
+						EEPROM.put(t, '^');								// magic end marker
+						//DEBUG_PRINT('^');
+					}else{
+						EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));	// byte of value`
+						//DEBUG_PRINT(*((char*)tmpVal + (t-eeBeg)-1));
+					}
+					//DEBUG_PRINTLN(" ");
+				}
+				
+				//DEBUG_PRINTLN(" ------------");
+			}
+		
+			// add values to the fieldstruct
+			//fieldStruct[_nrXF-1].varPointer = (*fieldStruct[nr-1].varPointer);
+			if(_serialDebug == true){
+				DEBUG_PRINTLN("");
+			}		
+		}
+		EEPROM.end();
+		if(_serialDebug == true){
+			DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+		}
 	}
 }
 
 void IOTAppStory::loopWiFiManager() {
-	if(_nrXF > 0){
-		for(unsigned int i = 0; i < _nrXF; i++){
-			// add the WiFiManagerParameter to parArray so it can be referenced to later
-			parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, fieldStruct[i].varPointer, fieldStruct[i].length);
-		}
+	for(unsigned int i = 0; i < _nrXF; i++){
+		// add the WiFiManagerParameter to parArray so it can be referenced to later
+		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, (*fieldStruct[i].varPointer), fieldStruct[i].length);
 	}
 	
 	// Just a quick hint
@@ -610,10 +653,8 @@ void IOTAppStory::loopWiFiManager() {
 	wifiManager.addParameter(&p_hint);
 
 	//add all parameters here
-	if(_nrXF > 0){
-		for(unsigned int i = 0; i < _nrXF; i++){
-			wifiManager.addParameter(&parArray[i]);
-		}
+	for(unsigned int i = 0; i < _nrXF; i++){
+		wifiManager.addParameter(&parArray[i]);
 	}
 
 	// Sets timeout in seconds until configuration portal gets turned off.
@@ -637,14 +678,11 @@ void IOTAppStory::loopWiFiManager() {
 	if(_serialDebug == true){DEBUG_PRINTLN(" ---------------------------");}
 	
 	//add all parameters here
-	if(_nrXF > 0){
-		for(unsigned int i = 0; i < _nrXF; i++){
-			strcpy(fieldStruct[i].varPointer, parArray[i].getValue());
-		}
+	for(unsigned int i = 0; i < _nrXF; i++){
+		strcpy((*fieldStruct[i].varPointer), parArray[i].getValue());
 	}
 	
-
-	writeConfig();
+	writeConfig(true);
 	readFullConfiguration();  // read back to fill all variables
 	//LEDswitch(None); // Turn LED off as we are not in configuration mode.
 	espRestart('N', "Configuration finished"); //Normal Operation
@@ -684,7 +722,7 @@ void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 }
 
 //---------- CONFIGURATION PARAMETERS ----------
-void IOTAppStory::writeConfig() {
+void IOTAppStory::writeConfig(bool wifiSave) {
 	//if(_serialDebug == true){DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");}
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
@@ -706,28 +744,57 @@ void IOTAppStory::writeConfig() {
 
 	// WRITE CONFIG TO EEPROM
 	for (unsigned int t = 0; t < sizeof(config); t++) EEPROM.write(t, *((char*)&config + t));
+	EEPROM.commit();
 	
-	if(_nrXF > 0){
+	if(wifiSave == true && _nrXF > 0){
 		// LOOP THREW ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
 		for (unsigned int nr = 1; nr <= _nrXF; nr++){
 			
-			const int sizeOfVal = fieldStruct[nr-1].length-1;
+			int prevTotLength = 0;
+			for(unsigned int i = 0; i < (nr-1); i++){
+				prevTotLength += fieldStruct[i].length;
+			}
+			const int sizeOfVal = fieldStruct[nr-1].length;
 			const int sizeOfConfig = sizeof(config)+2;
-			const int eeBeg = sizeOfConfig+((nr-1) * sizeOfVal)+nr+((nr-1)*2);
-			const int eeEnd = sizeOfConfig+(nr * sizeOfVal)+nr+1+((nr-1)*2);
+			const int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
+			const int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
+			
+			/*
+			DEBUG_PRINT(" EEPROM space: ");
+			DEBUG_PRINT(eeBeg);
+			DEBUG_PRINT("  to ");
+			DEBUG_PRINTLN(eeEnd);
+			DEBUG_PRINTLN(" ");
+			DEBUG_PRINT(" Size: ");
+			DEBUG_PRINTLN(sizeOfVal);
+			DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
+			*/
+			
+			char* tmpVal = new char[sizeOfVal + 1];
+			for (int i = 0; i <= sizeOfVal; i++) {
+				tmpVal[i] = 0;
+			}
+			if ((*fieldStruct[nr-1].varPointer) != NULL) {
+				strncpy(tmpVal, (*fieldStruct[nr-1].varPointer), fieldStruct[nr-1].length);
+			}
 
+			//DEBUG_PRINTLN("^^");
+			//DEBUG_PRINTLN(tmpVal);
+			//DEBUG_PRINTLN(" ");
+			
 			// check for MAGICEEP
-			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(fieldStruct[nr-1].length) == '\0'){
+			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
 					if(t == eeBeg){
-						EEPROM.put(t, MAGICEEP);
-						//DEBUG_PRINT(MAGICEEP);
-
+						EEPROM.put(t, MAGICEEP[0]);
+						//DEBUG_PRINTLN(MAGICEEP[0]);
+					}else if(t == eeEnd){
+						EEPROM.put(t, '^');
+						//DEBUG_PRINTLN('^');
 					}else{
-						EEPROM.put(t, *((char*)fieldStruct[nr-1].varPointer + (t-eeBeg)-1));
-						//DEBUG_PRINT(*((char*)fieldStruct[nr-1].varPointer + (t-eeBeg)-1));
-							
+						EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));
+						//DEBUG_PRINTLN(*((char*)tmpVal + (t-eeBeg)-1));
 					}
 				}
 			}
@@ -766,42 +833,15 @@ bool IOTAppStory::readConfig() {
 	return ret;
 }
 
-/*
-void IOTAppStory::routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged)) {
-	buttonEntry = org_buttonEntry;
-	buttonTime = org_buttonTime;
-	buttonChanged = org_buttonChanged;
-
-	if ((*buttonChanged) && (*buttonTime) > 3000) espRestart('C', "Going into Configuration Mode");  		// long button press > 4sec
-	if ((*buttonChanged) && (*buttonTime) > 500 && (*buttonTime) < 4000) callHome(); 				// long button press > 1sec
-	buttonChanged = false;
-
-	if(_serialDebug == true){
-		if (millis() - (*buttonEntry) > 5000) { 								// Non-Blocking second counter
-			(*buttonEntry) = millis();
-			if(_serialDebug == true){
-				DEBUG_PRINTLN("loop() running...");
-				DEBUG_PRINT("Heap ");
-				DEBUG_PRINTLN(ESP.getFreeHeap());
-				DEBUG_PRINTLN((*buttonTime));
-			}
-			//sendDebugMessage();
-		}
-	}
-}
-*/
-
 
 void IOTAppStory::routine() {
   unsigned long _buttonTime = -1;
-  	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
+  //pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
   
   int _buttonState = digitalRead(_modeButton);
-  
-
-  
+    
   if (buttonStateOld != _buttonState) {
-    Serial.println("button changed...");
+    Serial.println("* button changed *");
     delay(100);
     
     if (_buttonState == 0) {
@@ -810,10 +850,12 @@ void IOTAppStory::routine() {
         _buttonTime = millis() - buttonEntry;
         buttonEntry = millis();
     }
-    if (_serialDebug == true) {
+    /*
+	if (_serialDebug == true) {
        Serial.print("Time ");
        Serial.println(_buttonTime);
     }
+*/
     if (_buttonTime > 4000 && _buttonTime < 10000) espRestart('C', "Going into Configuration Mode");     // long button press > 4sec
     if (_buttonTime >  500 && _buttonTime < 4000) callHome();         // long button press > 1sec
   }
