@@ -26,6 +26,7 @@
 
 #define SKETCH "virginSoil "
 #define VERSION "V2.1.1"
+#define COMPDATE __DATE__ __TIME__
 
 // ================================================ PIN DEFINITIONS ======================================
 #ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
@@ -40,7 +41,7 @@
   
 #include <IOTAppStory.h>
 #include <IAS_Xtra_Func.h>
-IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
+IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
 
 // ================================================ SETUP ================================================
 void setup() {
@@ -49,7 +50,7 @@ void setup() {
   /* TIP! delete the above lines when not used */
   
 
-  IAS.begin(p,true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
