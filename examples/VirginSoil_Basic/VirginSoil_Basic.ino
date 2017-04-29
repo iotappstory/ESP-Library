@@ -40,7 +40,6 @@
 #endif
   
 #include <IOTAppStory.h>
-#include <IAS_Xtra_Func.h>
 IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
 
 // ================================================ SETUP ================================================
