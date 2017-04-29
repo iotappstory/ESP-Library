@@ -27,7 +27,10 @@
 
 #define SKETCH "virginSoil "
 #define VERSION "V2.1.1"
+#define COMPDATE __DATE__ __TIME__
 //#define LEDS_INVERSE          // LEDS on = GND
+
+
 
 // ================================================ PIN DEFINITIONS ======================================
 #ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
@@ -41,8 +44,7 @@
 #endif
   
 #include <IOTAppStory.h>
-#include <IAS_Xtra_Func.h>
-IOTAppStory IAS(SKETCH,VERSION,MODEBUTTON);
+IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
 
 
 
@@ -66,7 +68,7 @@ void setup() {
   //IAS.serialdebug(true,115200);                                    // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
 
-  //IAS.preSetConfig("yourBoardName");                               // preset Boardname
+  IAS.preSetConfig("VirginSoil-Full");                               // preset Boardname
   //IAS.preSetConfig("ssid","password");                             // preset Wifi
   //IAS.preSetConfig("ssid","password",true);                        // preset Wifi & automaticUpdate
   //IAS.preSetConfig("ssid","password","testboard");                 // preset Wifi & boardName
@@ -77,12 +79,12 @@ void setup() {
   IAS.addField(lbl1, "label1", "Label 1", 16);                       // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(lbl2, "label2", "Label 2", 16);                       // reference to org variable | field name | field label value | max char return
   IAS.addField(exampleURL, "url", "Example url", 80);
-  IAS.addField(timeZone, "timezone", "Timezone", 8);
-  IAS.addField(ledPin, "ledpin", "ledPin", 8);
+  IAS.addField(timeZone, "timezone", "Timezone", 4);
+  IAS.addField(ledPin, "ledpin", "ledPin", 2);
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true,LEDgreen);                                        // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true,LEDgreen);                                          // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
@@ -94,12 +96,12 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine();     // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.routine();                                                     // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
 
-  if (millis() - lastPrint > 5000) {                                    // Serial.print the example variables every 5 seconds
+  if (millis() - lastPrint > 10000) {                                // Serial.print the example variables every 5 seconds
     lastPrint = millis();
 
     Serial.print("Label 1: ");
@@ -117,7 +119,7 @@ void loop() {
     Serial.print("Led pin: ");
     Serial.println(atoi(ledPin));
     
-    Serial.print("-------------------------------------------");
+    Serial.println("-------------------------------------------");
   }
 
 }
