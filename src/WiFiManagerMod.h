@@ -37,13 +37,13 @@ const char HTTP_HEAD_END[] PROGMEM        = "</head><body><div class=\"container
 const char HTTP_PORTAL_OPTIONS[] PROGMEM  = "<form action=\"/wifi\" method=\"get\"><button class=\"btn\">Configuration</button></form><br/><form action=\"/i\" method=\"get\"><button class=\"btn\">Information</button></form><br/><form action=\"/addpage\" method=\"get\"><button class=\"btn\">Add Device to IAS</button></form><br/><form action=\"/close\" method=\"get\"><button class=\"btn\">Exit Portal</button></form><br/>";
 const char HTTP_ITEM[] PROGMEM            = "<div><a href=\"#p\" onclick=\"c(this)\">{v}</a>&nbsp;<span class=\"q {i}\">{r}%</span></div>";
 const char JSON_ITEM[] PROGMEM            = "{\"SSID\":\"{v}\", \"Encryption\":{i}, \"Quality\":\"{r}\"}";
-const char HTTP_FORM_START[] PROGMEM      = "<form method=\"get\" action=\"wifisave\"><label>SSID</label><input id=\"s\" name=\"s\" length=32 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" length=64 placeholder=\"password\">";
+const char HTTP_FORM_START[] PROGMEM      = "<form method=\"get\" action=\"wifisave\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\">";
 
-const char HTTP_FORM_ADD_DEV[] PROGMEM    = "<form method=\"get\" action=\"add\"><label>Device name</label><input id=\"n\" name=\"n\" length=6 placeholder=\"eg. Benchtester-1, LivingTemp\" required><small>Depending on your type of project, devices can be used again and again.<br><br>So whether this is one of your prototyping boards or a finished product mounted on location.<br><br>Name it accordingly for future ease of use.</small><br><br><label>IAS Device Activation Code</label><input id=\"d\" name=\"d\" length=6 placeholder=\"123456\" type=\"number\" title=\"6 digit number\" pattern=\"[0-9]{6}\" required><small>You can get this code from the \"Devices\" page in your Control Panel at IOTAppStory.com</small><br><br>";
+const char HTTP_FORM_ADD_DEV[] PROGMEM    = "<form method=\"get\" action=\"add\"><label>Device name</label><input id=\"n\" name=\"n\" maxlength=6 placeholder=\"eg. Benchtester-1, LivingTemp\" required><small>Depending on your type of project, devices can be used again and again.<br><br>So whether this is one of your prototyping boards or a finished product mounted on location.<br><br>Name it accordingly for future ease of use.</small><br><br><label>IAS Device Activation Code</label><input id=\"d\" name=\"d\" length=6 placeholder=\"123456\" type=\"number\" title=\"6 digit number\" pattern=\"[0-9]{6}\" required><small>You can get this code from the \"Devices\" page in your Control Panel at IOTAppStory.com</small><br><br>";
 const char HTTP_FORM_BACK[] PROGMEM    	  = "<form method=\"get\" action=\"\\\">";
 
 const char HTTP_FORM_LABEL[] PROGMEM      = "<label for=\"{i}\">{p}</label>";
-const char HTTP_FORM_PARAM[] PROGMEM      = "<input id=\"{i}\" name=\"{n}\" length={l} placeholder=\"{p}\" value=\"{v}\" {c}>";
+const char HTTP_FORM_PARAM[] PROGMEM      = "<input id=\"{i}\" name=\"{n}\" maxlength={l} placeholder=\"{p}\" value=\"{v}\" {c}>";
 const char HTTP_FORM_END[] PROGMEM        = "</form>"; //<button class=\"btn\" type=\"submit\">save</button>
 
 const char HTTP_FORM_BTN[] PROGMEM        = "<button class=\"btn\" type=\"{t}\">{b}</button>";
