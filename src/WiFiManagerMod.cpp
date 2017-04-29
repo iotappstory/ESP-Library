@@ -93,7 +93,7 @@ WiFiManager::~WiFiManager() {
 void WiFiManager::addParameter(WiFiManagerParameter *p) {
   _params[_paramsCount] = p;
   _paramsCount++;
-  DEBUG_WM(" Adding parameter");
+  DEBUG_WM("Adding parameter");
   DEBUG_WM(p->getID());
 }
 
@@ -205,14 +205,14 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
   int connRes = WiFi.waitForConnectResult();
   if (connRes == WL_CONNECTED){
 	  WiFi.mode(WIFI_AP_STA); //Dual mode works fine if it is connected to WiFi
-	  DEBUG_WM(" SET AP STA");
+	  DEBUG_WM("SET AP STA");
   	}
   	else {
     WiFi.mode(WIFI_AP); // Dual mode becomes flaky if not connected to a WiFi network.
     // When ESP8266 station is trying to find a target AP, it will scan on every channel,
     // that means ESP8266 station is changing its channel to scan. This makes the channel of ESP8266 softAP keep changing too..
     // So the connection may break. From http://bbs.espressif.com/viewtopic.php?t=671#p2531
-    DEBUG_WM(" SET AP");
+    DEBUG_WM("SET AP");
 	}
   _apName = apName;
   _apPassword = apPassword;
@@ -538,7 +538,7 @@ void WiFiManager::handleWifi() {
     }
 
   page += FPSTR(HTTP_FORM_START);
-  char parLength[2];
+  //char parLength[2];
   // add the extra parameters to the form
   for (int i = 0; i < _paramsCount; i++) {
     if (_params[i] == NULL) {
@@ -565,8 +565,8 @@ void WiFiManager::handleWifi() {
       pitem.replace("{i}", _params[i]->getID());
       pitem.replace("{n}", _params[i]->getID());
       pitem.replace("{p}", _params[i]->getPlaceholder());
-      snprintf(parLength, 2, "%d", _params[i]->getValueLength());
-      pitem.replace("{l}", parLength);
+      //snprintf(parLength, 2, "%d", _params[i]->getValueLength());
+      pitem.replace("{l}", String(_params[i]->getValueLength()-1));
       pitem.replace("{v}", _params[i]->getValue());
       pitem.replace("{c}", _params[i]->getCustomHTML());
     } else {
@@ -1083,7 +1083,7 @@ int WiFiManager::scanWifiNetworks(int **indicesptr) {
           cssid = WiFi.SSID(indices[i]);
           for (int j = i + 1; j < n; j++) {
             if(cssid == WiFi.SSID(indices[j])){
-              DEBUG_WM(" DUP AP: " + WiFi.SSID(indices[j]));
+              DEBUG_WM("DUP AP: " + WiFi.SSID(indices[j]));
               indices[j] = -1; // set dup aps to index -1
             }
           }
