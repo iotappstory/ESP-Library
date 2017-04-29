@@ -26,6 +26,7 @@
 
 #define SKETCH "INITLoader "
 #define VERSION "V1.0.0"
+#define COMPDATE __DATE__ __TIME__
 //#define LEDS_INVERSE          // LEDS on = GND
 
 // ================================================ PIN DEFINITIONS ======================================
@@ -40,8 +41,7 @@
 #endif
 
 #include <IOTAppStory.h>
-#include <IAS_Xtra_Func.h>
-IOTAppStory IAS(SKETCH, VERSION, MODEBUTTON);
+IOTAppStory IAS(SKETCH, VERSION, COMPDATE, MODEBUTTON);
 
 
 
@@ -51,7 +51,7 @@ void setup() {
   //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
   IAS.preSetConfig("INITLoader", false);         // preset Boardname, automatic upload false
 
-  IAS.begin(p, true, LEDgreen);           // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true, LEDgreen);           // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
   IAS.callHome(false);
 
   //-------- Your Setup starts from here ---------------
