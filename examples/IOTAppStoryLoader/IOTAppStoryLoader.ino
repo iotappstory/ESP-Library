@@ -49,9 +49,9 @@ IOTAppStory IAS(SKETCH, VERSION, COMPDATE, MODEBUTTON);
 void setup() {
   IAS.serialdebug(true);                  // 1st parameter: true or false for serial debugging. Default: false
   //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  IAS.preSetConfig("INITLoader", false);         // preset Boardname, automatic upload false
+  IAS.preSetConfig("INITLoader", false);	// preset Boardname, automatic upload false
 
-  IAS.begin(true, LEDgreen);           // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true, LEDgreen);							// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
   IAS.callHome(false);
 
   //-------- Your Setup starts from here ---------------
@@ -62,7 +62,8 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine(); // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+	IAS.routine();
  
   // if the scetch reaches this spot, no project was defined. Otherwise, it would load the defined sketch already before...
   Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
