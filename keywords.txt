@@ -21,6 +21,7 @@ begin	KEYWORD2
 routine	KEYWORD2
 ISRbuttonStateChanged	KEYWORD2
 callHome	KEYWORD2
+dPinConv	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
