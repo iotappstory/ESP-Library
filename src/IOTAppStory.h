@@ -45,7 +45,7 @@
 
 
     /* ------ ------ ------ Arduino library ------ ------ ------ */
-    #include "Arduino.h"
+    #include <Arduino.h>
 
 
     /* ------ ------ ------ begin necessary library's for using IOTAppStory ------ ------ ------ */
@@ -152,16 +152,16 @@
             WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             unsigned long buttonEntry, debugEntry;
             int buttonStateOld;
-//            volatile unsigned long (*buttonEntry);
-            unsigned long (*buttonTime);
-            volatile bool (*buttonChanged);
+            //volatile unsigned long (*buttonEntry);
+            //unsigned long (*buttonTime);
+            //volatile bool (*buttonChanged);
             //unsigned long debugEntry;
             //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
 
 
             /* ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ */
-            IOTAppStory(String appName, String appVersion, String compDate, int modeButton);
+            IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton);
 
             void serialdebug(bool onoff,int speed=115200);
 
@@ -197,7 +197,8 @@
 
             //void addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
-			void processField();
+            void processField();
+            int dPinConv(String orgVal);
 
             void initWiFiManager();
             void loopWiFiManager();
