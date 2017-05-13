@@ -1,6 +1,6 @@
-/* This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+/*
+	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
-
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -29,11 +29,11 @@
 #define COMPDATE __DATE__ __TIME__
 
 // ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
+#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
   #define MODEBUTTON 0
   #define LEDgreen 13
   //#define LEDred 12
-#else
+#else														// WeMos, NodeMCU etc D0-D16
   #define MODEBUTTON D3
   #define LEDgreen D7
   //#define LEDred D6
@@ -44,12 +44,12 @@ IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
 
 // ================================================ SETUP ================================================
 void setup() {
-  //IAS.serialdebug(true);                                                                                    // 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-  //IAS.serialdebug(true,115200);                                                                             // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
+  //IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
   /* TIP! delete the above lines when not used */
   
 
-  IAS.begin(true,LEDgreen);                                                                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true,LEDgreen);													// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
 
 
   //-------- Your Setup starts from here ---------------
@@ -60,7 +60,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine();                                            // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.routine();																		// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
