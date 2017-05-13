@@ -33,11 +33,11 @@
 
 
 // ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
+#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
   #define MODEBUTTON 0
   #define LEDgreen 13
   //#define LEDred 12
-#else
+#else														// WeMos, NodeMCU etc D0-D16
   #define MODEBUTTON D3
   #define LEDgreen D7
   //#define LEDred D6
