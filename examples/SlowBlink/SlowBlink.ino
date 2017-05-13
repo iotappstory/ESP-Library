@@ -32,7 +32,7 @@
 	#define MODEBUTTON 0
 	#define LEDgreen 13
 	//#define LEDred 12   
-#else				// WeMos, NodeMCU etc D0-D16
+#else													// WeMos, NodeMCU etc D0-D16
 	#define MODEBUTTON D3
 	#define LEDgreen D7
 	//#define LEDred D6
@@ -57,16 +57,16 @@ char* LEDpin = "14";						// The value given here is the default value and can b
 
 // ================================================ SETUP ================================================
 void setup() {
-	IAS.serialdebug(true);					// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-	//IAS.serialdebug(true,115200);				// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+	IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
+	//IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 	/* TIP! delete the above lines when not used */
 
-	IAS.preSetConfig("slowblink");				// preset Boardname
+	IAS.preSetConfig("slowblink");										// preset Boardname
 
-	IAS.addField(LEDpin, "ledpin", "ledPin", 2);		// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-								// reference to org variable | field name | field label value | max char return
+	IAS.addField(LEDpin, "ledpin", "ledPin", 2);			// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+																										// reference to org variable | field name | field label value | max char return
 
-	IAS.begin(true,LEDgreen);				// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer
+	IAS.begin(true,LEDgreen);													// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer
 
 
 	//-------- Your Setup starts from here ---------------
@@ -78,7 +78,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
 	yield();
-	IAS.routine();						// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+	IAS.routine();																		// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
 	//-------- Your Sketch starts from here ---------------
