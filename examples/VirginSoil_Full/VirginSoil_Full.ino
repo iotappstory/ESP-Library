@@ -1,7 +1,7 @@
 
-/* This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+/*
+	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
-
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -52,7 +52,9 @@ IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
 volatile unsigned long lastPrint;
 
 // We want to be able to edit these example variables from the wifi config manager
-// Currently only char arrays are supported. Use functions like atoi() and atof() to transform the char array to integers or floats
+// Currently only char arrays are supported. 
+// Use functions like atoi() and atof() to transform the char array to integers or floats
+// Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 char* lbl1        = "Light Show";
 char* lbl2        = "Living Room";
 char* exampleURL  = "http://someapi.com/getdata.php?userid=1234&key=7890abc";
