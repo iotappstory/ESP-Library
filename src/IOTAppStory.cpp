@@ -2,11 +2,11 @@
 	#include "IOTAppStory.h"
 #endif
 
-IOTAppStory::IOTAppStory(String appName, String appVersion, String compDate, int modeButton){
+IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
 	_appName = appName;
 	_appVersion = appVersion;
-	_firmware = appName+appVersion;
+	_firmware = String(appName)+String(appVersion);
 	_compDate = compDate;
 	_modeButton = modeButton;
 	readFullConfiguration();
@@ -282,7 +282,13 @@ void IOTAppStory::connectNetwork() {
 	if (MDNS.begin(config.boardName)) {
 		if(_serialDebug == true){
 			DEBUG_PRINT(" MDNS responder started: http://");
-			DEBUG_PRINTLN(hostNameWifi);
+			DEBUG_PRINT(hostNameWifi);
+			DEBUG_PRINTLN("");
+			DEBUG_PRINTLN("");
+			DEBUG_PRINTLN(" To use MDNS Install host software:");
+			DEBUG_PRINTLN(" - For Linux, install Avahi (http://avahi.org/)");
+			DEBUG_PRINTLN(" - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)");
+			DEBUG_PRINTLN(" - For Mac OSX and iOS support is built in through Bonjour already");
 			DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 		}
 	} else espRestart('N', "MDNS not started");
@@ -466,7 +472,7 @@ void IOTAppStory::initWiFiManager() {
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
-			if(_serialDebug == true){DEBUG_PRINT("After waiting ");}
+		if(_serialDebug == true){DEBUG_PRINT("After waiting ");}
 		int connRes = WiFi.waitForConnectResult();
 		float waited = (millis() - startedAt);
 		if(_serialDebug == true){
@@ -638,9 +644,67 @@ void IOTAppStory::processField(){
 		}
 	}
 }
+int IOTAppStory::dPinConv(String orgVal){
+	#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
+
+		//Serial.println("- Generic ESP's -");
+		if (orgVal == "D0" || orgVal == "16"){
+			return 16;
+		}else if (orgVal == "D1" || orgVal == "5"){
+			return 5;
+		}else if (orgVal == "D2" || orgVal == "4"){
+			return 4;
+		}else if (orgVal == "D4" || orgVal == "2"){
+			return 2;
+		}else if (orgVal == "D5" || orgVal == "14"){
+			return 14;
+		}else if (orgVal == "D6" || orgVal == "12"){
+			return 12;
+		}else if (orgVal == "D7" || orgVal == "13"){
+			return 13;
+		}else if (orgVal == "D8" || orgVal == "15"){
+			return 15;
+		}else if (orgVal == "D9" || orgVal == "3"){
+			return 3;
+		}else if (orgVal == "D10" || orgVal == "1"){
+			return 1;
+		}else{
+			return 16;
+		}
+
+	#else
+
+		//Serial.println("- Special ESP's -");
+		if (orgVal == "D0" || orgVal == "16"){
+			return D0;
+		}else if (orgVal == "D1" || orgVal == "5"){
+			return D1;
+		}else if (orgVal == "D2" || orgVal == "4"){
+			return D2;
+		}else if (orgVal == "D4" || orgVal == "2"){
+			return D4;
+		}else if (orgVal == "D5" || orgVal == "14"){
+			return D5;
+		}else if (orgVal == "D6" || orgVal == "12"){
+			return D6;
+		}else if (orgVal == "D7" || orgVal == "13"){
+			return D7;
+		}else if (orgVal == "D8" || orgVal == "15"){
+			return D7;
+		}else if (orgVal == "D9" || orgVal == "3"){
+			return D7;
+		}else if (orgVal == "D10" || orgVal == "1"){
+			return D7;
+		}else{
+			return D0;
+		}
+
+	#endif
+}
 
 void IOTAppStory::loopWiFiManager() {
 	for(unsigned int i = 0; i < _nrXF; i++){
+		
 		// add the WiFiManagerParameter to parArray so it can be referenced to later
 		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, (*fieldStruct[i].varPointer), fieldStruct[i].length);
 	}
