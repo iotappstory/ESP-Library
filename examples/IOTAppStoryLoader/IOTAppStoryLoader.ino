@@ -1,6 +1,6 @@
-/* This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+/*
+	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
-
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -30,14 +30,14 @@
 //#define LEDS_INVERSE          // LEDS on = GND
 
 // ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
-#define MODEBUTTON 0
-#define LEDgreen 13
-//#define LEDred 12
-#else
-#define MODEBUTTON D3
-#define LEDgreen D7
-//#define LEDred D6
+#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
+  #define MODEBUTTON 0
+  #define LEDgreen 13
+  //#define LEDred 12
+#else														// WeMos, NodeMCU etc D0-D16
+  #define MODEBUTTON D3
+  #define LEDgreen D7
+  //#define LEDred D6
 #endif
 
 #include <IOTAppStory.h>
