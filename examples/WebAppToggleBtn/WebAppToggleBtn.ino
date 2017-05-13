@@ -36,14 +36,14 @@
 #define COMPDATE __DATE__ __TIME__
 
 // ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
-	#define MODEBUTTON 0
-	#define LEDgreen 13
-	//#define LEDred 12
-#else
-	#define MODEBUTTON D3
-	#define LEDgreen D7
-	//#define LEDred D6
+#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
+  #define MODEBUTTON 0
+  #define LEDgreen 13
+  //#define LEDred 12
+#else														// WeMos, NodeMCU etc D0-D16
+  #define MODEBUTTON D3
+  #define LEDgreen D7
+  //#define LEDred D6
 #endif
 
 #include <IOTAppStory.h>
@@ -56,14 +56,14 @@ ESP8266WebServer server(80);
 
 // ================================================ EXAMPLE VARS =========================================
 // Variables will change:
-int ledState = LOW;		// the current state of the output pin
-int buttonState;		// the current reading from the input pin
+int ledState = LOW;					// the current state of the output pin
+int buttonState;						// the current reading from the input pin
 int lastButtonState = LOW;	// the previous reading from the input pin
 
 // the following variables are long's because the time, measured in miliseconds,
 // will quickly become a bigger number than can be stored in an int.
 long lastDebounceTime = 0;	// the last time the output pin was toggled
-long debounceDelay = 50;	// the debounce time; increase if the output flickers
+long debounceDelay = 50;		// the debounce time; increase if the output flickers
 
 // We want to be able to edit these example variables from the wifi config manager
 // Currently only char arrays are supported. (Keep in mind that html form fields always return Strings)
