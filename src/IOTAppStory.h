@@ -129,6 +129,7 @@
 
                 bool automaticUpdate;	// right after boot
                 char compDate[STRUCT_COMPDATE_SIZE];
+				char devPass[7];
 				
                 char magicBytes[4];
             } strConfig;
@@ -174,8 +175,8 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate);
 
-            void begin(int feedBackLed=-1, bool bootstats=true);
-            void firstBoot();
+            void begin(int feedBackLed=-1, bool bootstats=true, bool ea=false); // ea = erase all
+            void firstBoot(bool ea=false);
 
             bool readRTCmem();
             void writeRTCmem();
