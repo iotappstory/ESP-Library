@@ -28,18 +28,28 @@ extern "C" {
 #define WFM_LABEL_BEFORE 1
 #define WFM_LABEL_AFTER 2
 #define WFM_NO_LABEL 0
+#define WIFI_MANAGER_MAX_PARAMS 25
 
 const char HTTP_200[] PROGMEM             = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 const char HTTP_HEAD[] PROGMEM            = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><title>{v}</title>";
-const char HTTP_STYLE[] PROGMEM           = "<style>body,textarea,input,select{background: 0;border-radius: 0;font: 16px sans-serif;margin: 0}body{background:#000;color:#FFF;}body a{color:#FFF;}body a:hover{text-decoration:none;}textarea,input,select{outline:0;font-size:14px;color:#FFF;border:1px solid #ccc;padding:8px;width:90%;}.btn a{text-decoration: none}.container{margin: auto;width: 90%}@media(min-width:1200px){.container{margin: auto;width: 30%}}@media(min-width:768px) and (max-width:1200px){.container{margin: auto;width: 50%}}.btn,h2{font-size: 2em}h1{font-size: 3em}.btn{background: #fcbc12;border-radius: 4px;border: 0;color: #fff;cursor: pointer;display: inline-block;margin: 2px 0;padding: 9px 14px 10px;width: 100%}.btn:hover{background: #d3d3d3}.btn:active,.btn:focus{background: #d3d3d3}label>*{display: inline}form>*{display: block;margin-bottom: 10px}textarea:focus,input:focus,select:focus{border-color: #fcbc12}.msg{background: #364048;padding: 1.5em;border-radius:4px;}.q{float: right;width: 64px;text-align: right}.l{background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNrsV89rE0EUfm83odVaFKmWhlIPWlAUxFZb8SSieJEWeirqUXrxqH+C99JDjz3k4MGDYPVUCoInUWpOokJVEIRiaSldE8Qks89vNhPdbjbZ3XRLD2bIx87uzLz3zfs1ExYR2s+WafwEQuUNPN2otTbQCzDgAKpBjtUNDUcSEqhukaxcJylvQnQmbM0tYBoYAfrMN824ADwBXnhfVJH4+CTxuYWEBOASqWwDW0ECw8A8cCNEzjHgDHAHWAbug8AqqZJnnmQEsILZrin/R+Ai8BwYiOFWTfAV1k4wWSvJY0C8H/lCcxBYDFGuzf7F9E/63EG1ubJIVnYc+/neioAVY0dzQM73/gt4CJwFLhvo/gMzZiR35aj4aU6+PiIqfWgqnBvSsLJJ7usxBOGGdoEOtHe+0d/AJLDURN5NY60u+BGJVEFGOaPWhccFHrjdlgWmAu+zLZSTGZutB7MXQ5nsFHG2bReM+hMUyMdwWd7MDZORmMBRXx95SWsxCKyZuWEyEhPwj6udydG0SaAqWrshkMZBIbshoAKCnBgKnZ1KRbF9MEkl1FXQOoXetUD+9/hynVvs9oCZ+7ceyPqzGS6vv6Tc3c/BjGisA6WPJ9y3V9+IW+6PV6cimq4H1Z+6vP+wrhTGqef0t9YuKL4fw0GUjvJ6PbAP4VHth+xLkTEgnnWZ0m+s/cNxgnAvr0jSzmG0p61DoEOgQ2DfCYT881B2vR6mW4HEyI4gwN1Dq7poinJSNJBbK/CQHW2B3vMFHrw3TdVtXEjtbDoEVIUzh59q2dHX8v8tCP8IMADfe61URz1LDwAAAABJRU5ErkJggg==') no-repeat left center;background-size: 1em}input[type='checkbox']{float: left;width: 20px}.table{width:100%}.table td{padding:.5em;text-align:left}.table tbody>:nth-child(2n-1){background:#364048}</style>";
+const char HTTP_STYLE[] PROGMEM           = "<style>html{width:100%;height:100%;padding:0 0 0 0;margin:0 0 0 0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*, *:before, *:after{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body,textarea,input,select{background:0;border-radius:0;font:16px sans-serif;margin:0}body{background:#000;color:#FFF}body a{color:#FFF}body a:hover{text-decoration:none}textarea,input,select{outline:0;font-size:14px;color:#FFF;border:1px solid #ccc;padding:8px;width:100%}.btn a{text-decoration:none}.container{margin:auto;width:90%}@media(min-width:1200px){.container{margin:auto;width:30%}}@media(min-width:768px) and (max-width:1200px){.container{margin:auto;width:50%}}.btn,h2{font-size:2em}h1{font-size:3em}.btn{background:#fcbc12;border-radius:4px;border:0;color:#fff;cursor:pointer;display:inline-block;margin:2px 0;padding:9px 14px 10px;width:100%}.btn:hover{background:#d3d3d3}.btn:active,.btn:focus{background:#d3d3d3}label>*{display:inline}form>*{display:block;margin-bottom:10px}textarea:focus,input:focus,select:focus{border-color:#fcbc12}.msg{background:#364048;padding:1.5em;border-radius:4px}.q{float:right;width:64px;text-align:right}.l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNrsV89rE0EUfm83odVaFKmWhlIPWlAUxFZb8SSieJEWeirqUXrxqH+C99JDjz3k4MGDYPVUCoInUWpOokJVEIRiaSldE8Qks89vNhPdbjbZ3XRLD2bIx87uzLz3zfs1ExYR2s+WafwEQuUNPN2otTbQCzDgAKpBjtUNDUcSEqhukaxcJylvQnQmbM0tYBoYAfrMN824ADwBXnhfVJH4+CTxuYWEBOASqWwDW0ECw8A8cCNEzjHgDHAHWAbug8AqqZJnnmQEsILZrin/R+Ai8BwYiOFWTfAV1k4wWSvJY0C8H/lCcxBYDFGuzf7F9E/63EG1ubJIVnYc+/neioAVY0dzQM73/gt4CJwFLhvo/gMzZiR35aj4aU6+PiIqfWgqnBvSsLJJ7usxBOGGdoEOtHe+0d/AJLDURN5NY60u+BGJVEFGOaPWhccFHrjdlgWmAu+zLZSTGZutB7MXQ5nsFHG2bReM+hMUyMdwWd7MDZORmMBRXx95SWsxCKyZuWEyEhPwj6udydG0SaAqWrshkMZBIbshoAKCnBgKnZ1KRbF9MEkl1FXQOoXetUD+9/hynVvs9oCZ+7ceyPqzGS6vv6Tc3c/BjGisA6WPJ9y3V9+IW+6PV6cimq4H1Z+6vP+wrhTGqef0t9YuKL4fw0GUjvJ6PbAP4VHth+xLkTEgnnWZ0m+s/cNxgnAvr0jSzmG0p61DoEOgQ2DfCYT881B2vR6mW4HEyI4gwN1Dq7poinJSNJBbK/CQHW2B3vMFHrw3TdVtXEjtbDoEVIUzh59q2dHX8v8tCP8IMADfe61URz1LDwAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em}input[type='checkbox']{float:left;width:20px}.table{width:100%}.table td{padding:.5em;text-align:left}.table tbody>:nth-child(2n-1){background:#364048}</style>";
 const char HTTP_SCRIPT[] PROGMEM          = "<script>function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}</script>";
 const char HTTP_HEAD_END[] PROGMEM        = "</head><body><div class=\"container\">";
-const char HTTP_PORTAL_OPTIONS[] PROGMEM  = "<form action=\"/wifi\" method=\"get\"><button class=\"btn\">Configuration</button></form><br/><form action=\"/i\" method=\"get\"><button class=\"btn\">Information</button></form><br/><form action=\"/addpage\" method=\"get\"><button class=\"btn\">Add Device to IAS</button></form><br/><form action=\"/close\" method=\"get\"><button class=\"btn\">Exit Portal</button></form><br/>";
+const char HTTP_PORTAL_OPTIONS[] PROGMEM  = "<form action=\"/wifi\" method=\"get\"><button class=\"btn\">Configuration</button></form><br/><form action=\"/i\" method=\"get\"><button class=\"btn\">Information</button></form><br/>{q}<form action=\"/close\" method=\"get\"><button class=\"btn\">Exit Portal</button></form><br/>";
+
+const char HTTP_PORTAL_IASCFG[] PROGMEM   = "<form action=\"/ias\" target\"_blank\"><button class=\"btn\">IOTAppStory Cfg.</button></form><br/>";
+const char HTTP_PORTAL_INFO[] PROGMEM     = "<br><h3>AccessPoint Data</h3><table class=\"table\"><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>SSID</td><td>{si}</td></tr><tr><td>Access Point IP</td><td>{api}</td></tr><tr><td>Access Point MAC</td><td>{apm}</td></tr></tbody></table><br><h3>Device Data</h3><table class=\"table\"><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>Chip ID</td><td>{cid}</td></tr><tr><td>Flash Chip ID</td><td>{fid}</td></tr><tr><td>IDE Flash Size</td><td>{ifs} bytes</td></tr><tr><td>Real Flash Size</td><td>{rfs} bytes</td></tr><tr><td>Device IP</td><td>{dip}</td></tr><tr><td>Device MAC</td><td>{mac}</td></tr></tbody></table><br><h3>Available Pages</h3><table class=\"table\"><thead><tr><th>Page</th><th>Function</th></tr></thead><tbody><tr><td><a href=\"/\">/</a></td><td>Menu page.</td></tr><tr><td><a href=\"/wifi\">/wifi</a></td><td>Show WiFi scan results and enter WiFi configuration.</td></tr><tr><td><a href=\"/wifisave\">/wifisave</a></td><td>Save WiFi configuration information and configure device. Needs variables supplied.</td></tr><tr><td><a href=\"/close\">/close</a></td><td>Close the configuration server and configuration WiFi network.</td></tr><tr><td><a href=\"/i\">/i</a></td><td>This page.</td></tr><tr><td><a href=\"/r\">/r</a></td><td>Delete WiFi configuration and reboot. ESP device will not reconnect to a network until new WiFi configuration data is entered.</td></tr><tr><td><a href=\"/state\">/state</a></td><td>Current device state in JSON format. Interface for programmatic WiFi configuration.</td></tr><tr><td><a href=\"/scan\">/scan</a></td><td>Run a WiFi scan and return results in JSON format. Interface for programmatic WiFi configuration.</td></tr></table><p/>More information about WiFiManager at <a href=\"https://github.com/kentaylor/WiFiManager\">https://github.com/kentaylor/WiFiManager</a>.";
+
 const char HTTP_ITEM[] PROGMEM            = "<div><a href=\"#p\" onclick=\"c(this)\">{v}</a>&nbsp;<span class=\"q {i}\">{r}%</span></div>";
 const char JSON_ITEM[] PROGMEM            = "{\"SSID\":\"{v}\", \"Encryption\":{i}, \"Quality\":\"{r}\"}";
+
+
+
 const char HTTP_FORM_START[] PROGMEM      = "<form method=\"get\" action=\"wifisave\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\">";
 
-const char HTTP_FORM_ADD_DEV[] PROGMEM    = "<form method=\"get\" action=\"add\"><label>Device name</label><input id=\"n\" name=\"n\" maxlength=6 placeholder=\"eg. Benchtester-1, LivingTemp\" required><small>Depending on your type of project, devices can be used again and again.<br><br>So whether this is one of your prototyping boards or a finished product mounted on location.<br><br>Name it accordingly for future ease of use.</small><br><br><label>IAS Device Activation Code</label><input id=\"d\" name=\"d\" length=6 placeholder=\"123456\" type=\"number\" title=\"6 digit number\" pattern=\"[0-9]{6}\" required><small>You can get this code from the \"Devices\" page in your Control Panel at IOTAppStory.com</small><br><br>";
+
+
+
 const char HTTP_FORM_BACK[] PROGMEM    	  = "<form method=\"get\" action=\"\\\">";
 
 const char HTTP_FORM_LABEL[] PROGMEM      = "<label for=\"{i}\">{p}</label>";
@@ -51,7 +61,7 @@ const char HTTP_FORM_BTN[] PROGMEM        = "<button class=\"btn\" type=\"{t}\">
 const char HTTP_SAVED[] PROGMEM           = "<div class=\"msg\"><strong>Credentials Saved</strong><br>Trying to connect ESP to the {x} network.<br>Give it 10 seconds or so and check <a href=\"/\">how it went.</a> <p/>The {v} network you are connected to will be restarted on the radio channel of the {x} network. You may have to manually reconnect to the {v} network.</div>";
 const char HTTP_END[] PROGMEM             = "</div></body></html>";
 
-#define WIFI_MANAGER_MAX_PARAMS 25
+
 
 class WiFiManagerParameter {
   public:
@@ -96,6 +106,8 @@ class WiFiManager
 
     // get the AP name of the config portal, so it can be used in the callback
     String        getConfigPortalSSID();
+	
+	String 		  devPass = "000000"; 						// added for IOTAppStory
 
     void          resetSettings();
 
@@ -160,6 +172,7 @@ class WiFiManager
 	int numberOfNetworks;
 	int *networkIndices;
     int **networkIndicesptr = &networkIndices;
+	
 
     IPAddress     _ap_static_ip;
     IPAddress     _ap_static_gw;
@@ -191,8 +204,14 @@ class WiFiManager
     void          handleState();
     void          handleScan();
 
+    void          handleIAScfg();				// added for IAS
     void          handleAddPage();				// added for IAS
-    void          handleAdd();					// added for IAS
+    void          handleDevSave();				// added for IAS
+    void          handleEditProPage();			// added for IAS
+    void          handleNewProPage();			// added for IAS
+    void          handleAddToProPage();			// added for IAS
+    void          handleSavePro();				// added for IAS
+    void          handleSaveATP();				// added for IAS
 
     void          handleReset();
     void          handleNotFound();
