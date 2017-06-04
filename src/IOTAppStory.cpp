@@ -12,7 +12,7 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 	readFullConfiguration();
 }
 
-void IOTAppStory::firstBoot(){
+void IOTAppStory::firstBoot(bool ea){
 	if(_serialDebug == true){
 		DEBUG_PRINT(" Running first boot sequence for ");
 		DEBUG_PRINTLN(_firmware);
@@ -22,7 +22,16 @@ void IOTAppStory::firstBoot(){
 	// get json config......
 	
 	// erase eeprom after config (delete extra field data etc.)
-	eraseFlash((sizeof(config)+2),EEPROM_SIZE);
+	if(ea == true){
+		eraseFlash(0,EEPROM_SIZE);
+		
+		String emty = "000000";
+		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.devPass, 7);
+	}else{
+		eraseFlash((sizeof(config)+2),EEPROM_SIZE);	
+	}
 	
 	// update first boot config flag (date)
 	//String tmpdate = _compDate;
@@ -44,7 +53,7 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 }
 
 void IOTAppStory::preSetConfig(String boardName){
-    	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
+    boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
 }
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
 	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
@@ -80,7 +89,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 }
 
 
-void IOTAppStory::begin(int feedBackLed, bool bootstats){
+void IOTAppStory::begin(int feedBackLed, bool bootstats, bool ea){
 	if(_serialDebug == true){
 		DEBUG_PRINTLN("");
 		DEBUG_PRINTLN("");
@@ -106,7 +115,6 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats){
 		DEBUG_PRINTLN(config.automaticUpdate);
 		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 	}
-	
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
@@ -133,7 +141,7 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats){
 	}
 
 	// on first boot of the app run the firstBoot() function
-	if(String(config.compDate) != String(_compDate)){firstBoot();}
+	if(String(config.compDate) != String(_compDate)){firstBoot(ea);}
 
 	// process added fields
 	processField();
@@ -490,6 +498,7 @@ void IOTAppStory::initWiFiManager() {
 			DEBUG_PRINTLN(WiFi.localIP());
 		}
 	}
+	
 }
 
 /*
@@ -714,6 +723,7 @@ void IOTAppStory::loopWiFiManager() {
 
 	// Initialize WiFIManager
 	WiFiManager wifiManager;
+	wifiManager.devPass = String(config.devPass);
 	wifiManager.addParameter(&p_hint);
 
 	//add all parameters here
@@ -745,6 +755,8 @@ void IOTAppStory::loopWiFiManager() {
 	for(unsigned int i = 0; i < _nrXF; i++){
 		strcpy((*fieldStruct[i].varPointer), parArray[i].getValue());
 	}
+	wifiManager.devPass.toCharArray(config.devPass,7);
+	//DEBUG_PRINTLN(wifiManager.devPass);
 	
 	writeConfig(true);
 	readFullConfiguration();  // read back to fill all variables
@@ -796,10 +808,12 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 			DEBUG_PRINT("Stored ");
 			DEBUG_PRINT(config.ssid);
 			DEBUG_PRINTLN("  ");
-			//   DEBUG_PRINTLN(config.password);
+			//   DEBUG_PRINTLN(config.password);   devPass
 		}
 		*/
 	}
+	
+	
 	
 	EEPROM.begin(EEPROM_SIZE);
 	config.magicBytes[0] = MAGICBYTES[0];
