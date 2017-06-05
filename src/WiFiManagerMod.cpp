@@ -488,38 +488,11 @@ void WiFiManager::handleRoot() {
 
 /** IOTAppStory config page handler */
 void WiFiManager::handleIAScfg() {
-
-	if(server->arg("d") != ""){
-		devPass = server->arg("d");
-	}
-	//Serial.print(devPass);
 	
 	const char* host = "iotappstory.com";
 	String line = "";
+	String urlbeg = "";
 	String url = "";
-
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-		
-	
-	if(devPass == "000000"){
-		
-		
-		// We now create a URI for the request
-		url = "/ota/cnf/ias-id.php";
-		
-	}else{
-
-		// We now create a URI for the request
-		url = "/ota/cnf/dev_check.php";
-	}
-	
 	
 	url += "?chip_id=";
 	url += ESP.getChipId();
@@ -529,12 +502,56 @@ void WiFiManager::handleIAScfg() {
 	url += ESP.getFlashChipRealSize();
 	url += "&mac=";
 	url += WiFi.macAddress();
+	
+	// Use WiFiClient class to create TCP connections
+	WiFiClient client;
+	
+	if (!client.connect(host, 80)) {
+		Serial.println("connection failed");
+		return;
+	}
+	
+	
+	
+
+	//Serial.print(devPass);
+	
+
+/*
+
+		if(line == "1"){
+			devPass = server->arg("d");	
+			line = "";
+		}
+*/
+		
+	if(server->arg("d") != ""){
+		
+		// We now create a URI for the request
+		urlbeg = "/ota/cnf/ias-check.php";
+		url += "&ias_id=";
+		url += server->arg("d");
+		
+	}else if(devPass == "000000"){
+		
+		// We now create a URI for the request
+		urlbeg = "/ota/cnf/ias-id.php";
+		
+	}else{
+
+		// We now create a URI for the request
+		urlbeg = "/ota/cnf/dev_check.php";
+		
+	}
+	
+	
+
 
 	//Serial.print("Requesting URL: ");
 	//Serial.println(url);
 
 	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+	client.print(String("GET ") + urlbeg + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
 	unsigned long timeout = millis();
 	while (client.available() == 0) {
 		if (millis() - timeout > 5000) {
@@ -544,16 +561,22 @@ void WiFiManager::handleIAScfg() {
 		}
 	}
 
-
-	bool st = 0;
+	int st = 0;
 	// Read all the lines of the reply from server and print them to Serial
 	while(client.available()){
 			// from : close
 			if(st == 0){
 				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
+				st++;
+			}else if(st == 1){
+				line += client.readStringUntil('\r');
+				st++;
+			}else if(st == 2){
+				if(client.readStringUntil('\r') == "1"){
+					Serial.println(client.readStringUntil('\r'));
+					devPass = server->arg("d");
+				}
+				st++;
 			}
 	}
 
