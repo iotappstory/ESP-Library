@@ -25,6 +25,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
+#define IASCNF 1
 #define WFM_LABEL_BEFORE 1
 #define WFM_LABEL_AFTER 2
 #define WFM_NO_LABEL 0
@@ -204,6 +205,7 @@ class WiFiManager
     void          handleState();
     void          handleScan();
 
+#if IASCNF == 1
     void          handleIAScfg();				// added for IAS
     void          handleAddPage();				// added for IAS
     void          handleDevSave();				// added for IAS
@@ -212,6 +214,7 @@ class WiFiManager
     void          handleAddToProPage();			// added for IAS
     void          handleSavePro();				// added for IAS
     void          handleSaveATP();				// added for IAS
+#endif
 
     void          handleReset();
     void          handleNotFound();
