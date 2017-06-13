@@ -150,16 +150,17 @@ void WiFiManager::setupConfigPortal() {
   server->on("/state", std::bind(&WiFiManager::handleState, this));
   server->on("/scan", std::bind(&WiFiManager::handleScan, this));
   
-  server->on("/ias", std::bind(&WiFiManager::handleIAScfg, this));
-  server->on("/addpage", std::bind(&WiFiManager::handleAddPage, this));
-  server->on("/add", std::bind(&WiFiManager::handleDevSave, this));
-  
-  server->on("/editPro", std::bind(&WiFiManager::handleEditProPage, this));
-  server->on("/newPro", std::bind(&WiFiManager::handleNewProPage, this));
-  server->on("/addToPro", std::bind(&WiFiManager::handleAddToProPage, this));
-  server->on("/savePro", std::bind(&WiFiManager::handleSavePro, this));
-  server->on("/saveATP", std::bind(&WiFiManager::handleSaveATP, this));
-  
+  #if IASCNF == 1
+	  server->on("/ias", std::bind(&WiFiManager::handleIAScfg, this));
+	  server->on("/addpage", std::bind(&WiFiManager::handleAddPage, this));
+	  server->on("/add", std::bind(&WiFiManager::handleDevSave, this));
+	  
+	  server->on("/editPro", std::bind(&WiFiManager::handleEditProPage, this));
+	  server->on("/newPro", std::bind(&WiFiManager::handleNewProPage, this));
+	  server->on("/addToPro", std::bind(&WiFiManager::handleAddToProPage, this));
+	  server->on("/savePro", std::bind(&WiFiManager::handleSavePro, this));
+	  server->on("/saveATP", std::bind(&WiFiManager::handleSaveATP, this));
+  #endif
   
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
@@ -486,6 +487,8 @@ void WiFiManager::handleRoot() {
 
 }
 
+
+#if IASCNF == 1
 /** IOTAppStory config page handler */
 void WiFiManager::handleIAScfg() {
 	
@@ -915,7 +918,7 @@ void WiFiManager::handleAddToProPage() {
 
   DEBUG_WM(F("Sent Add Device to IAS page"));
 }
-
+#endif
 
 
 /** Wifi config page handler */
@@ -1261,7 +1264,7 @@ void WiFiManager::handleScan() {
 
 
 
-
+#if IASCNF == 1
 /* Handle the add device to IAS request */				// added for IAS
 void WiFiManager::handleDevSave() {
 	// form parameters
@@ -1547,7 +1550,7 @@ void WiFiManager::handleSaveATP() {
   
 	DEBUG_WM(F("Sent add device result page."));
 }
-
+#endif
 
 
 
