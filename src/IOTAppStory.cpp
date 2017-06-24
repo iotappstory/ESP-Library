@@ -23,14 +23,17 @@ void IOTAppStory::firstBoot(bool ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == true){
-		eraseFlash(0,EEPROM_SIZE);
+		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
+		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
+		
 		
 		String emty = "000000";
+		emty.toCharArray(config.devPass, 7);
+		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		emty.toCharArray(config.devPass, 7);
 	}else{
-		eraseFlash((sizeof(config)+2),EEPROM_SIZE);	
+		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
 	}
 	
 	// update first boot config flag (date)
@@ -141,7 +144,9 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats, bool ea){
 	}
 
 	// on first boot of the app run the firstBoot() function
-	if(String(config.compDate) != String(_compDate)){firstBoot(ea);}
+	if(String(config.compDate) != String(_compDate)){
+		firstBoot(ea);
+	}
 
 	// process added fields
 	processField();
