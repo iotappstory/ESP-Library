@@ -8,7 +8,7 @@
     #define MAXNUMEXTRAFIELDS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
-    #define MAX_WIFI_RETRIES 50
+    #define MAX_WIFI_RETRIES 15
     #define RTCMEMBEGIN 68
     #define MAGICBYTE 85
     #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
