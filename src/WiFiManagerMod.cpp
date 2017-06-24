@@ -491,12 +491,62 @@ void WiFiManager::handleRoot() {
 #if IASCNF == 1
 /** IOTAppStory config page handler */
 void WiFiManager::handleIAScfg() {
-	
+
+	if(server->arg("d") != ""){
+
+		hdlIasCfgPages("IOTAppStory.com config","ias-check.php","&ias_id="+server->arg("d"));
+		
+	}else if(devPass == "000000"){
+
+		hdlIasCfgPages("IOTAppStory.com config","ias-id.php");
+		
+	}else{
+
+		hdlIasCfgPages("IOTAppStory.com config","dev_check.php");
+
+	}
+}
+
+/** IOTAppStory add device page handler */
+void WiFiManager::handleAddPage() {
+	hdlIasCfgPages("Add Device","dev_new.php");
+}
+
+
+/** IOTAppStory edit project page handler */
+void WiFiManager::handleEditProPage() {
+	hdlIasCfgPages("Edit Project","proj_edit.php");
+}
+
+
+/** IOTAppStory new project page handler */
+void WiFiManager::handleNewProPage() {
+	hdlIasCfgPages("New Project","proj_edit.php","&new=1");
+}
+
+
+/** IOTAppStory add to existing project page handler */
+void WiFiManager::handleAddToProPage() {
+	hdlIasCfgPages("Add to a Project","proj_addto.php");
+}
+
+
+void WiFiManager::hdlIasCfgPages(String title, String file, String para){
 	const char* host = "iotappstory.com";
-	String line = "";
-	String urlbeg = "";
-	String url = "";
 	
+	////Serial.print("connecting to ");
+	////Serial.println(host);
+
+	// Use WiFiClient class to create TCP connections
+	WiFiClient client;
+	
+	if (!client.connect(host, 80)) {
+		//Serial.println("connection failed");
+		return;
+	}
+
+	// We now create a URI for the request
+	String url = "/ota/cnf/" + file;
 	url += "?chip_id=";
 	url += ESP.getChipId();
 	url += "&flash_chip_id=";
@@ -505,56 +555,13 @@ void WiFiManager::handleIAScfg() {
 	url += ESP.getFlashChipRealSize();
 	url += "&mac=";
 	url += WiFi.macAddress();
-	
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-	
-	
-	
-
-	//Serial.print(devPass);
-	
-
-/*
-
-		if(line == "1"){
-			devPass = server->arg("d");	
-			line = "";
-		}
-*/
-		
-	if(server->arg("d") != ""){
-		
-		// We now create a URI for the request
-		urlbeg = "/ota/cnf/ias-check.php";
-		url += "&ias_id=";
-		url += server->arg("d");
-		
-	}else if(devPass == "000000"){
-		
-		// We now create a URI for the request
-		urlbeg = "/ota/cnf/ias-id.php";
-		
-	}else{
-
-		// We now create a URI for the request
-		urlbeg = "/ota/cnf/dev_check.php";
-		
-	}
-	
-	
-
+	url += para;
 
 	//Serial.print("Requesting URL: ");
 	//Serial.println(url);
 
 	// This will send the request to the server
-	client.print(String("GET ") + urlbeg + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
 	unsigned long timeout = millis();
 	while (client.available() == 0) {
 		if (millis() - timeout > 5000) {
@@ -563,6 +570,7 @@ void WiFiManager::handleIAScfg() {
 			return;
 		}
 	}
+	String line = "";
 
 	int st = 0;
 	// Read all the lines of the reply from server and print them to Serial
@@ -570,250 +578,16 @@ void WiFiManager::handleIAScfg() {
 			// from : close
 			if(st == 0){
 				client.readStringUntil('{hstart}');
-				st++;
+				st = 1;
 			}else if(st == 1){
 				line += client.readStringUntil('\r');
-				st++;
+				st = 2;
 			}else if(st == 2){
 				if(client.readStringUntil('\r') == "1"){
 					Serial.println(client.readStringUntil('\r'));
 					devPass = server->arg("d");
 				}
-				st++;
-			}
-	}
-
-	
-	
-
-
-	
-	
-	
-	
-	
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "IOTAppStory.com config");
-  
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  page += line;
-  page += FPSTR(HTTP_END);
-
-  server->send(200, "text/html", page);
-  DEBUG_WM(F("Sent IOTAppStory.com config"));
-}
-
-/** IOTAppStory config page handler */
-void WiFiManager::handleAddPage() {
-	
-	const char* host = "iotappstory.com";
-	String line = "";
-	String url = "";
-	
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-	
-	url = "/ota/cnf/dev_new.php";
-	url += "?chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-	
-	
-	
-	server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	server->sendHeader("Pragma", "no-cache");
-	server->sendHeader("Expires", "-1");
-
-	String page = FPSTR(HTTP_HEAD);
-	page.replace("{v}", "Add Device to IOTAppStory.com");
-	page += FPSTR(HTTP_SCRIPT);
-	page += FPSTR(HTTP_STYLE);
-	page += _customHeadElement;
-	page += FPSTR(HTTP_HEAD_END);
-	page += line;
-	page += FPSTR(HTTP_END);
-	
-	server->send(200, "text/html", page);
-	DEBUG_WM(F("Sent Add Device to IAS page"));
-}
-
-
-
-/** IOTAppStory config page handler */
-void WiFiManager::handleEditProPage() {
-	
-	
-	const char* host = "iotappstory.com";
-	
-	////Serial.print("connecting to ");
-	////Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		//Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/proj_edit.php";
-	url += "?chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-	String line = "";
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-	//Serial.println(line);
-	
-	
-	
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Edit Project");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  
-  page += line;
-  
-  page += FPSTR(HTTP_END);
-  
-
-
-  server->send(200, "text/html", page);
-
-  DEBUG_WM(F("Sent Add Device to IAS page"));
-}
-
-
-/** IOTAppStory config page handler */
-void WiFiManager::handleNewProPage() {
-	const char* host = "iotappstory.com";
-	
-	////Serial.print("connecting to ");
-	////Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		//Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/proj_edit.php";
-	url += "?new=1&chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-	String line = "";
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
+				st = 3;
 			}
 	}
 	//Serial.println(line);
@@ -824,7 +598,7 @@ void WiFiManager::handleNewProPage() {
   server->sendHeader("Expires", "-1");
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "New Project");
+  page.replace("{v}", title);
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
@@ -838,85 +612,7 @@ void WiFiManager::handleNewProPage() {
 
   server->send(200, "text/html", page);
 
-  DEBUG_WM(F("Sent Add Device to IAS page"));
-}
-
-
-/** IOTAppStory config page handler */
-void WiFiManager::handleAddToProPage() {
-	const char* host = "iotappstory.com";
-	
-	////Serial.print("connecting to ");
-	////Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		//Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/proj_addto.php";
-	url += "?new=1&chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-	String line = "";
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-	//Serial.println(line);
-	
-
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Add to a Project");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  
-  page += line;
-  
-  page += FPSTR(HTTP_END);
-  
-
-
-  server->send(200, "text/html", page);
-
-  DEBUG_WM(F("Sent Add Device to IAS page"));
+  DEBUG_WM("Sent " + title);
 }
 #endif
 
@@ -1259,296 +955,31 @@ void WiFiManager::handleScan() {
 
 
 
-
-
-
-
-
 #if IASCNF == 1
-/* Handle the add device to IAS request */				// added for IAS
+/* Handle the save device to IAS request */				// added for IAS
 void WiFiManager::handleDevSave() {
-	// form parameters
+
 	String devName = server->arg("n").c_str();
 	devName.replace(" ", "%20");
 	
-	String line = "";
-  
-  
-	DEBUG_WM(F("Connect to IAS and add device"));
-	server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	server->sendHeader("Pragma", "no-cache");
-	server->sendHeader("Expires", "-1");
-	
-	const char* host = "iotappstory.com";
-	
-	//Serial.print("connecting to ");
-	//Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/dev_save.php";
-	url += "?ias_id=";
-	url += devPass;
-	url += "&name=";
-	url += devName;
-	url += "&chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-
-	//Serial.println();
-	//Serial.print("closing connection to ");
-	//Serial.println(host);
-	
-	String page = FPSTR(HTTP_HEAD);
-	page.replace("{v}", "Device added to IOTAppStory.com");
-	page += FPSTR(HTTP_SCRIPT);
-	page += FPSTR(HTTP_STYLE);
-	page += _customHeadElement;
-	page += FPSTR(HTTP_HEAD_END);
-	
-	page += line;
-
-	
-	page += FPSTR(HTTP_END);
-	
-	server->send(200, "text/html", page);
-  
-	DEBUG_WM(F("Sent add device result page."));
+	hdlIasCfgPages("Device added to IOTAppStory.com","dev_save.php","&ias_id="+devPass+"&name="+devName);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /* Handle the add device to IAS request */				// added for IAS
 void WiFiManager::handleSavePro() {
-	// form parameters
-	
+
 	String name = server->arg("n").c_str();
 	name.replace(" ", "%20");
-	String line = "";
-  
-	DEBUG_WM(F("Connect to IAS and add device"));
-	server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	server->sendHeader("Pragma", "no-cache");
-	server->sendHeader("Expires", "-1");
 	
-	const char* host = "iotappstory.com";
-	
-	//Serial.print("connecting to ");
-	//Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/proj_save.php";
-	url += "?ias_id=";
-	url += devPass;
-	url += "&id=";
-	url += server->arg("id");
-	url += "&name=";
-	url += name;
-	url += "&app=";
-	url += server->arg("a");
-	url += "&chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-
-	//Serial.println();
-	//Serial.print("closing connection to ");
-	//Serial.println(host);
-	
-	String page = FPSTR(HTTP_HEAD);
-	page.replace("{v}", "Project saved at IOTAppStory.com");
-	page += FPSTR(HTTP_SCRIPT);
-	page += FPSTR(HTTP_STYLE);
-	page += _customHeadElement;
-	page += FPSTR(HTTP_HEAD_END);
-	
-	page += line;
-
-	page += FPSTR(HTTP_END);
-	
-	server->send(200, "text/html", page);
-  
-	DEBUG_WM(F("Sent add device result page."));
+	hdlIasCfgPages("Project saved","proj_save.php","&ias_id="+devPass+"&id="+server->arg("id")+"&name="+name+"&app="+server->arg("a"));
 }
 
 
 /* Handle the add device to IAS request */				// added for IAS
 void WiFiManager::handleSaveATP() {
-	// form parameters
-	String line = "";
 
-  
-	DEBUG_WM(F("Connect to IAS and add device"));
-	server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	server->sendHeader("Pragma", "no-cache");
-	server->sendHeader("Expires", "-1");
-	
-	const char* host = "iotappstory.com";
-	
-	//Serial.print("connecting to ");
-	//Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
-	
-	if (!client.connect(host, 80)) {
-		Serial.println("connection failed");
-		return;
-	}
-
-	// We now create a URI for the request
-	String url = "/ota/cnf/proj_addto_save.php";
-	url += "?ias_id=";
-	url += devPass;
-	url += "&proj=";
-	url += server->arg("p");
-	url += "&chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1 " + "\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-
-	bool st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else{
-				line += client.readStringUntil('\r');	
-			}
-	}
-
-	//Serial.println();
-	//Serial.print("closing connection to ");
-	//Serial.println(host);
-	
-	String page = FPSTR(HTTP_HEAD);
-	page.replace("{v}", "Added to Project");
-	page += FPSTR(HTTP_SCRIPT);
-	page += FPSTR(HTTP_STYLE);
-	page += _customHeadElement;
-	page += FPSTR(HTTP_HEAD_END);
-	
-	page += line;
-
-	page += FPSTR(HTTP_END);
-	
-	server->send(200, "text/html", page);
-  
-	DEBUG_WM(F("Sent add device result page."));
+	hdlIasCfgPages("Added to Project","proj_addto_save.php","&ias_id="+devPass+"&proj="+server->arg("p"));
 }
 #endif
 
