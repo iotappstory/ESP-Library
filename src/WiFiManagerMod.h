@@ -214,6 +214,8 @@ class WiFiManager
     void          handleAddToProPage();			// added for IAS
     void          handleSavePro();				// added for IAS
     void          handleSaveATP();				// added for IAS
+	
+    void          hdlIasCfgPages(String title, String file, String para = "");				// added for IAS
 #endif
 
     void          handleReset();
