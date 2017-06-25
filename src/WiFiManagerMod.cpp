@@ -962,7 +962,7 @@ void WiFiManager::handleDevSave() {
 	String devName = server->arg("n").c_str();
 	devName.replace(" ", "%20");
 	
-	hdlIasCfgPages("Device added to IOTAppStory.com","dev_save.php","&ias_id="+devPass+"&name="+devName);
+	hdlIasCfgPages("Device added to IOTAppStory.com","dev_save.php","&ias_id="+devPass+"&name="+devName+"&dt="+server->arg("d").c_str());
 }
 
 
