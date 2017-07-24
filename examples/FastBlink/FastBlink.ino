@@ -61,7 +61,7 @@ void setup() {
 	//IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 	/* TIP! delete the above lines when not used */
 
-	IAS.preSetConfig("slowblink",true);								// preset Boardname
+	IAS.preSetConfig("fastblink",true);								// preset Boardname
 
 	IAS.addField(LEDpin, "ledpin", "ledPin", 2);			// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
 																										// reference to org variable | field name | field label value | max char return
