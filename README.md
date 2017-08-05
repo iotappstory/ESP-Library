@@ -6,4 +6,4 @@ Wiki pages: http://iotappstory.com/wiki
 
 ### Contributions and thanks
 
-For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which is a fork of [tzapu](https://github.com/tzapu/WiFiManager)
+For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
