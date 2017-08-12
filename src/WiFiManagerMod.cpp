@@ -144,6 +144,10 @@ void WiFiManager::setupConfigPortal() {
   server->on("/", std::bind(&WiFiManager::handleRoot, this));
   server->on("/wifi", std::bind(&WiFiManager::handleWifi, this));
   server->on("/wifisave", std::bind(&WiFiManager::handleWifiSave, this));
+  
+  server->on("/app", std::bind(&WiFiManager::handleApp, this));
+  server->on("/appsave", std::bind(&WiFiManager::handleAppSave, this));
+  
   server->on("/close", std::bind(&WiFiManager::handleServerClose, this));
   server->on("/i", std::bind(&WiFiManager::handleInfo, this));
   server->on("/r", std::bind(&WiFiManager::handleReset, this));
@@ -471,6 +475,13 @@ void WiFiManager::handleRoot() {
   }
   page += "</h2>";
   page += FPSTR(HTTP_PORTAL_OPTIONS);
+  //DEBUG_WM(F("_paramsCount"));
+  //DEBUG_WM(_paramsCount);
+  if (_paramsCount > 0){
+	  page.replace("{a}", FPSTR(HTTP_PORTAL_APPCFG));
+  }else{
+	  page.replace("{a}", "");
+  }
   if (WiFi.status()==WL_CONNECTED){
 	  page.replace("{q}", FPSTR(HTTP_PORTAL_IASCFG));
   }else{
@@ -628,7 +639,7 @@ void WiFiManager::handleWifi() {
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   page += FPSTR(HTTP_HEAD_END);
-  page += F("<h2>Configuration</h2>");
+  page += F("<h2>Wifi Configuration</h2>");
   //Print list of WiFi networks that were found in earlier scan
     if (numberOfNetworks == 0) {
       page += F("WiFi scan found no networks. Restart configuration portal to scan again.");
@@ -658,47 +669,9 @@ void WiFiManager::handleWifi() {
     page += "<br/>";
     }
 
-  page += FPSTR(HTTP_FORM_START);
+  page += FPSTR(HTTP_WFORM_START);
   //char parLength[2];
-  // add the extra parameters to the form
-  for (int i = 0; i < _paramsCount; i++) {
-    if (_params[i] == NULL) {
-      break;
-    }
 
-	String pitem;
-	switch (_params[i]->getLabelPlacement()) {
-    case WFM_LABEL_BEFORE:
-	  pitem = FPSTR(HTTP_FORM_LABEL);
-	  pitem += FPSTR(HTTP_FORM_PARAM);
-      break;
-    case WFM_LABEL_AFTER:
-	  pitem = FPSTR(HTTP_FORM_PARAM);
-	  pitem += FPSTR(HTTP_FORM_LABEL);
-      break;
-    default:
-	  // WFM_NO_LABEL
-      pitem = FPSTR(HTTP_FORM_PARAM);
-    break;
-  }
-
-    if (_params[i]->getID() != NULL) {
-      pitem.replace("{i}", _params[i]->getID());
-      pitem.replace("{n}", _params[i]->getID());
-      pitem.replace("{p}", _params[i]->getPlaceholder());
-      //snprintf(parLength, 2, "%d", _params[i]->getValueLength());
-      pitem.replace("{l}", String(_params[i]->getValueLength()-1));
-      pitem.replace("{v}", _params[i]->getValue());
-      pitem.replace("{c}", _params[i]->getCustomHTML());
-    } else {
-      pitem = _params[i]->getCustomHTML();
-    }
-
-    page += pitem;
-  }
-  if (_params[0] != NULL) {
-    page += "<br/>";
-  }
 
   if (_sta_static_ip) {
 
@@ -736,13 +709,9 @@ void WiFiManager::handleWifi() {
   page.replace("{t}", "submit");
   page.replace("{b}", "Save");
   page += FPSTR(HTTP_FORM_END);
-  page += "<br/>";
+
   
-  page += FPSTR(HTTP_FORM_BACK);
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", "submit");
-  page.replace("{b}", "< Back");
-  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_FORM_BACKBTN);
 
   page += FPSTR(HTTP_END);
 
@@ -759,19 +728,7 @@ void WiFiManager::handleWifiSave() {
   _ssid = server->arg("s").c_str();
   _pass = server->arg("p").c_str();
 
-  //parameters
-  for (int i = 0; i < _paramsCount; i++) {
-    if (_params[i] == NULL) {
-      break;
-    }
-    //read parameter
-    String value = server->arg(_params[i]->getID()).c_str();
-    //store it in array
-    value.toCharArray(_params[i]->_value, _params[i]->_length);
-    DEBUG_WM(F("Parameter"));
-    DEBUG_WM(_params[i]->getID());
-    DEBUG_WM(value);
-  }
+
 
   if (server->arg("ip") != "") {
     DEBUG_WM(F("static ip"));
@@ -810,6 +767,134 @@ void WiFiManager::handleWifiSave() {
 
   connect = true; //signal ready to connect/reset
 }
+
+
+
+/** Wifi config page handler */
+void WiFiManager::handleApp() {
+  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  server->sendHeader("Pragma", "no-cache");
+  server->sendHeader("Expires", "-1");
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Config App");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("<h2>App Configuration</h2>");
+
+  page += FPSTR(HTTP_AFORM_START);
+  //char parLength[2];
+  // add the extra parameters to the form
+  for (int i = 0; i < _paramsCount; i++) {
+    if (_params[i] == NULL) {
+		break;
+    }
+
+	String pitem;
+	switch (_params[i]->getLabelPlacement()) {
+		case WFM_LABEL_BEFORE:
+			pitem = FPSTR(HTTP_FORM_LABEL);
+			pitem += FPSTR(HTTP_FORM_PARAM);
+		break;
+		case WFM_LABEL_AFTER:
+			pitem = FPSTR(HTTP_FORM_PARAM);
+			pitem += FPSTR(HTTP_FORM_LABEL);
+		break;
+		default:
+			// WFM_NO_LABEL
+			pitem = FPSTR(HTTP_FORM_PARAM);
+		break;
+	}
+
+    if (_params[i]->getID() != NULL) {
+		pitem.replace("{i}", _params[i]->getID());
+		pitem.replace("{n}", _params[i]->getID());
+		pitem.replace("{p}", _params[i]->getPlaceholder());
+		//snprintf(parLength, 2, "%d", _params[i]->getValueLength());
+		pitem.replace("{l}", String(_params[i]->getValueLength()-1));
+		pitem.replace("{v}", _params[i]->getValue());
+		pitem.replace("{c}", _params[i]->getCustomHTML());
+    } else {
+		pitem = _params[i]->getCustomHTML();
+    }
+
+    page += pitem;
+  }
+  if (_params[0] != NULL) {
+    page += "<br/>";
+  }
+
+
+
+  page += FPSTR(HTTP_FORM_BTN);
+  page.replace("{t}", "submit");
+  page.replace("{b}", "Save");
+  page += FPSTR(HTTP_FORM_END);
+
+  
+  page += FPSTR(HTTP_FORM_BACKBTN);
+
+  page += FPSTR(HTTP_END);
+
+  server->send(200, "text/html", page);
+
+  DEBUG_WM(F("Sent config page"));
+}
+
+/** Handle the WLAN save form and redirect to WLAN config page again */
+void WiFiManager::handleAppSave() {
+  DEBUG_WM(F("App save"));
+
+
+
+  //parameters
+  for (int i = 0; i < _paramsCount; i++) {
+    if (_params[i] == NULL) {
+      break;
+    }
+    //read parameter
+    String value = server->arg(_params[i]->getID()).c_str();
+    //store it in array
+    value.toCharArray(_params[i]->_value, _params[i]->_length);
+    DEBUG_WM(F("Parameter"));
+    DEBUG_WM(_params[i]->getID());
+    DEBUG_WM(value);
+  }
+
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "App Config Saved");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP_APPSAVED);
+
+
+  
+  page += FPSTR(HTTP_FORM_BACKBTN);
+  
+  page += FPSTR(HTTP_END);
+
+  server->send(200, "text/html", page);
+
+  DEBUG_WM(F("Sent app save page"));
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 /** Handle shut down the server page */
 void WiFiManager::handleServerClose() {
     DEBUG_WM(F("Server Close"));
@@ -866,11 +951,7 @@ void WiFiManager::handleInfo() {
   page.replace("{mac}", WiFi.macAddress());
   page += "<br/>";
   
-  page += FPSTR(HTTP_FORM_BACK);
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", "submit");
-  page.replace("{b}", "< Back");
-  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_FORM_BACKBTN);
   
   page += FPSTR(HTTP_END);
 
