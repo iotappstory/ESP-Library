@@ -724,12 +724,12 @@ void IOTAppStory::loopWiFiManager() {
 	}
 	
 	// Just a quick hint
-	WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small></br></br>");
+	//WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small></br></br>");
 
 	// Initialize WiFIManager
 	WiFiManager wifiManager;
 	wifiManager.devPass = String(config.devPass);
-	wifiManager.addParameter(&p_hint);
+	//wifiManager.addParameter(&p_hint);
 
 	//add all parameters here
 	for(unsigned int i = 0; i < _nrXF; i++){
