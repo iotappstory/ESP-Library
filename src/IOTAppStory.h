@@ -33,7 +33,7 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
     _firmware = String(appName) + String(appVersion);
     _compDate = compDate;
     _modeButton = modeButton;
-
+    
     readFullConfiguration();
 }
 
@@ -1023,10 +1023,12 @@ void IOTAppStory::routine()
         switch(getButtonPress())
         {
         case BUTTON_PRESS_LONG:
+            DEBUG_PRINTLN("Entering in Configurarion Mode");
             espRestart('C', "Going into Configuration Mode");
         break;
         
         case BUTTON_PRESS_SHORT:
+            DEBUG_PRINTLN("Calling Home");
             callHome();
         break;
         }
@@ -1036,7 +1038,7 @@ void IOTAppStory::routine()
     else if (buttonState == LOW && millis() - debugEntry > 1000)
     {
         debugEntry = millis();
-        switch(getButtonPress())
+        switch(getButtonPress(true))
         {
         case BUTTON_PRESS_LONG:
             DEBUG_PRINTLN("Button Press: Config Mode");
@@ -1088,9 +1090,9 @@ void IOTAppStory::sendDebugMessage() {
 }
 */
 
-int IOTAppStory::getButtonPress()
+int IOTAppStory::getButtonPress(bool checkButtonState /*= false*/)
 {
-    if (digitalRead(_modeButton) == HIGH)
+    if (checkButtonState && digitalRead(_modeButton) == HIGH)
         return BUTTON_PRESS_NONE;
     
     unsigned long buttonTime = millis() - buttonEntry;
