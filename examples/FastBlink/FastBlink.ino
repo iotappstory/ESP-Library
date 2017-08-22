@@ -26,17 +26,8 @@
 #define SKETCH "Fast blink "
 #define VERSION "V2.0.0"
 #define COMPDATE __DATE__ __TIME__
+#define MODEBUTTON 0
 
-// ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
-	#define MODEBUTTON 0
-	#define LEDgreen 13
-	//#define LEDred 12   
-#else														// WeMos, NodeMCU etc D0-D16
-	#define MODEBUTTON D3
-	#define LEDgreen D7
-	//#define LEDred D6
-#endif
   
 #include <IOTAppStory.h>
 IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
@@ -66,7 +57,7 @@ void setup() {
 	IAS.addField(LEDpin, "ledpin", "ledPin", 2);			// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
 																										// reference to org variable | field name | field label value | max char return
 
-	IAS.begin(true,LEDgreen);													// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer
+	IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
 
 
 	//-------- Your Setup starts from here ---------------
