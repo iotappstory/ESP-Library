@@ -92,7 +92,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 }
 
 
-void IOTAppStory::begin(int feedBackLed, bool bootstats, bool ea){
+void IOTAppStory::begin(bool bootstats, bool ea){
 	if(_serialDebug == true){
 		DEBUG_PRINTLN("");
 		DEBUG_PRINTLN("");
@@ -121,14 +121,6 @@ void IOTAppStory::begin(int feedBackLed, bool bootstats, bool ea){
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
-	if(feedBackLed > -1){
-		//pinMode(feedBackLed, OUTPUT);         	// LEDgreen feedback
-		//digitalWrite(feedBackLed, LEDOFF);
-	}
-//	attachInterrupt(_modeButton, ptr, CHANGE);
-
-	//------------- LED and DISPLAYS ------------------------
-	//LEDswitch(GreenBlink);
 
 	// Read the "bootTime" & "boardMode" flag RTC memory
 	readRTCmem();
