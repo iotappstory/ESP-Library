@@ -27,18 +27,8 @@
 #define SKETCH "INITLoader "
 #define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
-//#define LEDS_INVERSE          // LEDS on = GND
+#define MODEBUTTON 0
 
-// ================================================ PIN DEFINITIONS ======================================
-#ifdef ARDUINO_ESP8266_ESP01		// Generic ESP's 0-16  WeMos, NodeMCU etc D0-D16
-  #define MODEBUTTON 0
-  #define LEDgreen 13
-  //#define LEDred 12
-#else														// WeMos, NodeMCU etc D0-D16
-  #define MODEBUTTON D3
-  #define LEDgreen D7
-  //#define LEDred D6
-#endif
 
 #include <IOTAppStory.h>
 IOTAppStory IAS(SKETCH, VERSION, COMPDATE, MODEBUTTON);
@@ -51,7 +41,7 @@ void setup() {
   //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
   IAS.preSetConfig("INITLoader", false);	// preset Boardname, automatic upload false
 
-  IAS.begin(true, LEDgreen, true);				// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: green feedback led integer | 3rd argument attach interrupt for the mode selection button
+  IAS.begin(true, true);									// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
   IAS.callHome(false);
 
   //-------- Your Setup starts from here ---------------
