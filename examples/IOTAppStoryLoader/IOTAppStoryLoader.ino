@@ -52,7 +52,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  // this routine handles the reaction of the Flash button. If short press: update of sketch, long press: Configuration
 	IAS.routine();
  
   // if the scetch reaches this spot, no project was defined. Otherwise, it would load the defined sketch already before...
