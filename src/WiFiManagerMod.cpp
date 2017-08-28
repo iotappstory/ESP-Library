@@ -13,6 +13,7 @@
  **************************************************************/
 
 #include "WiFiManagerMod.h"
+#include <algorithm>
 
 WiFiManagerParameter::WiFiManagerParameter() {
   _id = NULL;
