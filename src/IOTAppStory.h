@@ -27,8 +27,8 @@
     #endif
 
     //#ifdef SERIALDEBUG
-    #define         DEBUG_PRINT(x)    Serial.print(x)
-    #define         DEBUG_PRINTLN(x)  Serial.println(x)
+    #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
+    #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
     //#else
     //#define         DEBUG_PRINT(x)
     //#define         DEBUG_PRINTLN(x)
