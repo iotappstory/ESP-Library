@@ -20,7 +20,7 @@
 #include <memory>
 #undef min
 #undef max
-#include <algorithm>
+
 extern "C" {
   #include "user_interface.h"
 }
