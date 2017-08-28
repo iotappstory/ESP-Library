@@ -1,5 +1,16 @@
-#ifndef IOTAppStory_h
-	#include "IOTAppStory.h"
+#include <ESP8266WiFi.h>
+#include <ESP8266httpUpdate.h>
+#include <DNSServer.h>
+#include <ESP8266mDNS.h>
+//#include <Ticker.h>
+#include <EEPROM.h>
+#include <pgmspace.h>
+#include <ArduinoJson.h>
+#include <FS.h>
+#include "IOTAppStory.h"
+
+#ifdef REMOTEDEBUGGING
+	#include <WiFiUDP.h>
 #endif
 
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
@@ -752,7 +763,7 @@ void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 
 //---------- CONFIGURATION PARAMETERS ----------
 void IOTAppStory::writeConfig(bool wifiSave) {
-	//if(_serialDebug == true){DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");}
+	//DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
@@ -833,7 +844,7 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 }
 
 bool IOTAppStory::readConfig() {
-	if(_serialDebug == true){DEBUG_PRINTLN(" Reading Config");}
+	DEBUG_PRINTLN(" Reading Config");
 	boolean ret = false;
 	EEPROM.begin(EEPROM_SIZE);
 	long magicBytesBegin = sizeof(config) - 4; 								// Magic bytes at the end of the structure

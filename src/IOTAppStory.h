@@ -1,8 +1,10 @@
 #ifndef IOTAppStory_h
     #define IOTAppStory_h
 
+    #include <Arduino.h>
+    #include "WiFiManagerMod.h"
 
-    /* ------ ------ ------ DEFINES for librairy ------ ------ ------ */
+    /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
     #define EEPROM_SIZE 1024
     #define MAXNUMEXTRAFIELDS 12
@@ -42,52 +44,6 @@
         #define LEDOFF 0
     #endif
 
-
-
-    /* ------ ------ ------ Arduino library ------ ------ ------ */
-    #include <Arduino.h>
-
-
-    /* ------ ------ ------ begin necessary library's for using IOTAppStory ------ ------ ------ */
-    #ifndef WiFiManager_h
-        #include "WiFiManagerMod.h"
-    #endif
-    #ifndef ESP8266WiFi_h
-        #include <ESP8266WiFi.h>
-    #endif
-        #ifndef ESP8266httpUpdate_h
-    #include <ESP8266httpUpdate.h>
-    #endif
-        #ifndef DNSServer_h
-    #include <DNSServer.h>
-    #endif
-    #ifndef ESP8266mDNS_h
-        #include <ESP8266mDNS.h>
-    #endif
-    //#ifndef Ticker_h
-        //#include <Ticker.h>
-    //#endif
-    #ifndef EEPROM_h
-        #include <EEPROM.h>
-    #endif
-    #ifndef __PGMSPACE_H_
-        #include <pgmspace.h>
-    #endif
-    #ifndef ArduinoJson_h
-        #include <ArduinoJson.h>
-    #endif
-    #ifndef FS_h
-        #include <FS.h>
-    #endif
-    /* ------ ------ ------ end necessary library's for using IOTAppStory ------ ------ ------ */
-
-
-    /* ------ ------ ------ if REMOTEDEBUGGING is defined include the WiFiUDP library ------ ------ ------ */
-    #ifdef REMOTEDEBUGGING
-        #ifndef WiFiUDP_h
-            #include <WiFiUDP.h>
-        #endif
-    #endif
 
 
     /* ------ ------ ------ this is for the RTC memory read/write functions ------ ------ ------ */
