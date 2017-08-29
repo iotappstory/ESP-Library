@@ -13,6 +13,17 @@
 	#include <WiFiUDP.h>
 #endif
 
+// used by the RTC memory read/write functions
+extern "C" {
+	#include "user_interface.h"
+}
+
+// constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
+#define ENTER_CHECK_FIRMWARE_TIME_MIN 500
+#define ENTER_CHECK_FIRMWARE_TIME_MAX 4000
+#define ENTER_CONFIG_MODE_TIME_MIN    ENTER_CHECK_FIRMWARE_TIME_MAX
+#define ENTER_CONFIG_MODE_TIME_MAX    10000
+
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
 	_appName = appName;
@@ -65,42 +76,31 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	}
 }
 
-void IOTAppStory::preSetConfig(String boardName){
-    boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-}
-void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
+void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
 	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
-}
-void IOTAppStory::preSetConfig(String ssid, String password){
-	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-	_setPreSet = true;
-}
-void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate){
-	preSetConfig(ssid,password);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
-}
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName){
-	preSetConfig(ssid,password);
-	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	_setPreSet = true;
-}
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate){
-	preSetConfig(ssid,password,boardName);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
-}
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate){
-	preSetConfig(ssid,password,boardName);
-	IOTappStory1.toCharArray(config.IOTappStory1, STRUCT_HOST_SIZE);
-	IOTappStoryPHP1.toCharArray(config.IOTappStoryPHP1, STRUCT_FILE_SIZE);
 	config.automaticUpdate = automaticUpdate;
 	_setPreSet = true;
 }
 
+void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate /*= false*/){
+	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+	config.automaticUpdate = automaticUpdate;
+	_setPreSet = true;
+}
+
+void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate /*= false*/){
+	preSetConfig(ssid, password, automaticUpdate);
+	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
+	_setPreSet = true;
+}
+
+void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate /*= false*/) {
+	preSetConfig(ssid, password, boardName, automaticUpdate);
+	IOTappStory1.toCharArray(config.IOTappStory1, STRUCT_HOST_SIZE);
+	IOTappStoryPHP1.toCharArray(config.IOTappStoryPHP1, STRUCT_FILE_SIZE);
+	_setPreSet = true;
+}
 
 void IOTAppStory::begin(bool bootstats, bool ea){
 	DEBUG_PRINTLN("");
@@ -166,7 +166,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	if(config.automaticUpdate == true){
 		callHome();
 	}
-	buttonEntry = millis()+10000;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
+	buttonEntry = millis() + ENTER_CONFIG_MODE_TIME_MAX;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	// LEDswitch(None);
@@ -330,7 +330,7 @@ void IOTAppStory::printMacAddress() {
 }
 
 //---------- IOTappStory FUNCTIONS ----------
-bool IOTAppStory::callHome(bool spiffs) {
+bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	// update from IOTappStory.com
 	bool updateHappened=false;
 	byte res1, res2;
@@ -387,9 +387,6 @@ bool IOTAppStory::callHome(bool spiffs) {
 	return updateHappened;
 }
 
-bool IOTAppStory::callHome() {
-	return callHome(true);
-}
 /*
 void IOTAppStory::initialize() {   // this function is called by callHome() before return. Here, you put a safe startup configuration
 
@@ -894,8 +891,10 @@ void IOTAppStory::routine() {
        Serial.println(_buttonTime);
     }
 */
-    if (_buttonTime > 4000 && _buttonTime < 10000) espRestart('C', "Going into Configuration Mode");     // long button press > 4sec
-    if (_buttonTime >  500 && _buttonTime < 4000) callHome();         // long button press > 1sec
+    if (_buttonTime >= ENTER_CONFIG_MODE_TIME_MIN && _buttonTime < ENTER_CONFIG_MODE_TIME_MAX)
+    	espRestart('C', "Going into Configuration Mode");     // long button press > 4sec
+    if (_buttonTime >= ENTER_CHECK_FIRMWARE_TIME_MIN && _buttonTime < ENTER_CHECK_FIRMWARE_TIME_MAX) 
+	    callHome();         // long button press > 1sec
   }
   if (_serialDebug == true && millis() - debugEntry > 5000) {
      debugEntry = millis();
