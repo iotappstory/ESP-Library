@@ -57,7 +57,7 @@ const char HTTP_FORM_END[] PROGMEM        = "</form>";
 
 const char HTTP_FORM_BTN[] PROGMEM        = "<button class=\"btn\" type=\"{t}\">{b}</button>";
 
-const char HTTP_SAVED[] PROGMEM           = "<div class=\"msg\"><strong>Credentials Saved</strong><br>Trying to connect ESP to the {x} network.<br>Give it 10 seconds or so and check <a href=\"/\">how it went.</a> <p/>The {v} network you are connected to will be restarted on the radio channel of the {x} network. You may have to manually reconnect to the {v} network.</div>";
+const char HTTP_SAVED[] PROGMEM           = "<div class=\"msg\"><strong>Credentials Saved</strong><br>Trying to connect ESP to the {x} network.<br>Press Back after waiting at least 10 seconds.<br>You may have to manually reconnect to the {v} network.</div>";
 const char HTTP_APPSAVED[] PROGMEM        = "<div class=\"msg\"><strong>App Configuration Saved</strong><br>Your configuration has been saved.</div>";
 const char HTTP_END[] PROGMEM             = "</div></body></html>";
 
