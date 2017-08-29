@@ -17,9 +17,13 @@
     #define STRUCT_COMPDATE_SIZE 20
     #define STRUCT_HOST_SIZE 24
     #define STRUCT_FILE_SIZE 32
-	
-	
-	
+
+    // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
+    #define ENTER_CHECK_FIRMWARE_TIME_MIN 500
+    #define ENTER_CHECK_FIRMWARE_TIME_MAX 4000
+    #define ENTER_CONFIG_MODE_TIME_MIN    ENTER_CHECK_FIRMWARE_TIME_MAX
+    #define ENTER_CONFIG_MODE_TIME_MAX    10000
+
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -51,7 +55,7 @@
             typedef struct {
                 byte markerFlag;
                 int bootTimes;
-				char boardMode = 'N';  	// Normal operation or Configuration mode?
+                char boardMode = 'N';  	// Normal operation or Configuration mode?
             } rtcMemDef __attribute__((aligned(4)));
             rtcMemDef rtcMem;
 
@@ -76,8 +80,8 @@
 
                 bool automaticUpdate;	// right after boot
                 char compDate[STRUCT_COMPDATE_SIZE];
-				char devPass[7];
-				
+                char devPass[7];
+                
                 char magicBytes[4];
             } strConfig;
 
@@ -91,7 +95,7 @@
                 "/ota/esp8266-v1.php",
                 false,
                 "",
-				
+                
                 "CFG"  // Magic Bytes
             };
 
@@ -153,7 +157,7 @@
             void writeConfig(bool wifiSave=false);
             bool readConfig();
             void routine();
-//	    void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
+            //void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
