@@ -18,12 +18,6 @@ extern "C" {
 	#include "user_interface.h"
 }
 
-// constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
-#define ENTER_CHECK_FIRMWARE_TIME_MIN 500
-#define ENTER_CHECK_FIRMWARE_TIME_MAX 4000
-#define ENTER_CONFIG_MODE_TIME_MIN    ENTER_CHECK_FIRMWARE_TIME_MAX
-#define ENTER_CONFIG_MODE_TIME_MAX    10000
-
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
 	_appName = appName;
