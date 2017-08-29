@@ -69,7 +69,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
 	yield();
-	IAS.routine();																		// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+	IAS.loop();																				// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
 	//-------- Your Sketch starts from here ---------------
