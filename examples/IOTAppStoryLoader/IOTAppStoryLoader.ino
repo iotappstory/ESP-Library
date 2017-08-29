@@ -53,7 +53,7 @@ void setup() {
 void loop() {
   yield();
   // this routine handles the reaction of the Flash button. If short press: update of sketch, long press: Configuration
-	IAS.routine();
+	IAS.loop();
  
   // if the scetch reaches this spot, no project was defined. Otherwise, it would load the defined sketch already before...
   Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
