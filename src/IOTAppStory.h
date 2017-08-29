@@ -156,8 +156,7 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void routine();
-            //void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
+            void loop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
