@@ -863,7 +863,7 @@ bool IOTAppStory::readConfig() {
 }
 
 
-void IOTAppStory::routine() {
+void IOTAppStory::loop() {
   unsigned long _buttonTime = -1;
   //pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
   
