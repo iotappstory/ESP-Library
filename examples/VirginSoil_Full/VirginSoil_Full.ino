@@ -74,7 +74,7 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
 
 
   //-------- Your Setup starts from here ---------------
@@ -86,7 +86,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   yield();
-  IAS.routine();                                                     // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.loop();                                                        // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
