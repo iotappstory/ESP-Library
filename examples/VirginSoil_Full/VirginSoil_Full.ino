@@ -25,14 +25,14 @@
 
 */
 
-#define SKETCH "virginSoil "
+#define APPNAME "virginSoil"
 #define VERSION "V2.1.1"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
   
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
 
 
 
