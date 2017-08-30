@@ -23,7 +23,7 @@
 	SOFTWARE.
 */
 
-#define SKETCH "Fast blink "
+#define SKETCH "Fast blink"
 #define VERSION "V2.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
