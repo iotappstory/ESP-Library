@@ -24,14 +24,14 @@
 
 */
 
-#define SKETCH "INITLoader "
+#define APPNAME "INITLoader"
 #define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 
@@ -42,7 +42,7 @@ void setup() {
   IAS.preSetConfig("INITLoader", false);	// preset Boardname, automatic upload false
 
   IAS.begin(true, true);									// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
-  IAS.callHome(false);
+  IAS.callHome(true);
 
   //-------- Your Setup starts from here ---------------
 
