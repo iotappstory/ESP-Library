@@ -1,8 +1,10 @@
 #ifndef IOTAppStory_h
     #define IOTAppStory_h
 
+    #include <Arduino.h>
+    #include "WiFiManagerMod.h"
 
-    /* ------ ------ ------ DEFINES for librairy ------ ------ ------ */
+    /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
     #define EEPROM_SIZE 1024
     #define MAXNUMEXTRAFIELDS 12
@@ -15,9 +17,13 @@
     #define STRUCT_COMPDATE_SIZE 20
     #define STRUCT_HOST_SIZE 24
     #define STRUCT_FILE_SIZE 32
-	
-	
-	
+
+    // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
+    #define ENTER_CHECK_FIRMWARE_TIME_MIN 500
+    #define ENTER_CHECK_FIRMWARE_TIME_MAX 4000
+    #define ENTER_CONFIG_MODE_TIME_MIN    ENTER_CHECK_FIRMWARE_TIME_MAX
+    #define ENTER_CONFIG_MODE_TIME_MAX    10000
+
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -27,8 +33,8 @@
     #endif
 
     //#ifdef SERIALDEBUG
-    #define         DEBUG_PRINT(x)    Serial.print(x)
-    #define         DEBUG_PRINTLN(x)  Serial.println(x)
+    #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
+    #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
     //#else
     //#define         DEBUG_PRINT(x)
     //#define         DEBUG_PRINTLN(x)
@@ -43,68 +49,13 @@
     #endif
 
 
-
-    /* ------ ------ ------ Arduino library ------ ------ ------ */
-    #include <Arduino.h>
-
-
-    /* ------ ------ ------ begin necessary library's for using IOTAppStory ------ ------ ------ */
-    #ifndef WiFiManager_h
-        #include "WiFiManagerMod.h"
-    #endif
-    #ifndef ESP8266WiFi_h
-        #include <ESP8266WiFi.h>
-    #endif
-        #ifndef ESP8266httpUpdate_h
-    #include <ESP8266httpUpdate.h>
-    #endif
-        #ifndef DNSServer_h
-    #include <DNSServer.h>
-    #endif
-    #ifndef ESP8266mDNS_h
-        #include <ESP8266mDNS.h>
-    #endif
-    //#ifndef Ticker_h
-        //#include <Ticker.h>
-    //#endif
-    #ifndef EEPROM_h
-        #include <EEPROM.h>
-    #endif
-    #ifndef __PGMSPACE_H_
-        #include <pgmspace.h>
-    #endif
-    #ifndef ArduinoJson_h
-        #include <ArduinoJson.h>
-    #endif
-    #ifndef FS_h
-        #include <FS.h>
-    #endif
-    /* ------ ------ ------ end necessary library's for using IOTAppStory ------ ------ ------ */
-
-
-    /* ------ ------ ------ if REMOTEDEBUGGING is defined include the WiFiUDP library ------ ------ ------ */
-    #ifdef REMOTEDEBUGGING
-        #ifndef WiFiUDP_h
-            #include <WiFiUDP.h>
-        #endif
-    #endif
-
-
-    /* ------ ------ ------ this is for the RTC memory read/write functions ------ ------ ------ */
-    extern "C" {
-        #ifndef user_interface_h
-            #include "user_interface.h"
-        #endif
-    }
-
-
     class IOTAppStory {
         public:
             /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
             typedef struct {
                 byte markerFlag;
                 int bootTimes;
-				char boardMode = 'N';  	// Normal operation or Configuration mode?
+                char boardMode = 'N';  	// Normal operation or Configuration mode?
             } rtcMemDef __attribute__((aligned(4)));
             rtcMemDef rtcMem;
 
@@ -129,8 +80,8 @@
 
                 bool automaticUpdate;	// right after boot
                 char compDate[STRUCT_COMPDATE_SIZE];
-				char devPass[7];
-				
+                char devPass[7];
+                
                 char magicBytes[4];
             } strConfig;
 
@@ -144,7 +95,7 @@
                 "/ota/esp8266-v1.php",
                 false,
                 "",
-				
+                
                 "CFG"  // Magic Bytes
             };
 
@@ -153,10 +104,6 @@
             WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             unsigned long buttonEntry, debugEntry;
             int buttonStateOld;
-            //volatile unsigned long (*buttonEntry);
-            //unsigned long (*buttonTime);
-            //volatile bool (*buttonChanged);
-            //unsigned long debugEntry;
             //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
 
@@ -167,13 +114,10 @@
             void serialdebug(bool onoff,int speed=115200);
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
-            void preSetConfig(String boardName);
-            void preSetConfig(String boardName, bool automaticUpdate);
-            void preSetConfig(String ssid, String password);
-            void preSetConfig(String ssid, String password, bool automaticUpdate);
-            void preSetConfig(String ssid, String password, String boardName);
-            void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate);
-            void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate);
+            void preSetConfig(String boardName, bool automaticUpdate = false);
+            void preSetConfig(String ssid, String password, bool automaticUpdate = false);
+            void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
+            void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate = false);
 
             void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom
             void firstBoot(bool ea=false);
@@ -183,20 +127,13 @@
             void printRTCmem();
 
             void configESP();
-            void readFullConfiguration();
 
             void connectNetwork();
             bool isNetworkConnected();
-            String getMACaddress();
-            void printMacAddress();
 
-            bool callHome(bool spiffs);
-            bool callHome();
-            //void initialize();
-            byte iotUpdaterSketch(String server, String url, String firmware, bool immediately);
-            byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately);
+            bool callHome(bool spiffs = true);
+            byte iotUpdater(bool type, String server, String url);
 
-            //void addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void processField();
             int dPinConv(String orgVal);
@@ -209,19 +146,18 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void routine();
-//	    void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
+            void loop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
 
         private:
-            String  _appName;
-            String  _appVersion;
+            //String  _appName;				// may not be necessary
+            //String  _appVersion;			// may not be necessary
             String  _firmware;
             String  _compDate;
             int     _modeButton;
-            int     _nrXF = 0;			// nr of extra fields required in the config manager
+            int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
     };
