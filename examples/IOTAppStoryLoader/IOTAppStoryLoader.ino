@@ -31,7 +31,7 @@
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON, APPNAME);
 
 
 
@@ -51,10 +51,6 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  yield();
-  // this routine handles the reaction of the Flash button. If short press: update of sketch, long press: Configuration
-	IAS.loop();
- 
   // if the scetch reaches this spot, no project was defined. Otherwise, it would load the defined sketch already before...
   Serial.println( "\n\n                               ----------------   N O   A P P   L O A D E D   ----------------");
   Serial.println( "\n----------------  P L E A S E  C R E A T E   P R O J E C T   O N   I O T A P P S T O R Y . C O M   ----------------\n");

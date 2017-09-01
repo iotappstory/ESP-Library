@@ -28,7 +28,7 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 	readConfig();
 	
 	// set appName as default boardName in case the app developer does not set it
-	strncpy(config.boardName, appName, STRUCT_CHAR_ARRAY_SIZE);
+	preSetConfig((String)appName, false);
 }
 
 void IOTAppStory::firstBoot(bool ea){
@@ -71,6 +71,11 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 		Serial.begin(speed);
 		for (int i = 0; i < 5; i++) DEBUG_PRINTLN(" ");
 	}
+}
+
+void IOTAppStory::preSetConfig(bool automaticUpdate){
+	config.automaticUpdate = automaticUpdate;
+	_setPreSet = true;
 }
 
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
@@ -211,7 +216,7 @@ void IOTAppStory::configESP() {
 
 	initWiFiManager();
 
-	//--------------- LOOP ----------------------------------
+	//--------------- buttonbuttonLoop ----------------------------------
 	while (1) {
 		//if ((*buttonChanged) && (*buttonTime) > 4000) espRestart('N', "Back to normal mode");  // long button press > 4sec
 		yield();
@@ -779,12 +784,12 @@ bool IOTAppStory::readConfig() {
 }
 
 
-void IOTAppStory::loop() {
+void IOTAppStory::buttonLoop() {
   unsigned long _buttonTime = -1;
-  //pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
+  // pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
   
   int _buttonState = digitalRead(_modeButton);
-    
+  yield(); 
   if (buttonStateOld != _buttonState) {
     Serial.println("* button changed *");
     delay(100);
