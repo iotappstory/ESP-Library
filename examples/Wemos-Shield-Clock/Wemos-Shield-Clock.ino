@@ -95,7 +95,7 @@ void setup() {
 // ================================================ LOOP =================================================
 void loop() {
   IAS.buttonLoop();
-  if (millis() > iotEntry + 10000) {
+  if (millis() > iotEntry + 10000) {              // only for development. Please change it to at least 2 hours in production
     IAS.callHome();
     iotEntry = millis();
   }

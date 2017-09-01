@@ -88,7 +88,7 @@ void setup() {
 void loop() {
   IAS.buttonLoop();                                                 // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
-  if (millis() - callHomeEntry > 60000) {
+  if (millis() - callHomeEntry > 60000) {                          // only for development. Please change it to at least 2 hours in production
     IAS.callHome();
     callHomeEntry = millis();
   }
