@@ -2,7 +2,6 @@
     #define IOTAppStory_h
 
     #include <Arduino.h>
-    #include "WiFiManagerMod.h"
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
@@ -33,8 +32,9 @@
     #endif
 
     //#ifdef SERIALDEBUG
-    #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
-    #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
+    #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);             }
+    #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
+    #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x);           }
     //#else
     //#define         DEBUG_PRINT(x)
     //#define         DEBUG_PRINTLN(x)
@@ -101,13 +101,8 @@
 
             
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
-            WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             unsigned long buttonEntry, debugEntry;
             int buttonStateOld;
-            //volatile unsigned long (*buttonEntry);
-            //unsigned long (*buttonTime);
-            //volatile bool (*buttonChanged);
-            //unsigned long debugEntry;
             //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
 
@@ -131,19 +126,13 @@
             void printRTCmem();
 
             void configESP();
-            void readFullConfiguration();
 
             void connectNetwork();
             bool isNetworkConnected();
-            String getMACaddress();
-            void printMacAddress();
 
             bool callHome(bool spiffs = true);
-            //void initialize();
-            byte iotUpdaterSketch(String server, String url, String firmware, bool immediately);
-            byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately);
+            byte iotUpdater(bool type, String server, String url);
 
-            //void addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void processField();
             int dPinConv(String orgVal);
@@ -156,19 +145,18 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void routine();
-            //void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
+            void loop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
 
         private:
-            String  _appName;
-            String  _appVersion;
+            //String  _appName;				// may not be necessary
+            //String  _appVersion;			// may not be necessary
             String  _firmware;
             String  _compDate;
             int     _modeButton;
-            int     _nrXF = 0;			// nr of extra fields required in the config manager
+            int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
     };
