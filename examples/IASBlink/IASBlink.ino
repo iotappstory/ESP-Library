@@ -30,7 +30,7 @@
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON, APPNAME);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 
@@ -42,7 +42,7 @@ unsigned long blinkEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "14";																// The value given here is the default value and can be overwritten by values saved in configuration mode
+char* LEDpin = "D4";																// The value given here is the default value and can be overwritten by values saved in configuration mode
 char* blinkTime = "1000";
 
 
@@ -67,13 +67,12 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  yield();
   IAS.buttonLoop();																				// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
   if (millis() - blinkEntry > atoi(blinkTime)) {
-  digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
+    digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
     blinkEntry = millis();
 
     // Serial feedback
