@@ -33,7 +33,7 @@
 
     //#ifdef SERIALDEBUG
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
-    #define DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
+    #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
     #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
     //#else
     //#define         DEBUG_PRINT(x)
