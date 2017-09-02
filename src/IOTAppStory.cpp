@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include "IOTAppStory.h"
+#include "WiFiManagerMod.h"
 
 #ifdef REMOTEDEBUGGING
 	#include <WiFiUDP.h>
@@ -32,8 +33,7 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 }
 
 void IOTAppStory::firstBoot(bool ea){
-	DEBUG_PRINT(" Running first boot sequence for ");
-	DEBUG_PRINTLN(_firmware);
+	DEBUG_PRINTF(" Running first boot sequence for %s\n", _firmware.c_str());
 
 	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
 	
@@ -69,7 +69,7 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	_serialDebug = onoff;
 	if(_serialDebug == true){
 		Serial.begin(speed);
-		for (int i = 0; i < 5; i++) DEBUG_PRINTLN(" ");
+		DEBUG_PRINT("\n\n\n\n\n");
 	}
 }
 
@@ -105,25 +105,19 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 }
 
 void IOTAppStory::begin(bool bootstats, bool ea){
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
+	DEBUG_PRINTLN("\n");
 
 	if(_setPreSet == true){
 		writeConfig();
-		DEBUG_PRINTLN("Saving config presets...");
-		DEBUG_PRINTLN("");
+		DEBUG_PRINTLN("Saving config presets...\n");
 	}
 
 	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
-	DEBUG_PRINT(" Start ");
-	DEBUG_PRINTLN(_firmware);
+	DEBUG_PRINTF(" Start %s\n", _firmware.c_str());
 	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
-	DEBUG_PRINT(" Mode select button: Gpio");
-	DEBUG_PRINTLN(_modeButton);
-	DEBUG_PRINT(" Boardname: ");
-	DEBUG_PRINTLN(config.boardName);
-	DEBUG_PRINT(" Automatic update: ");
-	DEBUG_PRINTLN(config.automaticUpdate);
+	DEBUG_PRINTF(" Mode select button: GPIO%d\n", _modeButton);
+	DEBUG_PRINTF(" Boardname: %s\n", config.boardName);
+	DEBUG_PRINTF(" Automatic update: %d\n", config.automaticUpdate);
 	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 
 	// ----------- PINS ----------------
@@ -169,11 +163,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	buttonEntry = millis() + ENTER_CONFIG_MODE_TIME_MAX;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN("");
+	DEBUG_PRINT("\n\n\n\n\n");
 }
 
 
@@ -198,12 +188,9 @@ void IOTAppStory::writeRTCmem() {
 
 void IOTAppStory::printRTCmem() {
 	DEBUG_PRINTLN(" rtcMem");
-	DEBUG_PRINT(" markerFlag: ");
-	DEBUG_PRINTLN(rtcMem.markerFlag);
-	DEBUG_PRINT(" bootTimes since powerup: ");
-	DEBUG_PRINTLN(rtcMem.bootTimes);
-	DEBUG_PRINT(" boardMode: ");
-	DEBUG_PRINTLN(rtcMem.boardMode);
+	DEBUG_PRINTF(" markerFlag: %d\n", rtcMem.markerFlag);
+	DEBUG_PRINTF(" bootTimes since powerup: %d\n", rtcMem.bootTimes);
+	DEBUG_PRINTF(" boardMode: %c\n", rtcMem.boardMode);
 	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 }
 
@@ -211,7 +198,7 @@ void IOTAppStory::configESP() {
 	readConfig();
 	//connectNetwork();
 
-	DEBUG_PRINTLN("\n\n\n");
+	DEBUG_PRINT("\n\n\n\n");
 	DEBUG_PRINTLN("C O N F I G U R A T I O N    M O D E");
 
 	initWiFiManager();
@@ -278,11 +265,7 @@ bool IOTAppStory::isNetworkConnected() {
 		DEBUG_PRINT(".");
 	}
 	
-	if (retries <= 0){
-		return false;
-	}else{
-		return true;
-	}
+	return (retries > 0);
 }
 
 
@@ -293,9 +276,7 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	byte res1, res2;
 
 	DEBUG_PRINTLN(" Calling Home");
-	DEBUG_PRINT(" Current App: ");
-	DEBUG_PRINTLN(_firmware);
-	DEBUG_PRINTLN("");
+	DEBUG_PRINTF(" Current App: %s\n\n", _firmware.c_str());
 
 	ESPhttpUpdate.rebootOnUpdate(false);
 	res1 = iotUpdater(0,config.IOTappStory1, config.IOTappStoryPHP1);
@@ -331,7 +312,6 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	}
 	return updateHappened;
 }
-
 
 byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	byte retValue;
@@ -388,13 +368,10 @@ void IOTAppStory::initWiFiManager() {
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
-		DEBUG_PRINT("After waiting ");
 		int connRes = WiFi.waitForConnectResult();
 		float waited = (millis() - startedAt);
 
-		DEBUG_PRINT(waited / 1000);
-		DEBUG_PRINT("secs in setup() connection result is ");
-		DEBUG_PRINTLN(connRes);
+		DEBUG_PRINTF("After waiting %d secs in setup(), the connection result is %d\n", waited / 1000, connRes);
 	}
 
 	if (WiFi.status() != WL_CONNECTED) {
@@ -445,12 +422,13 @@ void IOTAppStory::processField(){
 		
 	if(_nrXF > 0){
 		DEBUG_PRINTLN(" Processing added fields");
+		DEBUG_PRINTF(" ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n");
 
 		EEPROM.begin(EEPROM_SIZE);
 		
 		for (unsigned int nr = 1; nr <= _nrXF; nr++){
 			delay(100);
-			// loop threw the fields struc array	
+			// loop through the fields struct array
 			
 			int prevTotLength = 0;
 			for(unsigned int i = 0; i < (nr-1); i++){
@@ -461,18 +439,7 @@ void IOTAppStory::processField(){
 			const int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
 			const int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
 
-			DEBUG_PRINT(" ");
-			DEBUG_PRINT(nr);
-			DEBUG_PRINT(" | ");
-			DEBUG_PRINT(fieldStruct[nr-1].fieldLabel);
-			DEBUG_PRINT(" | Default value: ");
-			DEBUG_PRINT((*fieldStruct[nr-1].varPointer));
-			DEBUG_PRINT(" | Max. length: ");
-			DEBUG_PRINT(fieldStruct[nr-1].length-1);
-			DEBUG_PRINT(" | EEPROM loc: ");
-			DEBUG_PRINT(eeBeg);
-			DEBUG_PRINT(" to ");
-			DEBUG_PRINT(eeEnd);
+			DEBUG_PRINTF(" %02d | %-30s | %03d | %04d to %04d | %-30s | ", nr, fieldStruct[nr-1].fieldLabel, fieldStruct[nr-1].length-1, eeBeg, eeEnd, (*fieldStruct[nr-1].varPointer));
 
 			char* eepVal = new char[fieldStruct[nr-1].length + 1];
 			char* tmpVal = new char[fieldStruct[nr-1].length + 1];
@@ -483,7 +450,6 @@ void IOTAppStory::processField(){
 			if ((*fieldStruct[nr-1].varPointer) != NULL) {
 				strncpy(tmpVal, (*fieldStruct[nr-1].varPointer), fieldStruct[nr-1].length);
 			}
-			
 
 			// read eeprom, check for MAGICEEP and get the updated value if present
 			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
@@ -498,18 +464,17 @@ void IOTAppStory::processField(){
 				
 				// if eeprom value is different update the ret value
 				if(String(eepVal) != String((*fieldStruct[nr-1].varPointer))){
-					DEBUG_PRINT(" | Overwriting default with eeprom value: ");
-					DEBUG_PRINT(eepVal);
+					DEBUG_PRINTF("%-30s | OVERWRITTEN", eepVal);
 
 					(*fieldStruct[nr-1].varPointer) = eepVal;
 				}else{
-					DEBUG_PRINT(" | Unchainged, keeping default value");
+					DEBUG_PRINTF("%-30s | DEFAULT", (*fieldStruct[nr-1].varPointer));
 					//DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
 				}
 
 			}else{
 				//DEBUG_PRINTLN(" NO existing EEPROM value found.");
-				DEBUG_PRINT(" | Writing default value to EEPROM.");
+				DEBUG_PRINTF("%-30s | WRITTING TO EEPROM", (*fieldStruct[nr-1].varPointer));
 
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
@@ -543,61 +508,39 @@ int IOTAppStory::dPinConv(String orgVal){
 	#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
 
 		//Serial.println("- Generic ESP's -");
-		if (orgVal == "D0" || orgVal == "16"){
-			return 16;
-		}else if (orgVal == "D1" || orgVal == "5"){
-			return 5;
-		}else if (orgVal == "D2" || orgVal == "4"){
-			return 4;
-		}else if (orgVal == "D4" || orgVal == "2"){
-			return 2;
-		}else if (orgVal == "D5" || orgVal == "14"){
-			return 14;
-		}else if (orgVal == "D6" || orgVal == "12"){
-			return 12;
-		}else if (orgVal == "D7" || orgVal == "13"){
-			return 13;
-		}else if (orgVal == "D8" || orgVal == "15"){
-			return 15;
-		}else if (orgVal == "D9" || orgVal == "3"){
-			return 3;
-		}else if (orgVal == "D10" || orgVal == "1"){
-			return 1;
-		}else{
-			return 16;
-		}
+		if      (orgVal == "D0"  || orgVal == "16")   return 16;
+		else if (orgVal == "D1"  || orgVal == "5")    return 5;
+		else if (orgVal == "D2"  || orgVal == "4")    return 4;
+		else if (orgVal == "D4"  || orgVal == "2")    return 2;
+		else if (orgVal == "D5"  || orgVal == "14")   return 14;
+		else if (orgVal == "D6"  || orgVal == "12")   return 12;
+		else if (orgVal == "D7"  || orgVal == "13")   return 13;
+		else if (orgVal == "D8"  || orgVal == "15")   return 15;
+		else if (orgVal == "D9"  || orgVal == "3")    return 3;
+		else if (orgVal == "D10" || orgVal == "1")    return 1;
+		else                                          return 16;
 
 	#else
 
 		//Serial.println("- Special ESP's -");
-		if (orgVal == "D0" || orgVal == "16"){
-			return D0;
-		}else if (orgVal == "D1" || orgVal == "5"){
-			return D1;
-		}else if (orgVal == "D2" || orgVal == "4"){
-			return D2;
-		}else if (orgVal == "D4" || orgVal == "2"){
-			return D4;
-		}else if (orgVal == "D5" || orgVal == "14"){
-			return D5;
-		}else if (orgVal == "D6" || orgVal == "12"){
-			return D6;
-		}else if (orgVal == "D7" || orgVal == "13"){
-			return D7;
-		}else if (orgVal == "D8" || orgVal == "15"){
-			return D7;
-		}else if (orgVal == "D9" || orgVal == "3"){
-			return D7;
-		}else if (orgVal == "D10" || orgVal == "1"){
-			return D7;
-		}else{
-			return D0;
-		}
+		if      (orgVal == "D0"  || orgVal == "16")   return D0;
+		else if (orgVal == "D1"  || orgVal == "5")    return D1;
+		else if (orgVal == "D2"  || orgVal == "4")    return D2;
+		else if (orgVal == "D4"  || orgVal == "2")    return D4;
+		else if (orgVal == "D5"  || orgVal == "14")   return D5;
+		else if (orgVal == "D6"  || orgVal == "12")   return D6;
+		else if (orgVal == "D7"  || orgVal == "13")   return D7;
+		else if (orgVal == "D8"  || orgVal == "15")   return D7;
+		else if (orgVal == "D9"  || orgVal == "3")    return D7;
+		else if (orgVal == "D10" || orgVal == "1")    return D7;
+		else                                          return D0;
 
 	#endif
 }
 
 void IOTAppStory::loopWiFiManager() {
+	WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
+	
 	for(unsigned int i = 0; i < _nrXF; i++){
 		// add the WiFiManagerParameter to parArray so it can be referenced to later
 		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, (*fieldStruct[i].varPointer), fieldStruct[i].length);
@@ -663,11 +606,7 @@ void IOTAppStory::espRestart(char mmode, char* message) {
 
 void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 	DEBUG_PRINTLN(" Erasing Flash...");
-	DEBUG_PRINT(" From ");
-	DEBUG_PRINT(eepFrom);
-	DEBUG_PRINT(" To ");
-	DEBUG_PRINT(eepTo);
-	DEBUG_PRINTLN(" ");
+	DEBUG_PRINTF(" From %4d to %4d\n", eepFrom, eepTo);
 
 	EEPROM.begin(EEPROM_SIZE);
 	for (unsigned int t = eepFrom; t < eepTo; t++) EEPROM.write(t, 0);
@@ -776,7 +715,7 @@ bool IOTAppStory::readConfig() {
 		ret = true;
 
 	} else {
-		DEBUG_PRINTLN(" EEPROM Configurarion NOT FOUND!!!!");
+		DEBUG_PRINTLN(" EEPROM Configuration NOT FOUND!!!!");
 		writeConfig();
 		ret = false;
 	}
