@@ -1,4 +1,4 @@
-/* 
+/*
 	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
 	Your code can be filled wherever it is marked.
 
@@ -23,14 +23,14 @@
 	SOFTWARE.
 */
 
-#define SKETCH "Fast blink "
-#define VERSION "V2.0.0"
+#define APPNAME "IASBlink"
+#define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
-  
+
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 
@@ -42,47 +42,45 @@ unsigned long blinkEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "14";																// The value given here is the default value and can be overwritten by values saved in configuration mode
-
+char* LEDpin = "D4";																// The value given here is the default value and can be overwritten by values saved in configuration mode
+char* blinkTime = "1000";
 
 
 // ================================================ SETUP ================================================
 void setup() {
-	IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-	//IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-	/* TIP! delete the above lines when not used */
+  IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
+  //IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  /* TIP! delete the above lines when not used */
 
-	IAS.preSetConfig("fastblink",true);								// preset Boardname
+  IAS.addField(LEDpin, "ledpin", "ledPin", 2);			       // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(blinkTime, "Blinktime(mS)", "blinkTime", 5);
+  // reference to org variable | field name | field label value | max char return
 
-	IAS.addField(LEDpin, "ledpin", "ledPin", 2);			// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-																										// reference to org variable | field name | field label value | max char return
-
-	IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
 
 
-	//-------- Your Setup starts from here ---------------
-	pinMode(IAS.dPinConv(LEDpin), OUTPUT);
+  //-------- Your Setup starts from here ---------------
+  pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-	yield();
-	IAS.routine();																		// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.buttonLoop();																				// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
-	//-------- Your Sketch starts from here ---------------
-	if (millis() - blinkEntry > 100) {
-		digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
-		blinkEntry = millis();
+  //-------- Your Sketch starts from here ---------------
+  if (millis() - blinkEntry > atoi(blinkTime)) {
+    digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
+    blinkEntry = millis();
 
-		// Serial feedback
-		Serial.println("");
-		Serial.print("blinkEntry: ");
-		Serial.println(blinkEntry);
-		Serial.print("LEDpin: ");
-		Serial.println(LEDpin);
-	}
+    // Serial feedback
+    Serial.println("");
+    Serial.print("blinkEntry: ");
+    Serial.println(blinkEntry);
+    Serial.print("LEDpin: ");
+    Serial.println(LEDpin);
+  }
 }
 

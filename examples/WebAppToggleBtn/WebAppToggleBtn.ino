@@ -31,14 +31,14 @@
 	or you can upload it to IOTAppStory.com
 */
 
-#define SKETCH "WebAppToggleBtn "
+#define APPNAME "WebAppToggleBtn"
 #define VERSION "V2.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
 
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -194,9 +194,8 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-	yield();
 	// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
-	IAS.routine();
+	IAS.buttonLoop();
 
 
 	//-------- Sketch Specific starts from here ---------------

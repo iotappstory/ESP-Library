@@ -20,12 +20,15 @@ extern "C" {
 
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
-	_appName = appName;
-	_appVersion = appVersion;
-	_firmware = String(appName)+String(appVersion);
+	//_appName = appName;			// may not be necessary
+	//_appVersion = appVersion;		// may not be necessary
+	_firmware = String(appName)+" "+String(appVersion);
 	_compDate = compDate;
 	_modeButton = modeButton;
-	readFullConfiguration();
+	readConfig();
+	
+	// set appName as default boardName in case the app developer does not set it
+	preSetConfig((String)appName, false);
 }
 
 void IOTAppStory::firstBoot(bool ea){
@@ -68,6 +71,11 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 		Serial.begin(speed);
 		for (int i = 0; i < 5; i++) DEBUG_PRINTLN(" ");
 	}
+}
+
+void IOTAppStory::preSetConfig(bool automaticUpdate){
+	config.automaticUpdate = automaticUpdate;
+	_setPreSet = true;
 }
 
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
@@ -147,14 +155,12 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	if (rtcMem.boardMode == 'C') configESP();
 
 	// --------- READ FULL CONFIG --------------------------
-	readFullConfiguration();
+	readConfig();
 	
-
 
 	// --------- START WIFI --------------------------
 	connectNetwork();
 
-	//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, "------------- Normal Mode -------------------");
 
 	// --------- if automaticUpdate Update --------------------------
 	if(config.automaticUpdate == true){
@@ -163,8 +169,6 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	buttonEntry = millis() + ENTER_CONFIG_MODE_TIME_MAX;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
-	// LEDswitch(None);
-	// sendSysLogMessage(7, 1, config.boardName, _firmware, 10, counter++, "Setup done");
 	DEBUG_PRINTLN("");
 	DEBUG_PRINTLN("");
 	DEBUG_PRINTLN("");
@@ -204,34 +208,15 @@ void IOTAppStory::printRTCmem() {
 }
 
 void IOTAppStory::configESP() {
-	// ----------- PINS ----------------
-	/*
-	#ifdef LEDgreen
-	  pinMode(LEDgreen, OUTPUT);
-	  digitalWrite(LEDgreen, LEDOFF);
-	#endif
-	#ifdef LEDred
-	  pinMode(LEDred, OUTPUT);
-	  digitalWrite(LEDred, LEDOFF);
-	#endif
-	*/
-
-	// ------------- INTERRUPTS ----------------------------
-	//blink.detach();
-
-	//------------- LED and DISPLAYS ------------------------
-	//LEDswitch(GreenFastBlink);
-
-	readFullConfiguration();
+	readConfig();
 	//connectNetwork();
 
 	DEBUG_PRINTLN("\n\n\n");
 	DEBUG_PRINTLN("C O N F I G U R A T I O N    M O D E");
 
-	//sendSysLogMessage(6, 1, config.boardName, _firmware, 10, counter++, "------------- Configuration Mode -------------------");
 	initWiFiManager();
 
-	//--------------- LOOP ----------------------------------
+	//--------------- buttonbuttonLoop ----------------------------------
 	while (1) {
 		//if ((*buttonChanged) && (*buttonTime) > 4000) espRestart('N', "Back to normal mode");  // long button press > 4sec
 		yield();
@@ -239,11 +224,6 @@ void IOTAppStory::configESP() {
 	}
 } 
 
-void IOTAppStory::readFullConfiguration() {
-	readConfig();  // configuration in EEPROM
-	DEBUG_PRINTLN(" Exit config");
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
-}
 
 void IOTAppStory::connectNetwork() {
 	DEBUG_PRINTLN(" Connecting to WiFi AP");
@@ -260,8 +240,11 @@ void IOTAppStory::connectNetwork() {
 	DEBUG_PRINTLN(" WiFi connected");
 
 	
-	getMACaddress();
-	printMacAddress();
+	//getMACaddress();
+	//printMacAddress();
+
+	DEBUG_PRINT(" Device MAC: ");
+	DEBUG_PRINTLN(WiFi.macAddress());
 
 	DEBUG_PRINT(" Device IP Address: ");
 	DEBUG_PRINTLN(WiFi.localIP());
@@ -302,26 +285,6 @@ bool IOTAppStory::isNetworkConnected() {
 	}
 }
 
-String IOTAppStory::getMACaddress() {
-	uint8_t mac[6];
-	char macStr[18] = {0};
-	WiFi.macAddress(mac);
-	sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0],  mac[1], mac[2], mac[3], mac[4], mac[5]);
-	return  String(macStr);
-}
-
-void IOTAppStory::printMacAddress() {
-	byte mac[6];
-	WiFi.macAddress(mac);
-	DEBUG_PRINT(" Device MAC: ");
-	for (int i = 0; i < 5; i++) {
-		Serial.print(mac[i], HEX);
-		DEBUG_PRINT(":");
-	}
-	if(_serialDebug == true){
-		Serial.println(mac[5], HEX);
-	}
-}
 
 //---------- IOTappStory FUNCTIONS ----------
 bool IOTAppStory::callHome(bool spiffs /*= true*/) {
@@ -329,22 +292,17 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	bool updateHappened=false;
 	byte res1, res2;
 
-	//sendSysLogMessage(7, 1, config.boardName, _firmware, 10, counter++, "------------- IOTappStory -------------------");
-	//LEDswitch(GreenSlowBlink);
-
-	getMACaddress();
+	DEBUG_PRINTLN(" Calling Home");
+	DEBUG_PRINT(" Current App: ");
+	DEBUG_PRINTLN(_firmware);
+	DEBUG_PRINTLN("");
 
 	ESPhttpUpdate.rebootOnUpdate(false);
-	res1 = iotUpdaterSketch(config.IOTappStory1, config.IOTappStoryPHP1, _firmware, true);
+	res1 = iotUpdater(0,config.IOTappStory1, config.IOTappStoryPHP1);
 	
 	if (res1 == 'F') {
-		String message = String(config.IOTappStory1) + ": Update not succesful";
-		//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, message);
-		res2 = iotUpdaterSketch(config.IOTappStory2, config.IOTappStoryPHP2, _firmware, true) ;
-		if (res2 == 'F') {
-			message = String(config.IOTappStory2) + ": Update not succesful";
-			//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, message);
-		} 
+		// if address 1 was unsuccesfull try address 2
+		res2 = iotUpdater(0,config.IOTappStory2, config.IOTappStoryPHP2) ;
 	}
 	if (res1 == 'U' || res2 == 'U')  updateHappened = true;
 	
@@ -352,15 +310,10 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	if (spiffs) {
 		DEBUG_PRINTLN("");
-		res1 = iotUpdaterSPIFFS(config.IOTappStory1, config.IOTappStoryPHP1, _firmware, true);
+		res1 = iotUpdater(1,config.IOTappStory1, config.IOTappStoryPHP1);
 		if (res1 == 'F') {
-			String message = String(config.IOTappStory1) + ": Update not succesful";
-			//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, message);
-			res2 = iotUpdaterSPIFFS(config.IOTappStory2, config.IOTappStoryPHP2, _firmware, true);
-			if (res2 == 'F') {
-				message = String(config.IOTappStory2) + ": Update not succesful";
-				//sendSysLogMessage(2, 1, config.boardName, _firmware, 10, counter++, message);
-			}
+			// if address 1 was unsuccesfull try address 2
+			res2 = iotUpdater(1,config.IOTappStory2, config.IOTappStoryPHP2);
 		}
 	} 
 	if (res1 == 'U' || res2 == 'U')  updateHappened = true;
@@ -370,35 +323,42 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
 
 	
-//	(*buttonTime) = 0;
-//	(*buttonChanged) = false;
 	
 	if (updateHappened) {
-		//initialize();
+		// set boardMode to normal and reboot
 		rtcMem.boardMode = 'N';
 		ESP.restart();
 	}
 	return updateHappened;
 }
 
-/*
-void IOTAppStory::initialize() {   // this function is called by callHome() before return. Here, you put a safe startup configuration
 
-}
-*/
-byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, bool immediately) {
+byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	byte retValue;
 
-	DEBUG_PRINTLN(" Calling Home");
-	DEBUG_PRINT(" Current App: ");
-	DEBUG_PRINTLN(firmware);
-	DEBUG_PRINTLN("");
-
-	DEBUG_PRINT(" Checking for App(Sketch) updates from: ");
+	DEBUG_PRINT(" Checking for ");
+	if(type == 0){
+		// type == sketch
+		DEBUG_PRINT("App(Sketch)");
+	}
+	if(type == 1){
+		// type == spiffs
+		DEBUG_PRINT("SPIFFS");
+	}
+	DEBUG_PRINT(" updates from: ");
 	DEBUG_PRINT(server);
 	DEBUG_PRINTLN(url);
-
-	t_httpUpdate_return ret = ESPhttpUpdate.update(server, 80, url, firmware);
+	
+	t_httpUpdate_return ret;
+	if(type == 0){
+		// type == sketch
+		ret = ESPhttpUpdate.update(server, 80, url, _firmware);
+	}
+	if(type == 1){
+		// type == spiffs
+		ret = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), _firmware);
+	}
+	
 	switch (ret) {
 		case HTTP_UPDATE_FAILED:
 			if(_serialDebug == true){
@@ -418,32 +378,6 @@ byte IOTAppStory::iotUpdaterSketch(String server, String url, String firmware, b
 	return retValue;
 }
 
-byte IOTAppStory::iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately) {
-	byte retValue;
-	DEBUG_PRINT(" Checking for SPIFFS updates from: ");
-	DEBUG_PRINT(server);
-	DEBUG_PRINTLN(url);
-
-	t_httpUpdate_return retspiffs = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), firmware);
-	switch (retspiffs) {
-		case HTTP_UPDATE_FAILED:
-			if(_serialDebug == true){
-				Serial.printf(" SPIFFS Update Failed. Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-				DEBUG_PRINTLN();
-			}
-			retValue = 'F';
-		break;
-		case HTTP_UPDATE_NO_UPDATES:
-			DEBUG_PRINTLN(" SPIFFS No updates");
-			retValue = 'A';
-		break;
-		case HTTP_UPDATE_OK:
-			DEBUG_PRINTLN(" SPIFFS Received update");
-			retValue = 'U';
-		break;
-	}
-	return retValue;
-}
 
 //---------- WIFIMANAGER COMMON FUNCTIONS
 void IOTAppStory::initWiFiManager() {
@@ -472,12 +406,6 @@ void IOTAppStory::initWiFiManager() {
 	
 }
 
-/*
-// add int field to the wifi configuration page and add value to eeprom
-void IOTAppStory::addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length){
-	_nrXF++;
-}
-*/
 
 // add char array field to the wifi configuration page and add value to eeprom
 void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length){
@@ -671,13 +599,9 @@ int IOTAppStory::dPinConv(String orgVal){
 
 void IOTAppStory::loopWiFiManager() {
 	for(unsigned int i = 0; i < _nrXF; i++){
-		
 		// add the WiFiManagerParameter to parArray so it can be referenced to later
 		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, (*fieldStruct[i].varPointer), fieldStruct[i].length);
 	}
-	
-	// Just a quick hint
-	//WiFiManagerParameter p_hint("<small>*Hint: if you want to reuse the currently active WiFi credentials, leave SSID and Password fields empty</small></br></br>");
 
 	// Initialize WiFIManager
 	WiFiManager wifiManager;
@@ -717,14 +641,12 @@ void IOTAppStory::loopWiFiManager() {
 	//DEBUG_PRINTLN(wifiManager.devPass);
 	
 	writeConfig(true);
-	readFullConfiguration();  // read back to fill all variables
-	//LEDswitch(None); // Turn LED off as we are not in configuration mode.
+	readConfig();  // read back to fill all variables
 	espRestart('N', "Configuration finished"); //Normal Operation
 }
 
 //---------- MISC FUNCTIONS ----------
 void IOTAppStory::espRestart(char mmode, char* message) {
-	//LEDswitch(GreenFastBlink);
 	while (digitalRead(_modeButton) == LOW) yield();    // wait till GPIOo released
 	delay(500);
 	
@@ -856,19 +778,18 @@ bool IOTAppStory::readConfig() {
 	} else {
 		DEBUG_PRINTLN(" EEPROM Configurarion NOT FOUND!!!!");
 		writeConfig();
-		//LEDswitch(RedFastBlink);
 		ret = false;
 	}
 	return ret;
 }
 
 
-void IOTAppStory::routine() {
+void IOTAppStory::buttonLoop() {
   unsigned long _buttonTime = -1;
-  //pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
+  // pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
   
   int _buttonState = digitalRead(_modeButton);
-    
+  yield(); 
   if (buttonStateOld != _buttonState) {
     Serial.println("* button changed *");
     delay(100);

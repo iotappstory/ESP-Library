@@ -24,14 +24,14 @@
 
 */
 
-#define SKETCH "virginSoil "
+#define APPNAME "virginSoilBasic"
 #define VERSION "V2.1.1"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
   
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
 
 // ================================================ SETUP ================================================
 void setup() {
@@ -50,9 +50,7 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  yield();
-  IAS.routine();																		// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
-
+  IAS.buttonLoop();																   // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
   //-------- Your Sketch starts from here ---------------
 

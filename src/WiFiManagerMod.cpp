@@ -505,17 +505,16 @@ void WiFiManager::handleRoot() {
 void WiFiManager::handleIAScfg() {
 
 	if(server->arg("d") != ""){
-
+		// check the entered code
 		hdlIasCfgPages("IOTAppStory.com config","ias-check.php","&ias_id="+server->arg("d"));
 		
-	}else if(devPass == "000000"){
-
+	}else if(devPass == "000000" || devPass == ""){
+		// send "enter your code" page
 		hdlIasCfgPages("IOTAppStory.com config","ias-id.php");
 		
 	}else{
-
-		hdlIasCfgPages("IOTAppStory.com config","dev_check.php");
-
+		// check device status
+		hdlIasCfgPages("IOTAppStory.com config","dev_check.php","&ias_id="+devPass);
 	}
 }
 
@@ -760,6 +759,7 @@ void WiFiManager::handleWifiSave() {
   page += FPSTR(HTTP_SAVED);
   page.replace("{v}", _apName);
   page.replace("{x}", _ssid);
+  page += FPSTR(HTTP_FORM_BACKBTN);
   page += FPSTR(HTTP_END);
 
   server->send(200, "text/html", page);

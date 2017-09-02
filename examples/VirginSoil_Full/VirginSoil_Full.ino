@@ -25,22 +25,22 @@
 
 */
 
-#define SKETCH "virginSoil "
+#define APPNAME "virginSoilFull"
 #define VERSION "V2.1.1"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
-  
+
 #include <IOTAppStory.h>
-IOTAppStory IAS(SKETCH,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 
 // ================================================ EXAMPLE VARS =========================================
-volatile unsigned long lastPrint;
+unsigned long printEntry;
 
 // We want to be able to edit these example variables from the wifi config manager
-// Currently only char arrays are supported. 
+// Currently only char arrays are supported.
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 char* lbl1        = "Light Show";
@@ -48,6 +48,7 @@ char* lbl2        = "Living Room";
 char* exampleURL  = "http://someapi.com/getdata.php?userid=1234&key=7890abc";
 char* timeZone    = "0.0";
 char* ledPin      = "2";
+unsigned long callHomeEntry = millis();
 
 
 
@@ -74,25 +75,29 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
 
 
   //-------- Your Setup starts from here ---------------
-  
+
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-  yield();
-  IAS.routine();                                                     // this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.buttonLoop();                                                 // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+
+  if (millis() - callHomeEntry > 60000) {                          // only for development. Please change it to at least 2 hours in production
+    IAS.callHome();
+    callHomeEntry = millis();
+  }
+
 
 
   //-------- Your Sketch starts from here ---------------
 
-  if (millis() - lastPrint > 10000) {                                // Serial.print the example variables every 5 seconds
-    lastPrint = millis();
+  if (millis() - printEntry > 10000) {                                // Serial.print the example variables every 5 seconds
 
     Serial.print("Label 1: ");
     Serial.println(lbl1);
@@ -108,8 +113,9 @@ void loop() {
 
     Serial.print("Led pin: ");
     Serial.println(atoi(ledPin));
-    
+
     Serial.println("-------------------------------------------");
+    printEntry = millis();
   }
 
 }

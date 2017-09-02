@@ -104,10 +104,6 @@
             WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             unsigned long buttonEntry, debugEntry;
             int buttonStateOld;
-            //volatile unsigned long (*buttonEntry);
-            //unsigned long (*buttonTime);
-            //volatile bool (*buttonChanged);
-            //unsigned long debugEntry;
             //String sysMessage; 			<<-- is this still needed?
             long counter = 0;
 
@@ -119,6 +115,7 @@
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
             void preSetConfig(String boardName, bool automaticUpdate = false);
+            void preSetConfig(bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate = false);
@@ -131,19 +128,13 @@
             void printRTCmem();
 
             void configESP();
-            void readFullConfiguration();
 
             void connectNetwork();
             bool isNetworkConnected();
-            String getMACaddress();
-            void printMacAddress();
 
             bool callHome(bool spiffs = true);
-            //void initialize();
-            byte iotUpdaterSketch(String server, String url, String firmware, bool immediately);
-            byte iotUpdaterSPIFFS(String server, String url, String firmware, bool immediately);
+            byte iotUpdater(bool type, String server, String url);
 
-            //void addField(int &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void processField();
             int dPinConv(String orgVal);
@@ -156,19 +147,18 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void routine();
-            //void routine(volatile unsigned long (*org_buttonEntry), unsigned long (*org_buttonTime), volatile bool (*org_buttonChanged));
+            void buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
 
         private:
-            String  _appName;
-            String  _appVersion;
+            //String  _appName;				// may not be necessary
+            //String  _appVersion;			// may not be necessary
             String  _firmware;
             String  _compDate;
             int     _modeButton;
-            int     _nrXF = 0;			// nr of extra fields required in the config manager
+            int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
     };

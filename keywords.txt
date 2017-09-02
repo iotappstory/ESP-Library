@@ -18,8 +18,7 @@ serialdebug	KEYWORD2
 preSetConfig	KEYWORD2
 addField	KEYWORD2
 begin	KEYWORD2
-routine	KEYWORD2
-ISRbuttonStateChanged	KEYWORD2
+loop	KEYWORD2
 callHome	KEYWORD2
 dPinConv	KEYWORD2
 
@@ -27,7 +26,7 @@ dPinConv	KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
-SKETCH	LITERAL1
+APPNAME	LITERAL1
 VERSION	LITERAL1
 COMPDATE	LITERAL1
 MODEBUTTON	LITERAL1
