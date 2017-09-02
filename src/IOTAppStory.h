@@ -2,7 +2,6 @@
     #define IOTAppStory_h
 
     #include <Arduino.h>
-    #include "WiFiManagerMod.h"
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
@@ -34,6 +33,7 @@
 
     //#ifdef SERIALDEBUG
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
+    #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
     #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
     //#else
     //#define         DEBUG_PRINT(x)
@@ -101,7 +101,6 @@
 
             
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
-            WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
             unsigned long buttonEntry, debugEntry;
             int buttonStateOld;
             //String sysMessage; 			<<-- is this still needed?
