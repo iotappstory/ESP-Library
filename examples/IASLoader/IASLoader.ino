@@ -30,6 +30,7 @@
 #define MODEBUTTON 0
 
 
+#include <ESP8266WiFi.h>
 #include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 

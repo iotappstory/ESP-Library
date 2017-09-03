@@ -18,7 +18,7 @@ serialdebug	KEYWORD2
 preSetConfig	KEYWORD2
 addField	KEYWORD2
 begin	KEYWORD2
-loop	KEYWORD2
+buttonLoop	KEYWORD2
 callHome	KEYWORD2
 dPinConv	KEYWORD2
 
