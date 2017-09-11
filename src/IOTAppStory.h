@@ -167,6 +167,33 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+			const static bool _boolDefaulValue = false;
+
+			
+			
+			/* ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ */
+			/* ------ CHANGE CONFIG VALUES 									 */
+			template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
+				if (a != b) {
+					a = b;
+					changeFlag = true;
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+			bool SetConfigValueCharArray(char* a, String &b, int len, bool changeFlag = &_boolDefaulValue) {
+				if (b != a) {
+					b.toCharArray(a, len);
+					changeFlag = true;
+					return true;
+				} else {
+					return false;
+				}
+			}
+			/* ------ */
+			
 			/* ------ CONVERT BYTE TO STRING 								 */
 			String GetCharToDisplayInDebug(char value) {
 				if (value>=32 && value<=126){

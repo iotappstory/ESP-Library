@@ -73,35 +73,31 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	}
 }
 
+
 void IOTAppStory::preSetConfig(bool automaticUpdate){
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
-	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	preSetConfig(automaticUpdate);
+	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate /*= false*/){
-	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	preSetConfig(automaticUpdate);
+	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate /*= false*/){
 	preSetConfig(ssid, password, automaticUpdate);
-	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	_setPreSet = true;
+	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate /*= false*/) {
 	preSetConfig(ssid, password, boardName, automaticUpdate);
-	IOTappStory1.toCharArray(config.IOTappStory1, STRUCT_HOST_SIZE);
-	IOTappStoryPHP1.toCharArray(config.IOTappStoryPHP1, STRUCT_FILE_SIZE);
-	_setPreSet = true;
+	SetConfigValueCharArray(config.IOTappStory1, IOTappStory1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.IOTappStoryPHP1, IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::begin(bool bootstats, bool ea){
