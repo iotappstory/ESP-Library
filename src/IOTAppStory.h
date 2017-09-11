@@ -30,6 +30,13 @@
     #else
         #define DEBUG_MSG(...)
     #endif
+	
+	
+	// set to true to include code for show EEPROM contents in debug
+	#ifndef DEBUG_EEPROM_CONFIG
+		#define DEBUG_EEPROM_CONFIG false
+	#endif
+
 
     //#ifdef SERIALDEBUG
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
@@ -160,6 +167,17 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+			/* ------ CONVERT BYTE TO STRING 								 */
+			String GetCharToDisplayInDebug(char value) {
+				if (value>=32 && value<=126){
+					return String(value);
+				} else if (value == 0){
+					return ".";
+				} else {
+					return String("[" + String(value, DEC) + "]");
+				} 
+			}
+			
     };
 
 #endif

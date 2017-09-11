@@ -615,17 +615,17 @@ void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 
 //---------- CONFIGURATION PARAMETERS ----------
 void IOTAppStory::writeConfig(bool wifiSave) {
-	//DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
+	DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		//DEBUG_PRINT("Stored ");
-		//DEBUG_PRINT(config.ssid);
-		//DEBUG_PRINTLN("  ");
-		//DEBUG_PRINTLN(config.password);   // devPass
+#if DEBUG_EEPROM_CONFIG
+		DEBUG_PRINT("Stored ");
+		DEBUG_PRINT(config.ssid);
+		DEBUG_PRINTLN("  ");
+		DEBUG_PRINTLN(config.password);   // devPass
+#endif		
 	}
-	
-	
 	
 	EEPROM.begin(EEPROM_SIZE);
 	config.magicBytes[0] = MAGICBYTES[0];
@@ -633,8 +633,19 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 	config.magicBytes[2] = MAGICBYTES[2];
 
 	// WRITE CONFIG TO EEPROM
-	for (unsigned int t = 0; t < sizeof(config); t++) EEPROM.write(t, *((char*)&config + t));
+	for (unsigned int t = 0; t < sizeof(config); t++) {
+		EEPROM.write(t, *((char*)&config + t));
+		
+#if DEBUG_EEPROM_CONFIG
+		// DEBUG (show all config EEPROM slots in one line)
+		DEBUG_PRINT(GetCharToDisplayInDebug(*((char*)&config + t)));
+#endif
+		
+	}
 	EEPROM.commit();
+#if DEBUG_EEPROM_CONFIG
+	DEBUG_PRINTLN();
+#endif
 	
 	if(wifiSave == true && _nrXF > 0){
 		// LOOP THROUGH ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
@@ -676,16 +687,22 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+					char valueTowrite;
+					
 					if(t == eeBeg){
-						EEPROM.put(t, MAGICEEP[0]);
-						//DEBUG_PRINTLN(MAGICEEP[0]);
+						valueTowrite = MAGICEEP[0];
 					}else if(t == eeEnd){
-						EEPROM.put(t, '^');
-						//DEBUG_PRINTLN('^');
+						valueTowrite = '^';
 					}else{
-						EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));
-						//DEBUG_PRINTLN(*((char*)tmpVal + (t-eeBeg)-1));
+						valueTowrite = *((char*)tmpVal + (t-eeBeg)-1);
 					}
+					EEPROM.put(t, valueTowrite);
+					
+#if DEBUG_EEPROM_CONFIG
+					// DEBUG (show all wifiSave EEPROM slots in one line)
+					DEBUG_PRINT(GetCharToDisplayInDebug(valueTowrite));
+#endif
+		
 				}
 			}
 			EEPROM.commit();
@@ -696,15 +713,27 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 }
 
 bool IOTAppStory::readConfig() {
-	DEBUG_PRINTLN(" Reading Config");
+	DEBUG_PRINTLN(" ------------------ Reading Config --------------------------------");
+
 	boolean ret = false;
 	EEPROM.begin(EEPROM_SIZE);
 	long magicBytesBegin = sizeof(config) - 4; 								// Magic bytes at the end of the structure
 
 	if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
 		DEBUG_PRINTLN(" EEPROM Configuration found");
-		for (unsigned int t = 0; t < sizeof(config); t++) *((char*)&config + t) = EEPROM.read(t);
+		for (unsigned int t = 0; t < sizeof(config); t++) {
+			char valueReaded = EEPROM.read(t);
+			*((char*)&config + t) = valueReaded;
+			
+#if DEBUG_EEPROM_CONFIG
+			// DEBUG (show all config EEPROM slots in one line)
+			DEBUG_PRINT(GetCharToDisplayInDebug(valueReaded));
+#endif
+		}
 		EEPROM.end();
+#if DEBUG_EEPROM_CONFIG
+		DEBUG_PRINTLN();
+#endif
 		
 		// Standard											// Is this part necessary? Maby for ram usage it is better to load this from eeprom only when needed....!?
 		//boardName = String(config.boardName);
