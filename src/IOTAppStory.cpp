@@ -21,15 +21,12 @@ extern "C" {
 
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
-	//_appName = appName;			// may not be necessary
+	_appName = appName;
 	//_appVersion = appVersion;		// may not be necessary
 	_firmware = String(appName)+" "+String(appVersion);
 	_compDate = compDate;
 	_modeButton = modeButton;
-	readConfig();
-	
-	// set appName as default boardName in case the app developer does not set it
-	preSetConfig((String)appName, false);
+
 }
 
 void IOTAppStory::firstBoot(bool ea){
@@ -75,6 +72,9 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 
 
 void IOTAppStory::preSetConfig(bool automaticUpdate){
+	if (!_configReaded) {
+		readConfig();
+	}
 	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
 }
 
@@ -100,9 +100,21 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.IOTappStoryPHP1, IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
+
 void IOTAppStory::begin(bool bootstats, bool ea){
 	DEBUG_PRINTLN("\n");
-
+	
+	// read config if needed
+	if (!_configReaded) {
+		readConfig();
+	}
+	
+	// set appName as default boardName in case the app developer does not set it
+	if (config.boardName == "yourFirstApp") {
+		preSetConfig(_appName, config.automaticUpdate);
+	}
+	
+	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
 		DEBUG_PRINTLN("Saving config presets...\n");
@@ -744,6 +756,9 @@ bool IOTAppStory::readConfig() {
 		writeConfig();
 		ret = false;
 	}
+	
+	_configReaded = true;
+	
 	return ret;
 }
 

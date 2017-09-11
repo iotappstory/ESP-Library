@@ -159,7 +159,7 @@
             void sendDebugMessage();
 
         private:
-            //String  _appName;				// may not be necessary
+            String  _appName;
             //String  _appVersion;			// may not be necessary
             String  _firmware;
             String  _compDate;
@@ -167,6 +167,7 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+			bool	_configReaded = false;
 			const static bool _boolDefaulValue = false;
 
 			
