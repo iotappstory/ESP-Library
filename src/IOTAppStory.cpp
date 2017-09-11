@@ -332,7 +332,7 @@ byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	t_httpUpdate_return ret;
 	if(type == 0){
 		// type == sketch
-		ret = ESPhttpUpdate.update(server, 80, url, _firmware);
+		ret = ESPhttpUpdate.update("http://" + String(server + url), _firmware);
 	}
 	if(type == 1){
 		// type == spiffs
