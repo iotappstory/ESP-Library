@@ -19,13 +19,20 @@ extern "C" {
 	#include "user_interface.h"
 }
 
-IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
+IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton)
+: _modeButton(modeButton)
+//, _appName(appName)          // may not be necessary
+//, _appVersion(appVersion)    // may not be necessary
+, _compDate(compDate)
+, _noPressCallback(NULL)
+, _shortPressCallback(NULL)
+, _longPressCallback(NULL)
+, _veryLongPressCallback(NULL)
+, _firmwareUpdateCallback(NULL)
+, _configModeCallback(NULL)
+{
 	// initiating object
-	//_appName = appName;			// may not be necessary
-	//_appVersion = appVersion;		// may not be necessary
 	_firmware = String(appName)+" "+String(appVersion);
-	_compDate = compDate;
-	_modeButton = modeButton;
 	readConfig();
 	
 	// set appName as default boardName in case the app developer does not set it
@@ -160,7 +167,9 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	if(config.automaticUpdate == true){
 		callHome();
 	}
-	buttonEntry = millis() + ENTER_CONFIG_MODE_TIME_MAX;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
+	
+	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
+	_appState = AppStateNoPress;
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	DEBUG_PRINT("\n\n\n\n\n");
@@ -277,6 +286,9 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	DEBUG_PRINTLN(" Calling Home");
 	DEBUG_PRINTF(" Current App: %s\n\n", _firmware.c_str());
+	
+	if (_firmwareUpdateCallback)
+		_firmwareUpdateCallback();
 
 	ESPhttpUpdate.rebootOnUpdate(false);
 	res1 = iotUpdater(0,config.IOTappStory1, config.IOTappStoryPHP1);
@@ -590,8 +602,11 @@ void IOTAppStory::loopWiFiManager() {
 
 //---------- MISC FUNCTIONS ----------
 void IOTAppStory::espRestart(char mmode, char* message) {
-	while (digitalRead(_modeButton) == LOW) yield();    // wait till GPIOo released
+	while (isModeButtonPressed()) yield();    // wait till GPIOo released
 	delay(500);
+	
+	if (_configModeCallback)
+		_configModeCallback();
 	
 	rtcMem.boardMode = mmode;
 	writeRTCmem();
@@ -723,46 +738,120 @@ bool IOTAppStory::readConfig() {
 }
 
 
-void IOTAppStory::buttonLoop() {
-  unsigned long _buttonTime = -1;
-  // pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
-  
-  int _buttonState = digitalRead(_modeButton);
-  yield(); 
-  if (buttonStateOld != _buttonState) {
-    Serial.println("* button changed *");
-    delay(100);
-    
-    if (_buttonState == 0) {
-      buttonEntry = millis();
-    } else {
-        _buttonTime = millis() - buttonEntry;
-        buttonEntry = millis();
-    }
-    /*
-	if (_serialDebug == true) {
-       Serial.print("Time ");
-       Serial.println(_buttonTime);
-    }
-*/
-    if (_buttonTime >= ENTER_CONFIG_MODE_TIME_MIN && _buttonTime < ENTER_CONFIG_MODE_TIME_MAX)
-    	espRestart('C', "Going into Configuration Mode");     // long button press > 4sec
-    if (_buttonTime >= ENTER_CHECK_FIRMWARE_TIME_MIN && _buttonTime < ENTER_CHECK_FIRMWARE_TIME_MAX) 
-	    callHome();         // long button press > 1sec
-  }
-  if (_serialDebug == true && millis() - debugEntry > 5000) {
-     debugEntry = millis();
-     //DEBUG_PRINT("inside loop()... ");
-     //DEBUG_PRINT("Heap ");
-     //DEBUG_PRINTLN(ESP.getFreeHeap());
-     //sendDebugMessage();
-  }
-  buttonStateOld = _buttonState;
+ModeButtonState IOTAppStory::buttonLoop() {
+	return getModeButtonState();
 }
 
 void IOTAppStory::saveConfigCallback () {        								// <<-- could be deleted ?
 	writeConfig();
 }
+
+bool IOTAppStory::isModeButtonPressed() {
+	return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
+}
+
+ModeButtonState IOTAppStory::getModeButtonState() {
+	
+	while(true)
+	{
+		unsigned long buttonTime = millis() - _buttonEntry;
+	
+		switch(_appState) {
+		case AppStateNoPress:
+			if (isModeButtonPressed()) {
+				_buttonEntry = millis();
+				_appState = AppStateWaitPress;
+				continue;
+			}
+			return ModeButtonNoPress;
+		
+		case AppStateWaitPress:
+			if (buttonTime > MODE_BUTTON_SHORT_PRESS) {
+				_appState = AppStateShortPress;
+				if (_shortPressCallback)
+					_shortPressCallback();
+				continue;
+			}
+			if (!isModeButtonPressed()) {
+				_appState = AppStateNoPress;
+			}
+			return ModeButtonNoPress;
+		
+		case AppStateShortPress:
+			if (buttonTime > MODE_BUTTON_LONG_PRESS) {
+				_appState = AppStateLongPress;
+				if (_longPressCallback)
+					_longPressCallback();
+				continue;
+			}
+			if (!isModeButtonPressed()) {
+				_appState = AppStateFirmwareUpdate;
+				continue;
+			}
+			return ModeButtonShortPress;
+		
+		case AppStateLongPress:
+			if (buttonTime > MODE_BUTTON_VERY_LONG_PRESS) {
+				_appState = AppStateVeryLongPress;
+				if (_veryLongPressCallback)
+					_veryLongPressCallback();
+				continue;
+			}
+			if (!isModeButtonPressed()) {
+				_appState = AppStateConfigMode;
+				continue;
+			}
+			return ModeButtonLongPress;
+			
+		case AppStateVeryLongPress:
+			if (!isModeButtonPressed()) {
+				_appState = AppStateNoPress;
+				if (_noPressCallback)
+					_noPressCallback();
+				continue;
+			}
+			return ModeButtonVeryLongPress;
+		
+		case AppStateFirmwareUpdate:
+			_appState = AppStateNoPress;
+			DEBUG_PRINTLN("Calling Home");
+			callHome();
+			continue;
+		
+		case AppStateConfigMode:
+			_appState = AppStateNoPress;
+			DEBUG_PRINTLN("Entering in Configuration Mode");
+			espRestart('C', "Going into Configuration Mode");
+			continue;
+		}
+	}
+	return ModeButtonNoPress; // will never reach here (used just to avoid compiler warnings)
+}
+
+void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
+	_noPressCallback = value;
+}
+
+void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
+	_shortPressCallback = value;
+}
+
+void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
+	_longPressCallback = value;
+}
+
+void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
+	_veryLongPressCallback = value;
+}
+
+void IOTAppStory::onModeButtonFirmwareUpdate(THandlerFunction value) {
+	_firmwareUpdateCallback = value;
+}
+
+void IOTAppStory::onModeButtonConfigMode(THandlerFunction value) {
+	_configModeCallback = value;
+}
+
 /*
 void IOTAppStory::sendDebugMessage() {
 	// ------- Syslog Message --------

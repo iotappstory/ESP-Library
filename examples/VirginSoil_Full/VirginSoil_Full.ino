@@ -26,7 +26,7 @@
 */
 
 #define APPNAME "virginSoilFull"
-#define VERSION "V2.1.1"
+#define VERSION "V2.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
@@ -77,6 +77,32 @@ void setup() {
 
   IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
 
+  // You can configure callback functions that can give feedback to the app user about
+  // the current state of the application.
+  IAS.onModeButtonNoPress([]() {
+    Serial.println(">>>>> Mode Button is not pressed.");
+  });
+
+  IAS.onModeButtonShortPress([]() {
+    Serial.println(">>>>> If mode button is released, I will enter in firmware update mode.");
+  });
+
+  IAS.onModeButtonLongPress([]() {
+    Serial.println(">>>>> If mode button is released, I will enter in configuration mode.");
+  });
+
+  IAS.onModeButtonVeryLongPress([]() {
+    Serial.println(">>>>> If mode button is released, I won't do anything.");
+    /* TIP! You can use this callback to put your app on it's own configuration mode */
+  });
+
+  IAS.onModeButtonFirmwareUpdate([]() {
+    Serial.println(">>>>> Checking if there is a firmware update available.");
+  });
+
+  IAS.onModeButtonConfigMode([]() {
+    Serial.println(">>>>> Starting configuration mode. Search for my WiFi and connect to 192.168.4.1.");
+  });
 
   //-------- Your Setup starts from here ---------------
 
@@ -97,7 +123,7 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
 
-  if (millis() - printEntry > 10000) {                                // Serial.print the example variables every 5 seconds
+  if (millis() - printEntry > 10000) {                                // Serial.print the example variables every 10 seconds
 
     Serial.print("Label 1: ");
     Serial.println(lbl1);
