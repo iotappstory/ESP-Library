@@ -850,7 +850,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 		
 		case AppStateFirmwareUpdate:
 			_appState = AppStateNoPress;
-			DEBUG_PRINTLN("Calling Home");
+			//DEBUG_PRINTLN("Calling Home");
 			callHome();
 			continue;
 		
