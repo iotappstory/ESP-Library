@@ -167,7 +167,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	if (rtcMem.boardMode == 'C') configESP();
 
 	// --------- READ FULL CONFIG --------------------------
-	readConfig();
+	//readConfig();
 	
 
 	// --------- START WIFI --------------------------
@@ -739,7 +739,7 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 }
 
 bool IOTAppStory::readConfig() {
-	DEBUG_PRINTLN(" ------------------ Reading Config --------------------------------");
+	//DEBUG_PRINTLN(" ------------------ Reading Config --------------------------------");
 
 	boolean ret = false;
 	EEPROM.begin(EEPROM_SIZE);
@@ -760,13 +760,6 @@ bool IOTAppStory::readConfig() {
 #if DEBUG_EEPROM_CONFIG
 		DEBUG_PRINTLN();
 #endif
-		
-		// Standard											// Is this part necessary? Maby for ram usage it is better to load this from eeprom only when needed....!?
-		//boardName = String(config.boardName);
-		//IOTappStory1 = String(config.IOTappStory1);
-		//IOTappStoryPHP1 = String(config.IOTappStoryPHP1);
-		//IOTappStory2 = String(config.IOTappStory2);
-		//IOTappStoryPHP2 = String(config.IOTappStoryPHP2);
 		ret = true;
 
 	} else {
