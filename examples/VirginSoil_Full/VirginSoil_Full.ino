@@ -138,10 +138,10 @@ void loop() {
 
     Serial.println(" LABEL\t\t| VAR\t\t| VALUE");
 
-    Serial.print(" Label 1\t| lbl1\t\t| ");
+    Serial.print(" Label 1\t\t| lbl1\t\t| ");
     Serial.println(lbl1);
 
-    Serial.print(" Label 2\t| lbl2\t\t| ");
+    Serial.print(" Label 2\t\t| lbl2\t\t| ");
     Serial.println(lbl2);
 
     Serial.print(" Example url\t| exampleURL\t| ");
@@ -150,7 +150,7 @@ void loop() {
     Serial.print(" Timezone\t| timeZone\t| ");
     Serial.println(atof(timeZone));
 
-    Serial.print(" Led pin\t| ledPin\t| ");
+    Serial.print(" Led pin\t\t| ledPin\t| ");
     Serial.println(atoi(ledPin));
     
     Serial.println("*-------------------------------------------------------------------------*");
