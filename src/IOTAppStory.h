@@ -10,7 +10,6 @@
     #define MAXNUMEXTRAFIELDS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
-    #define MAX_WIFI_RETRIES 15
     #define RTCMEMBEGIN 68
     #define MAGICBYTE 85
     #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
@@ -23,6 +22,10 @@
     #define MODE_BUTTON_LONG_PRESS        4000
     #define MODE_BUTTON_VERY_LONG_PRESS   10000
 
+	// sets the default value for the maximum number of retries when trying to connect to the wifi
+	#ifndef MAX_WIFI_RETRIES
+		#define MAX_WIFI_RETRIES 15
+	#endif // !MAX_WIFI_RETRIES
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -30,6 +33,13 @@
     #else
         #define DEBUG_MSG(...)
     #endif
+	
+	
+	// set to true to include code for show EEPROM contents in debug
+	#ifndef DEBUG_EEPROM_CONFIG
+		#define DEBUG_EEPROM_CONFIG false
+	#endif
+
 
     //#ifdef SERIALDEBUG
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
@@ -189,7 +199,7 @@
     
 
         private:
-            //String  _appName;				// may not be necessary
+            String  _appName;
             //String  _appVersion;			// may not be necessary
             String  _firmware;
             String  _compDate;
@@ -197,6 +207,7 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+
             unsigned long   _buttonEntry;
             unsigned long   _debugEntry;
             AppState        _appState;
@@ -207,6 +218,43 @@
             THandlerFunction _veryLongPressCallback;
             THandlerFunction _firmwareUpdateCallback;
             THandlerFunction _configModeCallback;
+
+            bool	_configReaded = false;
+            const static bool _boolDefaulValue = false;
+
+            /* ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ */
+            /* ------ CHANGE CONFIG VALUES 									 */
+            template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
+              if (a != b) {
+                a = b;
+                changeFlag = true;
+                return true;
+              } else {
+                return false;
+              }
+            }
+
+            bool SetConfigValueCharArray(char* a, String &b, int len, bool changeFlag = &_boolDefaulValue) {
+              if (b != a) {
+                b.toCharArray(a, len);
+                changeFlag = true;
+                return true;
+              } else {
+                return false;
+              }
+            }
+            /* ------ */
+
+            /* ------ CONVERT BYTE TO STRING 								 */
+            String GetCharToDisplayInDebug(char value) {
+              if (value>=32 && value<=126){
+                return String(value);
+              } else if (value == 0){
+                return ".";
+              } else {
+                return String("[" + String(value, DEC) + "]");
+              } 
+            }
     };
 
 #endif
