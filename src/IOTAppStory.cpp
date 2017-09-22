@@ -21,15 +21,12 @@ extern "C" {
 
 IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton){
 	// initiating object
-	//_appName = appName;			// may not be necessary
+	_appName = appName;
 	//_appVersion = appVersion;		// may not be necessary
 	_firmware = String(appName)+" "+String(appVersion);
 	_compDate = compDate;
 	_modeButton = modeButton;
-	readConfig();
-	
-	// set appName as default boardName in case the app developer does not set it
-	preSetConfig((String)appName, false);
+
 }
 
 void IOTAppStory::firstBoot(bool ea){
@@ -73,40 +70,51 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	}
 }
 
+
 void IOTAppStory::preSetConfig(bool automaticUpdate){
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	if (!_configReaded) {
+		readConfig();
+	}
+	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
-	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	preSetConfig(automaticUpdate);
+	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate /*= false*/){
-	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-	config.automaticUpdate = automaticUpdate;
-	_setPreSet = true;
+	preSetConfig(automaticUpdate);
+	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate /*= false*/){
 	preSetConfig(ssid, password, automaticUpdate);
-	boardName.toCharArray(config.boardName, STRUCT_CHAR_ARRAY_SIZE);
-	_setPreSet = true;
+	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate /*= false*/) {
 	preSetConfig(ssid, password, boardName, automaticUpdate);
-	IOTappStory1.toCharArray(config.IOTappStory1, STRUCT_HOST_SIZE);
-	IOTappStoryPHP1.toCharArray(config.IOTappStoryPHP1, STRUCT_FILE_SIZE);
-	_setPreSet = true;
+	SetConfigValueCharArray(config.IOTappStory1, IOTappStory1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.IOTappStoryPHP1, IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
+
 
 void IOTAppStory::begin(bool bootstats, bool ea){
 	DEBUG_PRINTLN("\n");
-
+	
+	// read config if needed
+	if (!_configReaded) {
+		readConfig();
+	}
+	
+	// set appName as default boardName in case the app developer does not set it
+	if (config.boardName == "yourFirstApp") {
+		preSetConfig(_appName, config.automaticUpdate);
+	}
+	
+	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
 		DEBUG_PRINTLN("Saving config presets...\n");
@@ -332,7 +340,7 @@ byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	t_httpUpdate_return ret;
 	if(type == 0){
 		// type == sketch
-		ret = ESPhttpUpdate.update(server, 80, url, _firmware);
+		ret = ESPhttpUpdate.update("http://" + String(server + url), _firmware);
 	}
 	if(type == 1){
 		// type == spiffs
@@ -615,17 +623,17 @@ void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 
 //---------- CONFIGURATION PARAMETERS ----------
 void IOTAppStory::writeConfig(bool wifiSave) {
-	//DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
+	DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		//DEBUG_PRINT("Stored ");
-		//DEBUG_PRINT(config.ssid);
-		//DEBUG_PRINTLN("  ");
-		//DEBUG_PRINTLN(config.password);   // devPass
+#if DEBUG_EEPROM_CONFIG
+		DEBUG_PRINT("Stored ");
+		DEBUG_PRINT(config.ssid);
+		DEBUG_PRINTLN("  ");
+		DEBUG_PRINTLN(config.password);   // devPass
+#endif		
 	}
-	
-	
 	
 	EEPROM.begin(EEPROM_SIZE);
 	config.magicBytes[0] = MAGICBYTES[0];
@@ -633,8 +641,19 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 	config.magicBytes[2] = MAGICBYTES[2];
 
 	// WRITE CONFIG TO EEPROM
-	for (unsigned int t = 0; t < sizeof(config); t++) EEPROM.write(t, *((char*)&config + t));
+	for (unsigned int t = 0; t < sizeof(config); t++) {
+		EEPROM.write(t, *((char*)&config + t));
+		
+#if DEBUG_EEPROM_CONFIG
+		// DEBUG (show all config EEPROM slots in one line)
+		DEBUG_PRINT(GetCharToDisplayInDebug(*((char*)&config + t)));
+#endif
+		
+	}
 	EEPROM.commit();
+#if DEBUG_EEPROM_CONFIG
+	DEBUG_PRINTLN();
+#endif
 	
 	if(wifiSave == true && _nrXF > 0){
 		// LOOP THROUGH ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
@@ -676,16 +695,22 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+					char valueTowrite;
+					
 					if(t == eeBeg){
-						EEPROM.put(t, MAGICEEP[0]);
-						//DEBUG_PRINTLN(MAGICEEP[0]);
+						valueTowrite = MAGICEEP[0];
 					}else if(t == eeEnd){
-						EEPROM.put(t, '^');
-						//DEBUG_PRINTLN('^');
+						valueTowrite = '^';
 					}else{
-						EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));
-						//DEBUG_PRINTLN(*((char*)tmpVal + (t-eeBeg)-1));
+						valueTowrite = *((char*)tmpVal + (t-eeBeg)-1);
 					}
+					EEPROM.put(t, valueTowrite);
+					
+#if DEBUG_EEPROM_CONFIG
+					// DEBUG (show all wifiSave EEPROM slots in one line)
+					DEBUG_PRINT(GetCharToDisplayInDebug(valueTowrite));
+#endif
+		
 				}
 			}
 			EEPROM.commit();
@@ -696,15 +721,27 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 }
 
 bool IOTAppStory::readConfig() {
-	DEBUG_PRINTLN(" Reading Config");
+	DEBUG_PRINTLN(" ------------------ Reading Config --------------------------------");
+
 	boolean ret = false;
 	EEPROM.begin(EEPROM_SIZE);
 	long magicBytesBegin = sizeof(config) - 4; 								// Magic bytes at the end of the structure
 
 	if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
 		DEBUG_PRINTLN(" EEPROM Configuration found");
-		for (unsigned int t = 0; t < sizeof(config); t++) *((char*)&config + t) = EEPROM.read(t);
+		for (unsigned int t = 0; t < sizeof(config); t++) {
+			char valueReaded = EEPROM.read(t);
+			*((char*)&config + t) = valueReaded;
+			
+#if DEBUG_EEPROM_CONFIG
+			// DEBUG (show all config EEPROM slots in one line)
+			DEBUG_PRINT(GetCharToDisplayInDebug(valueReaded));
+#endif
+		}
 		EEPROM.end();
+#if DEBUG_EEPROM_CONFIG
+		DEBUG_PRINTLN();
+#endif
 		
 		// Standard											// Is this part necessary? Maby for ram usage it is better to load this from eeprom only when needed....!?
 		//boardName = String(config.boardName);
@@ -719,6 +756,9 @@ bool IOTAppStory::readConfig() {
 		writeConfig();
 		ret = false;
 	}
+	
+	_configReaded = true;
+	
 	return ret;
 }
 
