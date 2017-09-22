@@ -2,6 +2,7 @@
     #define IOTAppStory_h
 
     #include <Arduino.h>
+    #include <functional>
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
@@ -17,10 +18,9 @@
     #define STRUCT_FILE_SIZE 32
 
     // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
-    #define ENTER_CHECK_FIRMWARE_TIME_MIN 500
-    #define ENTER_CHECK_FIRMWARE_TIME_MAX 4000
-    #define ENTER_CONFIG_MODE_TIME_MIN    ENTER_CHECK_FIRMWARE_TIME_MAX
-    #define ENTER_CONFIG_MODE_TIME_MAX    10000
+    #define MODE_BUTTON_SHORT_PRESS       500
+    #define MODE_BUTTON_LONG_PRESS        4000
+    #define MODE_BUTTON_VERY_LONG_PRESS   10000
 
 	// sets the default value for the maximum number of retries when trying to connect to the wifi
 	#ifndef MAX_WIFI_RETRIES
@@ -58,6 +58,14 @@
         #define LEDOFF 0
     #endif
 
+    enum ModeButtonState {
+        ModeButtonNoPress,           // mode button is not pressed
+        ModeButtonShortPress,        // short press - will enter in firmware update mode
+        ModeButtonLongPress,         // long press - will enter in configuration mode
+        ModeButtonVeryLongPress,     // very long press - won't do anything (but the app developer might want to do something)
+        ModeButtonFirmwareUpdate,    // about to enter in firmware update mode
+        ModeButtonConfigMode         // about to enter in configuration mode
+    };
 
     class IOTAppStory {
         public:
@@ -108,14 +116,22 @@
                 
                 "CFG"  // Magic Bytes
             };
+    
+            // similar to the ModeButtonState but has some extra states
+            // that are used internally by the state machine method
+            enum AppState {
+                AppStateNoPress,        // mode button is not pressed
+                AppStateWaitPress,      // mode button is pressed but not long enough for a short press
+                AppStateShortPress,     // mode button is pressed for a short time. Releasing it will make it go to firmware update mode.
+                AppStateLongPress,      // mode button is pressed for a long time. Releasing it will make it go to config mode.
+                AppStateVeryLongPress,  // mode button is pressed for a very long time. Releasing it won't do anything.
+                AppStateFirmwareUpdate, // about to enter in firmware update mode
+                AppStateConfigMode      // about to enter in config mode
+            };
 
+            typedef std::function<void(void)> THandlerFunction;
             
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
-            unsigned long buttonEntry, debugEntry;
-            int buttonStateOld;
-            //String sysMessage; 			<<-- is this still needed?
-            long counter = 0;
-
 
             /* ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ */
             IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton);
@@ -156,10 +172,31 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void buttonLoop();
+            ModeButtonState buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
+            bool isModeButtonPressed();
+            ModeButtonState getModeButtonState();
+    
+            // called when state is changed to idle (mode button is not pressed)
+            void onModeButtonNoPress(THandlerFunction fn);
+    
+            // called when state is changed to short press
+            void onModeButtonShortPress(THandlerFunction fn);
+    
+            // called when state is changed to long press
+            void onModeButtonLongPress(THandlerFunction fn);
+    
+            // called when state is changed to very long press
+            void onModeButtonVeryLongPress(THandlerFunction fn);
+    
+            // called when the app is about to update the firmware
+            void onModeButtonFirmwareUpdate(THandlerFunction fn);
+    
+            // called when the app is about to enter in configuration mode
+            void onModeButtonConfigMode(THandlerFunction fn);
+    
 
         private:
             String  _appName;
@@ -170,45 +207,54 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
-			bool	_configReaded = false;
-			const static bool _boolDefaulValue = false;
 
-			
-			
-			/* ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ */
-			/* ------ CHANGE CONFIG VALUES 									 */
-			template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
-				if (a != b) {
-					a = b;
-					changeFlag = true;
-					return true;
-				} else {
-					return false;
-				}
-			}
+            unsigned long   _buttonEntry;
+            unsigned long   _debugEntry;
+            AppState        _appState;
+    
+            THandlerFunction _noPressCallback;
+            THandlerFunction _shortPressCallback;
+            THandlerFunction _longPressCallback;
+            THandlerFunction _veryLongPressCallback;
+            THandlerFunction _firmwareUpdateCallback;
+            THandlerFunction _configModeCallback;
 
-			bool SetConfigValueCharArray(char* a, String &b, int len, bool changeFlag = &_boolDefaulValue) {
-				if (b != a) {
-					b.toCharArray(a, len);
-					changeFlag = true;
-					return true;
-				} else {
-					return false;
-				}
-			}
-			/* ------ */
-			
-			/* ------ CONVERT BYTE TO STRING 								 */
-			String GetCharToDisplayInDebug(char value) {
-				if (value>=32 && value<=126){
-					return String(value);
-				} else if (value == 0){
-					return ".";
-				} else {
-					return String("[" + String(value, DEC) + "]");
-				} 
-			}
-			
+            bool	_configReaded = false;
+            const static bool _boolDefaulValue = false;
+
+            /* ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ */
+            /* ------ CHANGE CONFIG VALUES 									 */
+            template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
+              if (a != b) {
+                a = b;
+                changeFlag = true;
+                return true;
+              } else {
+                return false;
+              }
+            }
+
+            bool SetConfigValueCharArray(char* a, String &b, int len, bool changeFlag = &_boolDefaulValue) {
+              if (b != a) {
+                b.toCharArray(a, len);
+                changeFlag = true;
+                return true;
+              } else {
+                return false;
+              }
+            }
+            /* ------ */
+
+            /* ------ CONVERT BYTE TO STRING 								 */
+            String GetCharToDisplayInDebug(char value) {
+              if (value>=32 && value<=126){
+                return String(value);
+              } else if (value == 0){
+                return ".";
+              } else {
+                return String("[" + String(value, DEC) + "]");
+              } 
+            }
     };
 
 #endif
