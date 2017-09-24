@@ -16,7 +16,9 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPClient.h>
 #include <DNSServer.h>
+#include "IOTAppStory.h"
 #include <memory>
 #undef min
 #undef max
@@ -96,6 +98,7 @@ class WiFiManager
   public:
     WiFiManager();
     ~WiFiManager();
+	IOTAppStory* root;
 
     boolean       autoConnect(); //Deprecated. Do not use.
     boolean       autoConnect(char const *apName, char const *apPassword = NULL); //Deprecated. Do not use.
@@ -218,7 +221,7 @@ class WiFiManager
     void          handleSavePro();				// added for IAS
     void          handleSaveATP();				// added for IAS
 	
-    void          hdlIasCfgPages(String title, String file, String para = "");				// added for IAS
+    void          hdlIasCfgPages(const char *title, const char *file, String para = "");				// added for IAS
 #endif
 
     void          handleReset();
