@@ -1,8 +1,7 @@
 #include <ESP8266WiFi.h>
-#include <ESP8266httpUpdate.h>
+#include "ESP8266httpUpdateMod.h"
 #include <DNSServer.h>
 #include <ESP8266mDNS.h>
-//#include <Ticker.h>
 #include <EEPROM.h>
 #include <pgmspace.h>
 #include <ArduinoJson.h>
@@ -355,11 +354,11 @@ byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	t_httpUpdate_return ret;
 	if(type == 0){
 		// type == sketch
-		ret = ESPhttpUpdate.update("http://" + String(server + url), _firmware);
+		ret = ESPhttpUpdate.update("https://" + String(server + url), _firmware, config.sha1);
 	}
 	if(type == 1){
 		// type == spiffs
-		ret = ESPhttpUpdate.updateSpiffs("http://" + String(server + url), _firmware);
+		ret = ESPhttpUpdate.updateSpiffs("https://" + String(server + url), _firmware, config.sha1);
 	}
 	
 	switch (ret) {
@@ -641,7 +640,7 @@ void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
 
 //---------- CONFIGURATION PARAMETERS ----------
 void IOTAppStory::writeConfig(bool wifiSave) {
-	DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
+	//DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
@@ -888,23 +887,3 @@ void IOTAppStory::onModeButtonConfigMode(THandlerFunction value) {
 	_configModeCallback = value;
 }
 
-/*
-void IOTAppStory::sendDebugMessage() {
-	// ------- Syslog Message --------
-
-	/* severity: 2 critical, 6 info, 7 debug
-	facility: 1 user level
-	String hostName: Board Name
-	app: FIRMWARE
-	procID: unddefined
-	msgID: counter
-	message: Your message
-	
-
-	sysMessage = "";
-	long h1 = ESP.getFreeHeap();
-	sysMessage += " Heap ";
-	sysMessage += h1;
-	//sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, sysMessage);
-}
-*/
