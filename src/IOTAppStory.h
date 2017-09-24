@@ -64,6 +64,25 @@
         ModeButtonConfigMode         // about to enter in configuration mode
     };
 
+
+	// store serial feedback strings in PROGMEM
+	const char SER_DEV[] PROGMEM             = "*-------------------------------------------------------------------------*";
+	
+	const char SER_FB_RUN[] PROGMEM          = " Running first boot sequence for %s\n";
+	const char SER_FB_E_F[] PROGMEM          = " Erasing full EEPROM";
+	const char SER_FB_E_P[] PROGMEM          = " Erasing EEPROM but leaving config settings";
+	
+	const char SER_MDNS_START[] PROGMEM      = " MDNS responder started: http://";
+	const char SER_MDNS_INFO[] PROGMEM       = "\n\n To use MDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already";
+	
+	const char SER_WIFI_NOCRED[] PROGMEM     = "We haven't got any access point credentials, so get them now";
+	const char SER_WIFI_CONT[] PROGMEM       = " Not connected to WiFi but continuing anyway.";
+	
+	const char SER_PF_START[] PROGMEM        = " Processing added fields";
+	const char SER_PF_HEAD[] PROGMEM         = " ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n";
+	
+	
+	
     class IOTAppStory {
 		
         public:
