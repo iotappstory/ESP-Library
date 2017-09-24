@@ -542,22 +542,13 @@ void WiFiManager::handleAddToProPage() {
 }
 
 
-void WiFiManager::hdlIasCfgPages(String title, String file, String para){
-	const char* host = "iotappstory.com";
+void WiFiManager::hdlIasCfgPages(const char *title, const char *file, String para){
 	
-	////Serial.print("connecting to ");
-	////Serial.println(host);
-
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
+	HTTPClient http;
 	
-	if (!client.connect(host, 80)) {
-		//Serial.println("connection failed");
-		return;
-	}
-
 	// We now create a URI for the request
-	String url = "/ota/cnf/" + file;
+	String url = "http://iotappstory.com/ota/cnf/" + String(file);
+	//String url = "https://" + String(root->config.IOTappStory1)+ "/ota/cnf/" + String(file);// 	<<--  https We need to free up RAM first!
 	url += "?chip_id=";
 	url += ESP.getChipId();
 	url += "&flash_chip_id=";
@@ -568,40 +559,41 @@ void WiFiManager::hdlIasCfgPages(String title, String file, String para){
 	url += WiFi.macAddress();
 	url += para;
 
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
+	// connect to server
+	//DEBUG_WM("Connecting to: ");
+	//DEBUG_WM(url);
+    //http.begin(url, root->config.sha1); // 														<<--  https We need to free up RAM first!
+    http.begin(url);
+	
+	// respons code
+	int httpCode = http.GET();
+	
+	// httpCode will be negative on error
+	if(httpCode < 1) {
+		DEBUG_WM("[HTTP] GET... failed, error: ");
+		DEBUG_WM(http.errorToString(httpCode).c_str());
+		return;
 	}
+	
+	// respons string
 	String line = "";
-
-	int st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else if(st == 1){
-				line += client.readStringUntil('\r');
-				st = 2;
-			}else if(st == 2){
-				if(client.readStringUntil('\r') == "1"){
-					Serial.println(client.readStringUntil('\r'));
-					devPass = server->arg("d");
-				}
-				st = 3;
-				break;
-			}
+	
+	// file found at server
+	if(httpCode == HTTP_CODE_OK) {
+		line = http.getString();
+		DEBUG_WM(line);
+	}else{
+		return;
 	}
+
+	// end connection
+	http.end();
+	
+	// save received activation code
+	if(server->arg("d")){
+		devPass = server->arg("d");
+	}
+
 	//Serial.println(line);
 	
 
@@ -624,7 +616,8 @@ void WiFiManager::hdlIasCfgPages(String title, String file, String para){
 
   server->send(200, "text/html", page);
 
-  DEBUG_WM("Sent " + title);
+  DEBUG_WM("Sent ");
+  DEBUG_WM(title);
 }
 #endif
 
