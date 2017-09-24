@@ -41,14 +41,11 @@
 	#endif
 
 
-    //#ifdef SERIALDEBUG
+
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
     #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
     #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
-    //#else
-    //#define         DEBUG_PRINT(x)
-    //#define         DEBUG_PRINTLN(x)
-    //#endif
+
 
     #ifdef LEDS_INVERSE
         #define LEDON  0
@@ -68,6 +65,7 @@
     };
 
     class IOTAppStory {
+		
         public:
             /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
             typedef struct {
@@ -93,11 +91,12 @@
                 char boardName[STRUCT_CHAR_ARRAY_SIZE];
                 char IOTappStory1[STRUCT_HOST_SIZE];
                 char IOTappStoryPHP1[STRUCT_FILE_SIZE];
-                char IOTappStory2[STRUCT_HOST_SIZE];
-                char IOTappStoryPHP2[STRUCT_FILE_SIZE];
+                const char IOTappStory2[STRUCT_HOST_SIZE];
+                const char IOTappStoryPHP2[STRUCT_FILE_SIZE];
 
                 bool automaticUpdate;	// right after boot
                 char compDate[STRUCT_COMPDATE_SIZE];
+                char sha1[60];
                 char devPass[7];
                 
                 char magicBytes[4];
@@ -113,6 +112,7 @@
                 "/ota/esp8266-v1.php",
                 false,
                 "",
+                "76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",			// <<--- needs a field in the config pages
                 
                 "CFG"  // Magic Bytes
             };
@@ -255,6 +255,9 @@
                 return String("[" + String(value, DEC) + "]");
               } 
             }
+			
+			friend class WiFiManager;
+			friend class ESP8266HTTPUpdate;
     };
 
 #endif
