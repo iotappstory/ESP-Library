@@ -39,7 +39,8 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 }
 
 void IOTAppStory::firstBoot(bool ea){
-	DEBUG_PRINTF(" Running first boot sequence for %s\n", _firmware.c_str());
+	DEBUG_PRINT(FPSTR(SER_DEV));
+	DEBUG_PRINTLN(_firmware.c_str());
 
 	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
 	
@@ -47,7 +48,7 @@ void IOTAppStory::firstBoot(bool ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == true){
-		DEBUG_PRINTLN(" Erasing full EEPROM");
+		DEBUG_PRINTLN(FPSTR(SER_FB_E_F));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
 		
@@ -58,7 +59,7 @@ void IOTAppStory::firstBoot(bool ea){
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 	}else{
-		DEBUG_PRINTLN(" Erasing EEPROM but leaving config settings");
+		DEBUG_PRINTLN(FPSTR(SER_FB_E_P));
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
 	}
 	
@@ -68,7 +69,7 @@ void IOTAppStory::firstBoot(bool ea){
 	writeConfig();
 	
 	
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 
 void IOTAppStory::serialdebug(bool onoff,int speed){
@@ -129,13 +130,13 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 		DEBUG_PRINTLN("Saving config presets...\n");
 	}
 
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF(" Start %s\n", _firmware.c_str());
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF(" Mode select button: GPIO%d\n", _modeButton);
 	DEBUG_PRINTF(" Boardname: %s\n", config.boardName);
 	DEBUG_PRINTF(" Automatic update: %d\n", config.automaticUpdate);
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
@@ -210,7 +211,7 @@ void IOTAppStory::printRTCmem() {
 	DEBUG_PRINTF(" markerFlag: %d\n", rtcMem.markerFlag);
 	DEBUG_PRINTF(" bootTimes since powerup: %d\n", rtcMem.bootTimes);
 	DEBUG_PRINTF(" boardMode: %c\n", rtcMem.boardMode);
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 
 void IOTAppStory::configESP() {
@@ -261,15 +262,10 @@ void IOTAppStory::connectNetwork() {
 	wifi_station_set_hostname(config.boardName);
 	//   WiFi.hostname(hostNameWifi);
 	if (MDNS.begin(config.boardName)) {
-		DEBUG_PRINT(" MDNS responder started: http://");
+		DEBUG_PRINT(FPSTR(SER_MDNS_START));
 		DEBUG_PRINT(hostNameWifi);
-		DEBUG_PRINTLN("");
-		DEBUG_PRINTLN("");
-		DEBUG_PRINTLN(" To use MDNS Install host software:");
-		DEBUG_PRINTLN(" - For Linux, install Avahi (http://avahi.org/)");
-		DEBUG_PRINTLN(" - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)");
-		DEBUG_PRINTLN(" - For Mac OSX and iOS support is built in through Bonjour already");
-		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+		DEBUG_PRINTLN(FPSTR(SER_MDNS_INFO));
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	} else {
 		espRestart('N', "MDNS not started");
 	}
@@ -323,7 +319,7 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	DEBUG_PRINTLN("");
 	DEBUG_PRINTLN(" Returning from IOTAppStory.com");
-	DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+	DEBUG_PRINTLN(FPSTR(SER_DEV));
 
 	
 	
@@ -386,7 +382,7 @@ void IOTAppStory::initWiFiManager() {
 	if(_serialDebug == true){WiFi.printDiag(Serial);} //Remove this line if you do not want to see WiFi password printed
 
 	if (WiFi.SSID() == "") {
-		DEBUG_PRINTLN("We haven't got any access point credentials, so get them now");
+		DEBUG_PRINTLN(FPSTR(SER_WIFI_NOCRED));
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
@@ -443,8 +439,8 @@ void IOTAppStory::processField(){
 	}
 		
 	if(_nrXF > 0){
-		DEBUG_PRINTLN(" Processing added fields");
-		DEBUG_PRINTF(" ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n");
+		DEBUG_PRINTLN(FPSTR(SER_PF_START));
+		DEBUG_PRINTLN(FPSTR(SER_PF_HEAD));
 
 		EEPROM.begin(EEPROM_SIZE);
 		
@@ -523,7 +519,7 @@ void IOTAppStory::processField(){
 			DEBUG_PRINTLN("");
 		}
 		EEPROM.end();
-		DEBUG_PRINTLN("*-------------------------------------------------------------------------*");
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	}
 }
 int IOTAppStory::dPinConv(String orgVal){
@@ -588,7 +584,7 @@ void IOTAppStory::loopWiFiManager() {
 	// Once the user leaves the portal with the exit button
 	// processing will continue
 	if (!wifiManager.startConfigPortal(config.boardName)) {
-		DEBUG_PRINTLN(" Not connected to WiFi but continuing anyway.");
+		DEBUG_PRINTLN(FPSTR(SER_WIFI_CONT));
 	}else{
 		// If you get here you have connected to the WiFi
 		DEBUG_PRINTLN(" Connected... :-)");
