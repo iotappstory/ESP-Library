@@ -65,7 +65,6 @@ class ESP8266HTTPUpdate
 {
 	
 public:
-	IOTAppStory* root;
     ESP8266HTTPUpdate(void);
     ~ESP8266HTTPUpdate(void);
 
@@ -74,16 +73,14 @@ public:
         _rebootOnUpdate = reboot;
     }
 
+    t_httpUpdate_return update(const String& currentVersion);
+    t_httpUpdate_return updateSpiffs(const String& currentVersion);
 
-    t_httpUpdate_return update(const String& url, const String& currentVersion, const String& httpsFingerprint);
-    t_httpUpdate_return updateSpiffs(const String& url, const String& currentVersion, const String& httpsFingerprint);
-
-
+	strConfig *config;
     int getLastError(void);
     String getLastErrorString(void);
 
 protected:
-	
     t_httpUpdate_return handleUpdate(HTTPClient& http, const String& currentVersion, bool spiffs = false);
     bool runUpdate(Stream& in, uint32_t size, String md5, int command = U_FLASH);
 
