@@ -31,7 +31,6 @@ extern "C" {
 #define WFM_LABEL_BEFORE 1
 #define WFM_LABEL_AFTER 2
 #define WFM_NO_LABEL 0
-#define WIFI_MANAGER_MAX_PARAMS 25
 
 const char HTTP_200[] PROGMEM             = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 const char HTTP_HEAD[] PROGMEM            = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><title>{v}</title>";
@@ -99,18 +98,19 @@ class WiFiManager
     WiFiManager();
     ~WiFiManager();
 
-    boolean       autoConnect(); //Deprecated. Do not use.
-    boolean       autoConnect(char const *apName, char const *apPassword = NULL); //Deprecated. Do not use.
+    //boolean       autoConnect(); //Deprecated. Do not use.
+    boolean       autoConnect(char const *apPassword = NULL); //Deprecated. Do not use.
 
     //if you want to start the config portal
-    boolean       startConfigPortal();
-    boolean       startConfigPortal(char const *apName, char const *apPassword = NULL);
+    //boolean       startConfigPortal();
+    boolean       startConfigPortal(char const *apPassword = NULL);
 
     // get the AP name of the config portal, so it can be used in the callback
     String        getConfigPortalSSID();
 	
-	String 		  devPass = "000000"; 						// added for IOTAppStory
-
+	//String 		  devPass = "000000"; 						// added for IOTAppStory
+	strConfig *config;											// added for IOTAppStory
+	
     void          resetSettings();
 
     //sets timeout before webserver loop ends and exits even if there has been no setup.
@@ -161,10 +161,10 @@ class WiFiManager
     void          startWPS();
     char*         getStatus(int status);
 
-    const char*   _apName                 = "no-net";
+    //const char*   _apName                 = "no-net";
     const char*   _apPassword             = NULL;
-    String        _ssid                   = "";
-    String        _pass                   = "";
+    //String        _ssid                   = "";
+    //String        _pass                   = "";
     unsigned long _configPortalTimeout    = 0;
     unsigned long _connectTimeout         = 0;
     unsigned long _configPortalStart      = 0;
