@@ -98,7 +98,6 @@ class WiFiManager
   public:
     WiFiManager();
     ~WiFiManager();
-	IOTAppStory* root;
 
     boolean       autoConnect(); //Deprecated. Do not use.
     boolean       autoConnect(char const *apName, char const *apPassword = NULL); //Deprecated. Do not use.
@@ -200,6 +199,7 @@ class WiFiManager
     uint8_t       waitForConnectResult();
 
     void          handleRoot();
+	void          hdlReturn(String &message, String type="text/html");		// added for IAS	(<- saves mem)
     void          handleWifi();
     void          handleWifiSave();
 	
@@ -221,7 +221,7 @@ class WiFiManager
     void          handleSavePro();				// added for IAS
     void          handleSaveATP();				// added for IAS
 	
-    void          hdlIasCfgPages(const char *title, const char *file, String para = "");				// added for IAS
+    void          hdlIasCfgPages(String title, const char *file, String para = "");				// added for IAS
 #endif
 
     void          handleReset();
@@ -254,7 +254,7 @@ class WiFiManager
       return  obj->fromString(s);
     }
     auto optionalIPFromString(...) -> bool {
-      DEBUG_WM("NO fromString METHOD ON IPAddress, you need ESP8266 core 2.1.0 or newer for Custom IP configuration to work.");
+      DEBUG_WM(F("NO fromString METHOD ON IPAddress, you need ESP8266 core 2.1.0 or newer for Custom IP configuration to work."));
       return false;
     }
 };
