@@ -48,18 +48,18 @@ void IOTAppStory::firstBoot(bool ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == true){
-		DEBUG_PRINTLN(FPSTR(SER_FB_E_F));
+		DEBUG_PRINTLN(F(" Erasing full EEPROM"));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
 		
 		
-		String emty = "000000";
+		String emty = F("000000");
 		emty.toCharArray(config.devPass, 7);
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 	}else{
-		DEBUG_PRINTLN(FPSTR(SER_FB_E_P));
+		DEBUG_PRINTLN(F(" Erasing EEPROM but leaving config settings"));
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
 	}
 	
@@ -76,7 +76,7 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 	_serialDebug = onoff;
 	if(_serialDebug == true){
 		Serial.begin(speed);
-		DEBUG_PRINT("\n\n\n\n\n");
+		DEBUG_PRINT(F("\n\n\n\n\n"));
 	}
 }
 
@@ -112,7 +112,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 
 
 void IOTAppStory::begin(bool bootstats, bool ea){
-	DEBUG_PRINTLN("\n");
+	DEBUG_PRINTLN(F("\n"));
 	
 	// read config if needed
 	if (!_configReaded) {
@@ -127,7 +127,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
-		DEBUG_PRINTLN("Saving config presets...\n");
+		DEBUG_PRINTLN(F("Saving config presets...\n"));
 	}
 
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -183,7 +183,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	_appState = AppStateNoPress;
 
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
-	DEBUG_PRINT("\n\n\n\n\n");
+	DEBUG_PRINT(F("\n\n\n\n\n"));
 }
 
 
@@ -207,9 +207,14 @@ void IOTAppStory::writeRTCmem() {
 }
 
 void IOTAppStory::printRTCmem() {
-	DEBUG_PRINTLN(" rtcMem");
-	DEBUG_PRINTF(" markerFlag: %d\n", rtcMem.markerFlag);
-	DEBUG_PRINTF(" bootTimes since powerup: %d\n", rtcMem.bootTimes);
+	DEBUG_PRINTLN(F(" rtcMem"));
+	
+	DEBUG_PRINT(F(" markerFlag: "));
+	DEBUG_PRINTLN(rtcMem.markerFlag);
+	
+	DEBUG_PRINT(F(" bootTimes since powerup: "));
+	DEBUG_PRINTLN(rtcMem.bootTimes);
+
 	DEBUG_PRINTF(" boardMode: %c\n", rtcMem.boardMode);
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
@@ -218,8 +223,8 @@ void IOTAppStory::configESP() {
 	readConfig();
 	//connectNetwork();
 
-	DEBUG_PRINT("\n\n\n\n");
-	DEBUG_PRINTLN("C O N F I G U R A T I O N    M O D E");
+	DEBUG_PRINT(F("\n\n\n\n"));
+	DEBUG_PRINTLN(F("C O N F I G U R A T I O N    M O D E"));
 
 	initWiFiManager();
 
@@ -233,27 +238,27 @@ void IOTAppStory::configESP() {
 
 
 void IOTAppStory::connectNetwork() {
-	DEBUG_PRINTLN(" Connecting to WiFi AP");
+	DEBUG_PRINTLN(F(" Connecting to WiFi AP"));
 
 	WiFi.mode(WIFI_STA);
 	if (!isNetworkConnected()) {
 		DEBUG_PRINTLN("");
-		DEBUG_PRINTLN(" No Connection. Try to connect with saved PW");
+		DEBUG_PRINTLN(F(" No Connection. Try to connect with saved PW"));
 
 		WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
 		if (!isNetworkConnected()) espRestart('C', "Going into Configuration Mode"); // still no success
 	}
 	DEBUG_PRINTLN(" ");
-	DEBUG_PRINTLN(" WiFi connected");
+	DEBUG_PRINTLN(F(" WiFi connected"));
 
 	
 	//getMACaddress();
 	//printMacAddress();
 
-	DEBUG_PRINT(" Device MAC: ");
+	DEBUG_PRINT(F(" Device MAC: "));
 	DEBUG_PRINTLN(WiFi.macAddress());
 
-	DEBUG_PRINT(" Device IP Address: ");
+	DEBUG_PRINT(F(" Device IP Address: "));
 	DEBUG_PRINTLN(WiFi.localIP());
 
 	// Register host name in WiFi and mDNS
@@ -262,9 +267,9 @@ void IOTAppStory::connectNetwork() {
 	wifi_station_set_hostname(config.boardName);
 	//   WiFi.hostname(hostNameWifi);
 	if (MDNS.begin(config.boardName)) {
-		DEBUG_PRINT(FPSTR(SER_MDNS_START));
+		DEBUG_PRINT(F(" MDNS responder started: http://"));
 		DEBUG_PRINT(hostNameWifi);
-		DEBUG_PRINTLN(FPSTR(SER_MDNS_INFO));
+		DEBUG_PRINTLN(F("\n\n To use MDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"));
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	} else {
 		espRestart('N', "MDNS not started");
@@ -290,7 +295,7 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	bool updateHappened=false;
 	byte res1, res2;
 
-	DEBUG_PRINTLN(" Calling Home");
+	DEBUG_PRINTLN(F(" Calling Home"));
 	DEBUG_PRINTF(" Current App: %s\n\n", _firmware.c_str());
 	
 	if (_firmwareUpdateCallback)
@@ -318,7 +323,7 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	if (res1 == 'U' || res2 == 'U')  updateHappened = true;
 
 	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN(" Returning from IOTAppStory.com");
+	DEBUG_PRINTLN(F(" Returning from IOTAppStory.com"));
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 
 	
@@ -334,16 +339,16 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 	byte retValue;
 
-	DEBUG_PRINT(" Checking for ");
+	DEBUG_PRINT(F(" Checking for "));
 	if(type == 0){
 		// type == sketch
-		DEBUG_PRINT("App(Sketch)");
+		DEBUG_PRINT(F("App(Sketch)"));
 	}
 	if(type == 1){
 		// type == spiffs
-		DEBUG_PRINT("SPIFFS");
+		DEBUG_PRINT(F("SPIFFS"));
 	}
-	DEBUG_PRINT(" updates from: ");
+	DEBUG_PRINT(F(" updates from: "));
 	DEBUG_PRINT(server);
 	DEBUG_PRINTLN(url);
 	
@@ -365,11 +370,11 @@ byte IOTAppStory::iotUpdater(bool type, String server, String url) {
 			retValue = 'F';
 		break;
 		case HTTP_UPDATE_NO_UPDATES:
-			DEBUG_PRINTLN(" No updates");
+			DEBUG_PRINTLN(F(" No updates"));
 			retValue = 'A';
 		break;
 		case HTTP_UPDATE_OK:
-			DEBUG_PRINTLN(" Received update");
+			DEBUG_PRINTLN(F(" Received update"));
 			retValue = 'U';
 		break;
 	}
@@ -382,7 +387,7 @@ void IOTAppStory::initWiFiManager() {
 	if(_serialDebug == true){WiFi.printDiag(Serial);} //Remove this line if you do not want to see WiFi password printed
 
 	if (WiFi.SSID() == "") {
-		DEBUG_PRINTLN(FPSTR(SER_WIFI_NOCRED));
+		DEBUG_PRINTLN(F("We haven't got any access point credentials, so get them now"));
 	}else{
 		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 		unsigned long startedAt = millis();
@@ -393,9 +398,9 @@ void IOTAppStory::initWiFiManager() {
 	}
 
 	if (WiFi.status() != WL_CONNECTED) {
-		DEBUG_PRINTLN("Failed to connect");
+		DEBUG_PRINTLN(F("Failed to connect"));
 	}else{
-		DEBUG_PRINT("Local ip: ");
+		DEBUG_PRINT(F("Local ip: "));
 		DEBUG_PRINTLN(WiFi.localIP());
 	}
 	
@@ -439,8 +444,8 @@ void IOTAppStory::processField(){
 	}
 		
 	if(_nrXF > 0){
-		DEBUG_PRINTLN(FPSTR(SER_PF_START));
-		DEBUG_PRINTLN(FPSTR(SER_PF_HEAD));
+		DEBUG_PRINTLN(F(" Processing added fields"));
+		DEBUG_PRINTLN(F(" ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"));
 
 		EEPROM.begin(EEPROM_SIZE);
 		
@@ -475,7 +480,6 @@ void IOTAppStory::processField(){
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
 					// start after MAGICEEP
 					if(t != eeBeg && t != eeEnd && EEPROM.read(t) != 0){
-						//DEBUG_PRINTLN(EEPROM.read(t));
 						*((char*)eepVal + (t-eeBeg)-1) = EEPROM.read(t);
 					}
 				}
@@ -487,31 +491,21 @@ void IOTAppStory::processField(){
 					(*fieldStruct[nr-1].varPointer) = eepVal;
 				}else{
 					DEBUG_PRINTF("%-30s | DEFAULT", (*fieldStruct[nr-1].varPointer));
-					//DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
 				}
 
 			}else{
-				//DEBUG_PRINTLN(" NO existing EEPROM value found.");
 				DEBUG_PRINTF("%-30s | WRITTING TO EEPROM", (*fieldStruct[nr-1].varPointer));
 
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
-					//DEBUG_PRINT(t);
-					//DEBUG_PRINT("  | ");
 					if(t == eeBeg){
 						EEPROM.put(t, MAGICEEP[0]);						// magic begin marker
-						//DEBUG_PRINT(MAGICEEP[0]);
 					}else  if(t == eeEnd){
 						EEPROM.put(t, '^');								// magic end marker
-						//DEBUG_PRINT('^');
 					}else{
 						EEPROM.put(t, *((char*)tmpVal + (t-eeBeg)-1));	// byte of value`
-						//DEBUG_PRINT(*((char*)tmpVal + (t-eeBeg)-1));
 					}
-					//DEBUG_PRINTLN(" ");
 				}
-				
-				//DEBUG_PRINTLN(" ------------");
 			}
 		
 			// add values to the fieldstruct
@@ -584,15 +578,15 @@ void IOTAppStory::loopWiFiManager() {
 	// Once the user leaves the portal with the exit button
 	// processing will continue
 	if (!wifiManager.startConfigPortal(config.boardName)) {
-		DEBUG_PRINTLN(FPSTR(SER_WIFI_CONT));
+		DEBUG_PRINTLN(F(" Not connected to WiFi but continuing anyway."));
 	}else{
 		// If you get here you have connected to the WiFi
-		DEBUG_PRINTLN(" Connected... :-)");
+		DEBUG_PRINTLN(F(" Connected... :-)"));
 	}
 	// Getting posted form values and overriding local variables parameters
 	// Config file is written
 
-	DEBUG_PRINTLN(" ---------------------------");
+	//DEBUG_PRINTLN(" ---------------------------");
 
 	//add all parameters here
 	for(unsigned int i = 0; i < _nrXF; i++){
@@ -626,7 +620,7 @@ void IOTAppStory::espRestart(char mmode, char* message) {
 }
 
 void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
-	DEBUG_PRINTLN(" Erasing Flash...");
+	DEBUG_PRINTLN(F(" Erasing Flash..."));
 	DEBUG_PRINTF(" From %4d to %4d\n", eepFrom, eepTo);
 
 	EEPROM.begin(EEPROM_SIZE);
@@ -641,7 +635,7 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 #if DEBUG_EEPROM_CONFIG
-		DEBUG_PRINT("Stored ");
+		DEBUG_PRINT(F("Stored "));
 		DEBUG_PRINT(config.ssid);
 		DEBUG_PRINTLN("  ");
 		DEBUG_PRINTLN(config.password);   // devPass
@@ -741,7 +735,7 @@ bool IOTAppStory::readConfig() {
 	long magicBytesBegin = sizeof(config) - 4; 								// Magic bytes at the end of the structure
 
 	if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
-		DEBUG_PRINTLN(" EEPROM Configuration found");
+		DEBUG_PRINTLN(F(" EEPROM Configuration found"));
 		for (unsigned int t = 0; t < sizeof(config); t++) {
 			char valueReaded = EEPROM.read(t);
 			*((char*)&config + t) = valueReaded;
@@ -758,7 +752,7 @@ bool IOTAppStory::readConfig() {
 		ret = true;
 
 	} else {
-		DEBUG_PRINTLN(" EEPROM Configuration NOT FOUND!!!!");
+		DEBUG_PRINTLN(F(" EEPROM Configuration NOT FOUND!!!!"));
 		writeConfig();
 		ret = false;
 	}
@@ -851,7 +845,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 		
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
-			DEBUG_PRINTLN("Entering in Configuration Mode");
+			DEBUG_PRINTLN(F(" Entering in Configuration Mode"));
 			espRestart('C', "Going into Configuration Mode");
 			continue;
 		}
