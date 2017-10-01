@@ -7,6 +7,7 @@
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
     #define EEPROM_SIZE 1024
+	#define WIFI_MANAGER_MAX_PARAMS 12
     #define MAXNUMEXTRAFIELDS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
@@ -14,6 +15,7 @@
     #define MAGICBYTE 85
     #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
     #define STRUCT_COMPDATE_SIZE 20
+	#define STRUCT_BNAME_SIZE 30
     #define STRUCT_HOST_SIZE 24
     #define STRUCT_FILE_SIZE 32
 
@@ -44,6 +46,7 @@
 
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
     #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
+    #define         DEBUG_PRINTF_P(...) { if(_serialDebug) Serial.printf_P(__VA_ARGS__);  }
     #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
 
 
@@ -54,7 +57,42 @@
         #define LEDON  1
         #define LEDOFF 0
     #endif
+	
+	 /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
+	typedef struct {
+		byte markerFlag;
+		int bootTimes;
+		char boardMode = 'N';  	// Normal operation or Configuration mode?
+	} rtcMemDef __attribute__((aligned(4)));
+	
 
+	typedef struct  {
+		const char *fieldIdName;
+		const char *fieldLabel;
+		char* (*varPointer);
+		int length;
+
+		//char *custom;
+		//int labelPlacement;
+	} eFields;
+
+	typedef struct  {
+		char ssid[STRUCT_CHAR_ARRAY_SIZE];
+		char password[STRUCT_CHAR_ARRAY_SIZE];
+		char boardName[STRUCT_BNAME_SIZE];
+		char IOTappStory1[STRUCT_HOST_SIZE];
+		char IOTappStoryPHP1[STRUCT_FILE_SIZE];
+		const char IOTappStory2[16];
+		const char IOTappStoryPHP2[20];
+
+		bool automaticUpdate;	// right after boot
+		char compDate[STRUCT_COMPDATE_SIZE];
+		char sha1[60];
+		char devPass[7];
+		
+		char magicBytes[4];
+	} strConfig;
+	
     enum ModeButtonState {
         ModeButtonNoPress,           // mode button is not pressed
         ModeButtonShortPress,        // short press - will enter in firmware update mode
@@ -72,40 +110,8 @@
     class IOTAppStory {
 		
         public:
-            /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
-            typedef struct {
-                byte markerFlag;
-                int bootTimes;
-                char boardMode = 'N';  	// Normal operation or Configuration mode?
-            } rtcMemDef __attribute__((aligned(4)));
-            rtcMemDef rtcMem;
-
-            typedef struct  {
-                const char *fieldIdName;
-                const char *fieldLabel;
-                char* (*varPointer);
-                int length;
-
-                //char *custom;
-                //int labelPlacement;
-            } eFields;
-
-            typedef struct  {
-                char ssid[STRUCT_CHAR_ARRAY_SIZE];
-                char password[STRUCT_CHAR_ARRAY_SIZE];
-                char boardName[STRUCT_CHAR_ARRAY_SIZE];
-                char IOTappStory1[STRUCT_HOST_SIZE];
-                char IOTappStoryPHP1[STRUCT_FILE_SIZE];
-                const char IOTappStory2[STRUCT_HOST_SIZE];
-                const char IOTappStoryPHP2[STRUCT_FILE_SIZE];
-
-                bool automaticUpdate;	// right after boot
-                char compDate[STRUCT_COMPDATE_SIZE];
-                char sha1[60];
-                char devPass[7];
-                
-                char magicBytes[4];
-            } strConfig;
+            /* ------ ------ ------ VARIABLES ------ ------ ------ */
+			rtcMemDef rtcMem;
 
             strConfig config = {
                 "",
@@ -118,7 +124,7 @@
                 false,
                 "",
                 "76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",			// <<--- needs a field in the config pages
-                
+                "",
                 "CFG"  // Magic Bytes
             };
     
@@ -163,7 +169,7 @@
             bool isNetworkConnected();
 
             bool callHome(bool spiffs = true);
-            byte iotUpdater(bool type, String server, String url);
+            byte iotUpdater(bool type, bool loc = false);
 
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void processField();
@@ -172,7 +178,7 @@
             void initWiFiManager();
             void loopWiFiManager();
 
-            void espRestart(char mmode, char* message);
+            void espRestart(char mmode, const char* message);
             void eraseFlash(unsigned int eepFrom = 0, unsigned int eepTo = EEPROM_SIZE);
 
             void writeConfig(bool wifiSave=false);
