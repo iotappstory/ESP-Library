@@ -37,32 +37,29 @@ ESP8266HTTPUpdate::~ESP8266HTTPUpdate(void)
 {
 }
 
-/*
-HTTPUpdateResult ESP8266HTTPUpdate::update(const String& url)
-{
-    HTTPClient http;
-    http.begin(url, root->config.sha1);
-    return handleUpdate(http, root->_firmware, false);
-}
 
-HTTPUpdateResult ESP8266HTTPUpdate::updateSpiffs(const String& url)
+HTTPUpdateResult ESP8266HTTPUpdate::update(const String& currentVersion)
 {
+	
+	String url = F("https://");
+	url += String(config->IOTappStory1) + String(config->IOTappStoryPHP1);
+	
+	
+	
     HTTPClient http;
-    http.begin(url, String(root->config.sha1));
-    return handleUpdate(http, root->_firmware, true);
-}
-*/
-HTTPUpdateResult ESP8266HTTPUpdate::update(const String& url, const String& currentVersion, const String& httpsFingerprint)
-{
-    HTTPClient http;
-    http.begin(url, httpsFingerprint);
+    http.begin(url, config->sha1);
     return handleUpdate(http, currentVersion, false);
 }
 
-HTTPUpdateResult ESP8266HTTPUpdate::updateSpiffs(const String& url, const String& currentVersion, const String& httpsFingerprint)
+HTTPUpdateResult ESP8266HTTPUpdate::updateSpiffs(const String& currentVersion)
 {
+	String url = F("https://");
+	url += String(config->IOTappStory1) + String(config->IOTappStoryPHP1);
+	
+	
+	
     HTTPClient http;
-    http.begin(url, httpsFingerprint);
+    http.begin(url, config->sha1);
     return handleUpdate(http, currentVersion, true);
 }
 
@@ -144,6 +141,7 @@ HTTPUpdateResult ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, const String&
     http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
     http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
     http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
+    http.addHeader(F("x-ESP8266-act_id"), String(config->devPass));
 
     if(spiffs) {
         http.addHeader(F("x-ESP8266-mode"), F("spiffs"));
