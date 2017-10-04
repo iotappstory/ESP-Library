@@ -58,7 +58,10 @@
         #define LEDOFF 0
     #endif
 	
-	 /* ------ ------ ------ VARIABLES & STRUCTURES ------ ------ ------ */
+
+	 
+	 
+	 /* ------ ------ ------ STRUCTURES ------ ------ ------ */
 	typedef struct {
 		byte markerFlag;
 		int bootTimes;
@@ -80,10 +83,14 @@
 		char ssid[STRUCT_CHAR_ARRAY_SIZE];
 		char password[STRUCT_CHAR_ARRAY_SIZE];
 		char boardName[STRUCT_BNAME_SIZE];
-		char IOTappStory1[STRUCT_HOST_SIZE];
-		char IOTappStoryPHP1[STRUCT_FILE_SIZE];
-		const char IOTappStory2[16];
-		const char IOTappStoryPHP2[20];
+		
+		const char* (*appName);
+		const char* (*appVersion);
+		
+		char HOST1[STRUCT_HOST_SIZE];
+		char FILE1[STRUCT_FILE_SIZE];
+		//const char IOTappStory2[16];
+		//const char IOTappStoryPHP2[20];
 
 		bool automaticUpdate;	// right after boot
 		char compDate[STRUCT_COMPDATE_SIZE];
@@ -102,10 +109,14 @@
         ModeButtonConfigMode         // about to enter in configuration mode
     };
 
-
-	// store "repeating" serial feedback strings in PROGMEM as this uses less than F()
-	const char SER_DEV[] PROGMEM             = "*-------------------------------------------------------------------------*";
 	
+	/* ------ ------ ------ PROGMEM ------ ------ ------ */
+	
+	// store "repeating" serial feedback strings in PROGMEM as this uses less than F()
+	const char SER_DEV[] PROGMEM           = "*-------------------------------------------------------------------------*";
+	 
+	const char HOST2[] PROGMEM             = "iotappstory.com";
+	const char FILE2[] PROGMEM             = "/ota/esp8266-v2.php";
 	
     class IOTAppStory {
 		
@@ -116,11 +127,13 @@
             strConfig config = {
                 "",
                 "",
-                "yourFirstApp",
+                "yourESP",
+                NULL,
+                NULL,
                 "iotappstory.com",
-                "/ota/esp8266-v1.php",
-                "iotappstory.com",
-                "/ota/esp8266-v1.php",
+                "/ota/esp8266-v2.php",
+                //"iotappstory.com",
+                //"/ota/esp8266-v1.php",
                 false,
                 "",
                 "76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",			// <<--- needs a field in the config pages
@@ -145,16 +158,16 @@
             eFields fieldStruct[MAXNUMEXTRAFIELDS];
 
             /* ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ */
-            IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton);
+            IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton);
 
             void serialdebug(bool onoff,int speed=115200);
 
-            // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and IOTappStoryPHP1
+            // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and FILE1
             void preSetConfig(String boardName, bool automaticUpdate = false);
             void preSetConfig(bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
-            void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate = false);
+            void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
             void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom
             void firstBoot(bool ea=false);
@@ -210,10 +223,10 @@
     
 
         private:
-            String  _appName;
+            //const char *_appName;
             //String  _appVersion;			// may not be necessary
             String  _firmware;
-            String  _compDate;
+            const char *_compDate;
             int     _modeButton;
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
