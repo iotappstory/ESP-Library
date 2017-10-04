@@ -63,6 +63,9 @@ const char HTTP_APPSAVED[] PROGMEM        = "<div class=\"msg\"><strong>App Conf
 const char HTTP_END[] PROGMEM             = "</div></body></html>";
 
 
+const char ST_JS[] PROGMEM             = "State - json";
+
+
 
 class WiFiManagerParameter {
   public:
@@ -213,15 +216,7 @@ class WiFiManager
 
 #if IASCNF == 1
     void          handleIAScfg();				// added for IAS
-    void          handleAddPage();				// added for IAS
-    void          handleDevSave();				// added for IAS
-    void          handleEditProPage();			// added for IAS
-    void          handleNewProPage();			// added for IAS
-    void          handleAddToProPage();			// added for IAS
-    void          handleSavePro();				// added for IAS
-    void          handleSaveATP();				// added for IAS
-	
-    void          hdlIasCfgPages(String title, const char *file, String para = "");				// added for IAS
+    void          hdlIasCfgPages(const __FlashStringHelper *title, const String para = "");				// added for IAS
 #endif
 
     void          handleReset();
