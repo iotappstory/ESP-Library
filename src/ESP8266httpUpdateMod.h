@@ -73,8 +73,8 @@ public:
         _rebootOnUpdate = reboot;
     }
 
-    t_httpUpdate_return update(const String& currentVersion);
-    t_httpUpdate_return updateSpiffs(const String& currentVersion);
+    t_httpUpdate_return update(const String& url, const String& currentVersion, bool spiffs = false);
+    //t_httpUpdate_return updateSpiffs(const String& currentVersion);
 
 	strConfig *config;
     int getLastError(void);
