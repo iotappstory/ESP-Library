@@ -142,34 +142,27 @@ void WiFiManager::setupConfigPortal() {
   dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
-  server->on("/", std::bind(&WiFiManager::handleRoot, this));
-  server->on("/wifi", std::bind(&WiFiManager::handleWifi, this));
-  server->on("/wifisave", std::bind(&WiFiManager::handleWifiSave, this));
+  server->on(F("/"), std::bind(&WiFiManager::handleRoot, this));
+  server->on(F("/wifi"), std::bind(&WiFiManager::handleWifi, this));
+  server->on(F("/wifisave"), std::bind(&WiFiManager::handleWifiSave, this));
   
-  server->on("/app", std::bind(&WiFiManager::handleApp, this));
-  server->on("/appsave", std::bind(&WiFiManager::handleAppSave, this));
+  server->on(F("/app"), std::bind(&WiFiManager::handleApp, this));
+  server->on(F("/appsave"), std::bind(&WiFiManager::handleAppSave, this));
   
-  server->on("/close", std::bind(&WiFiManager::handleServerClose, this));
-  server->on("/i", std::bind(&WiFiManager::handleInfo, this));
-  server->on("/r", std::bind(&WiFiManager::handleReset, this));
-  server->on("/state", std::bind(&WiFiManager::handleState, this));
-  server->on("/scan", std::bind(&WiFiManager::handleScan, this));
+  server->on(F("/close"), std::bind(&WiFiManager::handleServerClose, this));
+  server->on(F("/i"), std::bind(&WiFiManager::handleInfo, this));
+  server->on(F("/r"), std::bind(&WiFiManager::handleReset, this));
+  //server->on(F("/state"), std::bind(&WiFiManager::handleState, this));
+  server->on(F("/scan"), std::bind(&WiFiManager::handleScan, this));
   
   #if IASCNF == 1
-	  server->on("/ias", std::bind(&WiFiManager::handleIAScfg, this));
-	  server->on("/addpage", std::bind(&WiFiManager::handleAddPage, this));
-	  server->on("/add", std::bind(&WiFiManager::handleDevSave, this));
-	  
-	  server->on("/editPro", std::bind(&WiFiManager::handleEditProPage, this));
-	  server->on("/newPro", std::bind(&WiFiManager::handleNewProPage, this));
-	  server->on("/addToPro", std::bind(&WiFiManager::handleAddToProPage, this));
-	  server->on("/savePro", std::bind(&WiFiManager::handleSavePro, this));
-	  server->on("/saveATP", std::bind(&WiFiManager::handleSaveATP, this));
+	  server->on(F("/ias"), std::bind(&WiFiManager::handleIAScfg, this));
   #endif
   
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
   DEBUG_WM(F("HTTP server started"));
+  DEBUG_WM(system_get_free_heap_size());
 
 }
 
@@ -493,69 +486,71 @@ void WiFiManager::handleRoot() {
 #if IASCNF == 1
 /** IOTAppStory config page handler */
 void WiFiManager::handleIAScfg() {
-
-	if(server->arg("d") != ""){
-		// check the entered code
-		hdlIasCfgPages(F("IOTAppStory.com config"),"ias-check.php","&ias_id="+server->arg("d"));
-		
-	}else if(String(config->devPass) == "000000" || String(config->devPass) == ""){
-		// send "enter your code" page
-		hdlIasCfgPages(F("IOTAppStory.com config"),"ias-id.php");
-		
-	}else{
-		// check device status
-		hdlIasCfgPages(F("IOTAppStory.com config"),"dev_check.php","&ias_id="+String(config->devPass));
-	}
-}
-
-/** IOTAppStory add device page handler */
-void WiFiManager::handleAddPage() {
-	hdlIasCfgPages(F("Add Device"),"dev_new.php");
-}
-
-
-/** IOTAppStory edit project page handler */
-void WiFiManager::handleEditProPage() {
-	hdlIasCfgPages(F("Edit Project"),"proj_edit.php");
-}
-
-
-/** IOTAppStory new project page handler */
-void WiFiManager::handleNewProPage() {
-	hdlIasCfgPages(F("New Project"),"proj_edit.php","&new=1");
-}
-
-
-/** IOTAppStory add to existing project page handler */
-void WiFiManager::handleAddToProPage() {
-	hdlIasCfgPages(F("Add to a Project"),"proj_addto.php");
-}
-
-
-void WiFiManager::hdlIasCfgPages(String title, const char *file, String para){
-
-	HTTPClient http;
+	String args = "";
 	
-	// We now create a URI for the request
-	//String url = F("https://iotappstory.com/ota/cnf/");// 										<<--  https We need to free up RAM first!
-	String url = F("http://iotappstory.com/ota/cnf/");
-	url += String(file);
-	url += F("?chip_id=");
-	url += ESP.getChipId();
-	url += F("&flash_chip_id=");
-	url += ESP.getFlashChipId();
-	url += F("&flash_size=");
-	url += ESP.getFlashChipRealSize();
-	url += F("&mac=");
-	url += WiFi.macAddress();
-	url += para;
+	for(uint8_t i = 0; i < server->args(); i++){
+		if(i == 0){
+			args += "?";
+		}else{
+			args += "&";
+		}
+		args += server->argName(i) + "=" + server->arg(i);
+	}
+	
+	hdlIasCfgPages(F("IOTAppStory.com config"),args);
+}
+
+void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String args){
+
+	String url = "";
+	DEBUG_WM("Start hdlIasCfgPages()");// 								<-- remove on release
+	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	
+	if(system_get_free_heap_size() > 29500){
+		url += F("https://"); // 										<<--  https We need to free up RAM first!
+	}else{
+		url += F("http://");
+	}
+
+	url += FPSTR(HOST2);
+	url += F("/ota/cfg/cfg.php");
+	//url += file;
+	url += args;
+	
+	// start HTTPClient
+	DEBUG_WM("Start HTTPClient");// 									<-- remove on release
+	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+    HTTPClient http;
 
 	// connect to server
-	//DEBUG_WM("Connecting to: ");
-	//DEBUG_WM(url);
-    //http.begin(url, config->sha1); // 															<<--  https We need to free up RAM first!
-    http.begin(url);
+	DEBUG_WM("Connecting to: ");// 										<-- remove on release ?
+	DEBUG_WM(url);// 													<-- remove on release ?
+	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	delay(100);
 	
+	if(system_get_free_heap_size() > 29500){
+		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
+	}else{
+		http.begin(url);
+	}
+	
+	DEBUG_WM("after http.begin");// 									<-- remove on release
+	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
+	
+	// add headers
+    http.setUserAgent(F("ESP8266-http-Update"));
+	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
+	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
+    http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
+	
+    const char * headerkeys[] = { "x-MD5" };
+    size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+
+    // track these headers
+    http.collectHeaders(headerkeys, headerkeyssize);
+    
 	// respons code
 	int httpCode = http.GET();
 	
@@ -577,38 +572,31 @@ void WiFiManager::hdlIasCfgPages(String title, const char *file, String para){
 		return;
 	}
 
-	// end connection
+	// end HTTPClient
 	http.end();
 	
 	// save received activation code
-	if(server->arg("d")){
-		server->arg("d").toCharArray(config->devPass,7);
+	if(server->arg("c") && line == "(Y)"){
+		server->arg("c").toCharArray(config->devPass,7);
+		hdlIasCfgPages(F("IOTAppStory.com config"));
+	}else{
+
+		String page = FPSTR(HTTP_HEAD);
+		page.replace("{v}", title);
+		page += FPSTR(HTTP_SCRIPT);
+		page += FPSTR(HTTP_STYLE);
+		page += _customHeadElement;
+		page += FPSTR(HTTP_HEAD_END);
+		page += line;
+		page += FPSTR(HTTP_END);
+
+		hdlReturn(page);
 	}
-
-	//Serial.println(line);
-	
-
-
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", title);
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  
-  page += line;
-  
-  page += FPSTR(HTTP_END);
-  
-
-
-  hdlReturn(page);
-
-  //DEBUG_WM(F("Sent "));
-  //DEBUG_WM(title);
+	//DEBUG_WM(F("Sent "));
+	//DEBUG_WM(title);
 }
 #endif
+
 
 
 /** Wifi return page handler */
@@ -619,8 +607,6 @@ void WiFiManager::hdlReturn(String &message, String type) {
   
   server->send(200, type, message);
 }
-
-
 
 
 
@@ -875,16 +861,6 @@ void WiFiManager::handleAppSave() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /** Handle shut down the server page */
 void WiFiManager::handleServerClose() {
     DEBUG_WM(F("Server Close"));
@@ -921,16 +897,16 @@ void WiFiManager::handleInfo() {
   reportStatus(page);
   
   page += FPSTR(HTTP_PORTAL_INFO);
-  page.replace("{si}", WiFi.SSID());
-  page.replace("{api}", WiFi.softAPIP().toString());
-  page.replace("{apm}", WiFi.softAPmacAddress());
-  page.replace("{cid}", String(ESP.getChipId()));
-  page.replace("{fid}", String(ESP.getFlashChipId()));
-  page.replace("{ifs}", String(ESP.getFlashChipSize()));
-  page.replace("{rfs}", String(ESP.getFlashChipRealSize()));
-  page.replace("{dip}", WiFi.localIP().toString());
-  page.replace("{mac}", WiFi.macAddress());
-  page += "<br/>";
+  page.replace(F("{si}"), WiFi.SSID());
+  page.replace(F("{api}"), WiFi.softAPIP().toString());
+  page.replace(F("{apm}"), WiFi.softAPmacAddress());
+  page.replace(F("{cid}"), String(ESP.getChipId()));
+  page.replace(F("{fid}"), String(ESP.getFlashChipId()));
+  page.replace(F("{ifs}"), String(ESP.getFlashChipSize()));
+  page.replace(F("{rfs}"), String(ESP.getFlashChipRealSize()));
+  page.replace(F("{dip}"), WiFi.localIP().toString());
+  page.replace(F("{mac}"), WiFi.macAddress());
+  page += F("<br/>");
   
   page += FPSTR(HTTP_FORM_BACKBTN);
   
@@ -942,7 +918,7 @@ void WiFiManager::handleInfo() {
 }
 /** Handle the state page */
 void WiFiManager::handleState() {
-  DEBUG_WM(F("State - json"));
+  DEBUG_WM(FPSTR(ST_JS));
   String page = F("{\"Soft_AP_IP\":\"");
   page += WiFi.softAPIP().toString();
   page += F("\",\"Soft_AP_MAC\":\"");
@@ -967,7 +943,7 @@ void WiFiManager::handleState() {
 
 /** Handle the scan page */
 void WiFiManager::handleScan() {
-  DEBUG_WM(F("State - json"));
+  DEBUG_WM(FPSTR(ST_JS));
 
   int n;
   int *indices;
@@ -1003,47 +979,6 @@ void WiFiManager::handleScan() {
   hdlReturn(page, "application/json");
   //DEBUG_WM(F("Sent WiFi scan data ordered by signal strength in json format"));
 }
-
-
-
-
-
-
-
-
-#if IASCNF == 1
-/* Handle the save device to IAS request */				// added for IAS
-void WiFiManager::handleDevSave() {
-
-	String devName = server->arg("n").c_str();
-	devName.replace(" ", "%20");
-	
-	hdlIasCfgPages(F("Device added to IOTAppStory.com"),"dev_save.php","&ias_id="+String(config->devPass)+"&name="+devName+"&dt="+server->arg("d").c_str());
-}
-
-
-/* Handle the add device to IAS request */				// added for IAS
-void WiFiManager::handleSavePro() {
-
-	String name = server->arg("n").c_str();
-	name.replace(" ", "%20");
-	
-	hdlIasCfgPages(F("Project saved"),"proj_save.php","&ias_id="+String(config->devPass)+"&id="+server->arg("id")+"&name="+name+"&app="+server->arg("a"));
-}
-
-
-/* Handle the add device to IAS request */				// added for IAS
-void WiFiManager::handleSaveATP() {
-
-	hdlIasCfgPages(F("Added to Project"),"proj_addto_save.php","&ias_id="+String(config->devPass)+"&proj="+server->arg("p"));
-}
-#endif
-
-
-
-
-
-
 
 /** Handle the reset page */
 void WiFiManager::handleReset() {
