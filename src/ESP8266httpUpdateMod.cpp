@@ -38,23 +38,21 @@ ESP8266HTTPUpdate::~ESP8266HTTPUpdate(void)
 }
 
 
-HTTPUpdateResult ESP8266HTTPUpdate::update(const String& currentVersion)
+HTTPUpdateResult ESP8266HTTPUpdate::update(const String& url, const String& currentVersion, bool spiffs)
 {
-	
-	String url = F("https://");
-	url += String(config->IOTappStory1) + String(config->IOTappStoryPHP1);
-	
-	
-	
     HTTPClient http;
     http.begin(url, config->sha1);
-    return handleUpdate(http, currentVersion, false);
+    return handleUpdate(http, currentVersion, spiffs);
 }
 
+
+
+/*
 HTTPUpdateResult ESP8266HTTPUpdate::updateSpiffs(const String& currentVersion)
 {
 	String url = F("https://");
-	url += String(config->IOTappStory1) + String(config->IOTappStoryPHP1);
+	url += config->IOTappStory1;
+	url += config->IOTappStoryPHP1;
 	
 	
 	
@@ -62,6 +60,9 @@ HTTPUpdateResult ESP8266HTTPUpdate::updateSpiffs(const String& currentVersion)
     http.begin(url, config->sha1);
     return handleUpdate(http, currentVersion, true);
 }
+*/
+
+
 
 /**
  * return error code as int
@@ -141,7 +142,7 @@ HTTPUpdateResult ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, const String&
     http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
     http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
     http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
-    http.addHeader(F("x-ESP8266-act_id"), String(config->devPass));
+    http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
 
     if(spiffs) {
         http.addHeader(F("x-ESP8266-mode"), F("spiffs"));
