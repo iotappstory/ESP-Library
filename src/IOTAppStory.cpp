@@ -18,10 +18,8 @@ extern "C" {
 	#include "user_interface.h"
 }
 
-IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char *compDate, const int modeButton)
+IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton)
 : _modeButton(modeButton)
-//, _appName(appName)          // may not be necessary
-//, _appVersion(appVersion)    // may not be necessary
 , _compDate(compDate)
 , _noPressCallback(NULL)
 , _shortPressCallback(NULL)
@@ -30,12 +28,14 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 , _firmwareUpdateCallback(NULL)
 , _configModeCallback(NULL)
 {
-	// initiating object
-	_appName = appName;
-	//_appVersion = appVersion;		// may not be necessary
-	_firmware = String(appName)+" "+String(appVersion);
-	_compDate = compDate;
-  _modeButton = modeButton;
+
+	config.appName = &appName;
+	config.appVersion = &appVersion;
+
+	_firmware = appName;
+	_firmware += " ";
+	_firmware += appVersion;
+	
 }
 
 void IOTAppStory::firstBoot(bool ea){
@@ -65,7 +65,8 @@ void IOTAppStory::firstBoot(bool ea){
 	
 	// update first boot config flag (date)
 	//String tmpdate = _compDate;
-	String(_compDate).toCharArray(config.compDate, 20);
+	//String(_compDate).toCharArray(config.compDate, 20);
+	strcpy(config.compDate, _compDate);
 	writeConfig();
 	
 	
@@ -104,15 +105,16 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, b
 	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate /*= false*/) {
+void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String HOST1, String FILE1, bool automaticUpdate /*= false*/) {
 	preSetConfig(ssid, password, boardName, automaticUpdate);
-	SetConfigValueCharArray(config.IOTappStory1, IOTappStory1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.IOTappStoryPHP1, IOTappStoryPHP1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 
 void IOTAppStory::begin(bool bootstats, bool ea){
 	DEBUG_PRINTLN(F("\n"));
+	
 	
 	// read config if needed
 	if (!_configReaded) {
@@ -121,7 +123,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	
 	// set appName as default boardName in case the app developer does not set it
 	if (config.boardName == "yourFirstApp") {
-		preSetConfig(_appName, config.automaticUpdate);
+		preSetConfig((*config.appName), config.automaticUpdate);
 	}
 	
 	// write config if detected changes
@@ -132,6 +134,9 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
+	
+	DEBUG_PRINTLN(system_get_free_heap_size());	// <-- remove on release
+	
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
 	DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.boardName);
@@ -155,7 +160,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 	}
 
 	// on first boot of the app run the firstBoot() function
-	if(String(config.compDate) != String(_compDate)){
+	if(strcmp(config.compDate,_compDate) != 0){
 		firstBoot(ea);
 	}
 
@@ -216,8 +221,9 @@ void IOTAppStory::printRTCmem() {
 void IOTAppStory::configESP() {
 	readConfig();
 	//connectNetwork();
-
+	
 	DEBUG_PRINT(F("\n\n\n\nC O N F I G U R A T I O N    M O D E\n"));
+	DEBUG_PRINTLN(system_get_free_heap_size());
 
 	initWiFiManager();
 
@@ -292,9 +298,10 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s\n\n"), _firmware.c_str());
 	
-	if (_firmwareUpdateCallback)
+	if (_firmwareUpdateCallback){
 		_firmwareUpdateCallback();
-
+	}
+	
 	ESPhttpUpdate.rebootOnUpdate(false);
 	res = iotUpdater(0,0);
 	
@@ -343,29 +350,29 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 	}
 	
 	DEBUG_PRINT(F(" updates from: "));
+	String url = F("https://");
 	if(loc == 0){
 		// location 1
-		DEBUG_PRINT(config.IOTappStory1);
-		DEBUG_PRINTLN(config.IOTappStoryPHP1);
+		DEBUG_PRINT(config.HOST1);
+		DEBUG_PRINTLN(config.FILE1);
+
+		url += config.HOST1;
+		url += config.FILE1;
 	}else{
 		// location 1
-		DEBUG_PRINT(config.IOTappStory2);
-		DEBUG_PRINTLN(config.IOTappStoryPHP2);
+		DEBUG_PRINT(FPSTR(HOST2));
+		DEBUG_PRINTLN(FPSTR(FILE2));
+
+		url += FPSTR(HOST2);
+		url += FPSTR(FILE2);
 	}
 	
 
 	
 	t_httpUpdate_return ret;
-	ESPhttpUpdate.config = &config;
-	
-	if(type == 0){
-		// type == sketch
-		ret = ESPhttpUpdate.update(_firmware);
-	}
-	if(type == 1){
-		// type == spiffs
-		ret = ESPhttpUpdate.updateSpiffs(_firmware);
-	}
+	ESPhttpUpdate.config = &config;					// send pointer of our config struct
+	ret = ESPhttpUpdate.update(url,_firmware,type);		// type == 0 = sketch // type == 1 = spiffs
+
 	
 	switch (ret) {
 		case HTTP_UPDATE_FAILED:
@@ -444,7 +451,9 @@ void IOTAppStory::processField(){
 		}
 		
 		for(unsigned int nr = 0; nr < _nrXF; nr++){
-			String(tempValue[nr]).toCharArray((*fieldStruct[nr].varPointer), fieldStruct[nr].length);
+			//String().toCharArray(, fieldStruct[nr].length);
+			
+			strcpy((*fieldStruct[nr].varPointer), tempValue[nr]);
 		}
 	}
 		
@@ -488,7 +497,8 @@ void IOTAppStory::processField(){
 				}
 				
 				// if eeprom value is different update the ret value
-				if(String(eepVal) != String((*fieldStruct[nr-1].varPointer))){
+				if(strcmp(eepVal, (*fieldStruct[nr-1].varPointer)) != 0){
+				//if(String(eepVal) != String((*fieldStruct[nr-1].varPointer))){
 					DEBUG_PRINTF_P(PSTR("%-30s | OVERWRITTEN"), eepVal);
 
 					(*fieldStruct[nr-1].varPointer) = eepVal;
