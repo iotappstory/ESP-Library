@@ -128,3 +128,7 @@ See `addField()`
 ## Contributions and thanks
 
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
+
+Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
+
+And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP8266-Library/graphs/contributors)
