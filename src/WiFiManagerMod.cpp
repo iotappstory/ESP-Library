@@ -437,12 +437,10 @@ void WiFiManager::handleRoot() {
   if (captivePortal()) { // If caprive portal redirect instead of displaying the error page.
       return;
   }
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("Options"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = FPSTR(HTTP_TEMPLATE);
+  page.replace("{h}", _customHeadElement);
+  page.replace("{h}", "");
+
   page += F("<h2>");
   page += config->boardName;
   if (WiFi.SSID() != ""){
@@ -459,8 +457,7 @@ void WiFiManager::handleRoot() {
   }
   page += F("</h2>");
   page += FPSTR(HTTP_PORTAL_OPTIONS);
-  //DEBUG_WM(F("_paramsCount"));
-  //DEBUG_WM(_paramsCount);
+
   if (_paramsCount > 0){
 	  page.replace("{a}", FPSTR(HTTP_PORTAL_APPCFG));
   }else{
@@ -472,14 +469,12 @@ void WiFiManager::handleRoot() {
 	  page.replace("{q}", "");
   }
   
-  
   page += F("<div class=\"msg\">");
   reportStatus(page);
   page += F("</div>");
   page += FPSTR(HTTP_END);
 
   hdlReturn(page);
-
 }
 
 
@@ -503,10 +498,10 @@ void WiFiManager::handleIAScfg() {
 void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String args){
 
 	String url = "";
-	DEBUG_WM("Start hdlIasCfgPages()");// 								<-- remove on release
+	DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
 	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	
-	if(system_get_free_heap_size() > 29500){
+	if(system_get_free_heap_size() > 31200){
 		url += F("https://"); // 										<<--  https We need to free up RAM first!
 	}else{
 		url += F("http://");
@@ -514,27 +509,26 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 
 	url += FPSTR(HOST2);
 	url += F("/ota/cfg/cfg.php");
-	//url += file;
 	url += args;
 	
 	// start HTTPClient
-	DEBUG_WM("Start HTTPClient");// 									<-- remove on release
+	DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
 	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
     HTTPClient http;
 
 	// connect to server
-	DEBUG_WM("Connecting to: ");// 										<-- remove on release ?
+	DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
 	DEBUG_WM(url);// 													<-- remove on release ?
 	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	delay(100);
 	
-	if(system_get_free_heap_size() > 29500){
+	if(system_get_free_heap_size() > 31200){
 		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
 	}
 	
-	DEBUG_WM("after http.begin");// 									<-- remove on release
+	DEBUG_WM(F("after http.begin"));// 									<-- remove on release
 	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
 	
 	// add headers
@@ -580,17 +574,7 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 		server->arg("c").toCharArray(config->devPass,7);
 		hdlIasCfgPages(F("IOTAppStory.com config"));
 	}else{
-
-		String page = FPSTR(HTTP_HEAD);
-		page.replace("{v}", title);
-		page += FPSTR(HTTP_SCRIPT);
-		page += FPSTR(HTTP_STYLE);
-		page += _customHeadElement;
-		page += FPSTR(HTTP_HEAD_END);
-		page += line;
-		page += FPSTR(HTTP_END);
-
-		hdlReturn(page);
+		hdlReturn(line);
 	}
 	//DEBUG_WM(F("Sent "));
 	//DEBUG_WM(title);
@@ -613,13 +597,9 @@ void WiFiManager::hdlReturn(String &message, String type) {
 /** Wifi config page handler */
 void WiFiManager::handleWifi() {
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("Config ESP"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = "";
   page += F("<h2>Wifi Configuration</h2>");
+  
   //Print list of WiFi networks that were found in earlier scan
     if (numberOfNetworks == 0) {
       page += F("WiFi scan found no networks. Restart configuration portal to scan again.");
@@ -685,15 +665,9 @@ void WiFiManager::handleWifi() {
     page += "<br/>";
   }
 
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", F("submit"));
-  page.replace("{b}", F("Save"));
-  page += FPSTR(HTTP_FORM_END);
-
-  
+  page += FPSTR(HTTP_FORM_SAVEBTN);
+  page.replace("{u}", F("/wifisave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
-
-  page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
@@ -728,17 +702,12 @@ void WiFiManager::handleWifiSave() {
     optionalIPFromString(&_sta_static_sn, sn.c_str());
   }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("Credentials Saved"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+
+  String page = "";
   page += FPSTR(HTTP_SAVED);
   page.replace("{v}", config->boardName);
   page.replace("{x}", config->ssid);
   page += FPSTR(HTTP_FORM_BACKBTN);
-  page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
@@ -751,15 +720,9 @@ void WiFiManager::handleWifiSave() {
 
 /** Wifi config page handler */
 void WiFiManager::handleApp() {
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("Config App"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = FPSTR(HTTP_TEMPLATE);
   page += F("<h2>App Configuration</h2>");
 
-  page += FPSTR(HTTP_AFORM_START);
   //char parLength[2];
   // add the extra parameters to the form
   for (int i = 0; i < _paramsCount; i++) {
@@ -803,14 +766,9 @@ void WiFiManager::handleApp() {
 
 
 
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", F("submit"));
-  page.replace("{b}", F("Save"));
-  page += FPSTR(HTTP_FORM_END);
-
-  
+  page += FPSTR(HTTP_FORM_SAVEBTN);
+  page.replace("{u}", F("/appsave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
-
   page += FPSTR(HTTP_END);
 
   hdlReturn(page);
@@ -821,7 +779,6 @@ void WiFiManager::handleApp() {
 /** Handle the WLAN save form and redirect to WLAN config page again */
 void WiFiManager::handleAppSave() {
   DEBUG_WM(F("App save"));
-
 
 
   //parameters
@@ -838,38 +795,21 @@ void WiFiManager::handleAppSave() {
     DEBUG_WM(value);
   }
 
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("App Config Saved"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = FPSTR(HTTP_TEMPLATE);
   page += FPSTR(HTTP_APPSAVED);
-
-
-  
   page += FPSTR(HTTP_FORM_BACKBTN);
-  
   page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
   //DEBUG_WM(F("Sent app save page"));
-
-
 }
 
 
 /** Handle shut down the server page */
 void WiFiManager::handleServerClose() {
     DEBUG_WM(F("Server Close"));
-    String page = FPSTR(HTTP_HEAD);
-    page.replace("{v}", F("Close Server"));
-    page += FPSTR(HTTP_SCRIPT);
-    page += FPSTR(HTTP_STYLE);
-    page += _customHeadElement;
-    page += FPSTR(HTTP_HEAD_END);
+    String page = FPSTR(HTTP_TEMPLATE);
     page += F("<div class=\"msg\">My network is <strong>");
     page += WiFi.SSID();
     page += F("</strong><br>My IP address is <strong>");
@@ -879,18 +819,13 @@ void WiFiManager::handleServerClose() {
     page += FPSTR(HTTP_END);
     hdlReturn(page);
     stopConfigPortal = true; //signal ready to shutdown config portal
-  //DEBUG_WM(F("Sent server close page"));
+	//DEBUG_WM(F("Sent server close page"));
 
 }
 /** Handle the info page */
 void WiFiManager::handleInfo() {
   DEBUG_WM(F("Info"));
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("Info"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = "";
   page += F("<h2>Information</h2>");			// removed "Wifi" from the title
   //page += F("Android app from <a href=\"https://play.google.com/store/apps/details?id=au.com.umranium.espconnect\">https://play.google.com/store/apps/details?id=au.com.umranium.espconnect</a> provides easier ESP WiFi configuration.<p/>");
   // removed this add because the app refered to won't work with the IAS loader
@@ -909,8 +844,6 @@ void WiFiManager::handleInfo() {
   page += F("<br/>");
   
   page += FPSTR(HTTP_FORM_BACKBTN);
-  
-  page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
@@ -983,12 +916,7 @@ void WiFiManager::handleScan() {
 /** Handle the reset page */
 void WiFiManager::handleReset() {
   DEBUG_WM(F("Reset"));
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", F("WiFi Information"));
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = FPSTR(HTTP_TEMPLATE);
   page += F("Module will reset in a few seconds.");
   page += FPSTR(HTTP_END);
   hdlReturn(page);
