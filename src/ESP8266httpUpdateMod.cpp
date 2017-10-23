@@ -109,7 +109,7 @@ String ESP8266HTTPUpdate::getLastErrorString(void)
     case HTTP_UE_SERVER_WRONG_HTTP_CODE:
         return F("Wrong HTTP code");
     case HTTP_UE_SERVER_FAULTY_MD5:
-        return F("Faulty MD5");
+        return F("Faulty MD5. Check core version");
     case HTTP_UE_BIN_VERIFY_HEADER_FAILED:
         return F("Verify bin header failed");
     case HTTP_UE_BIN_FOR_WRONG_FLASH:
@@ -136,12 +136,12 @@ HTTPUpdateResult ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, const String&
     http.setTimeout(8000);
     http.setUserAgent(F("ESP8266-http-Update"));
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
+    //http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
     http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
     http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
     http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
     http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
-    http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
+    http.addHeader(F("x-ESP8266-core-version"), ESP.getCoreVersion());
     http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
 
     if(spiffs) {
