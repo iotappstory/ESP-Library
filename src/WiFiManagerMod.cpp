@@ -720,7 +720,7 @@ void WiFiManager::handleWifiSave() {
 
 /** Wifi config page handler */
 void WiFiManager::handleApp() {
-  String page = FPSTR(HTTP_TEMPLATE);
+  String page = "";
   page += F("<h2>App Configuration</h2>");
 
   //char parLength[2];
@@ -769,7 +769,6 @@ void WiFiManager::handleApp() {
   page += FPSTR(HTTP_FORM_SAVEBTN);
   page.replace("{u}", F("/appsave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
-  page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
@@ -795,10 +794,9 @@ void WiFiManager::handleAppSave() {
     DEBUG_WM(value);
   }
 
-  String page = FPSTR(HTTP_TEMPLATE);
+  String page = "";
   page += FPSTR(HTTP_APPSAVED);
   page += FPSTR(HTTP_FORM_BACKBTN);
-  page += FPSTR(HTTP_END);
 
   hdlReturn(page);
 
