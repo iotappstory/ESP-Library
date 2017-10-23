@@ -240,18 +240,14 @@ void IOTAppStory::connectNetwork() {
 	DEBUG_PRINTLN(F(" Connecting to WiFi AP"));
 
 	WiFi.mode(WIFI_STA);
-	if (!isNetworkConnected()) espRestart('C', " No Connection. Going into Configuration Mode"); // still no success
-	
-	/*
 	if (!isNetworkConnected()) {
 		DEBUG_PRINTLN("");
 		DEBUG_PRINTLN(F(" No Connection. Try to connect with saved PW"));
 
 		WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-		
+		if (!isNetworkConnected()) espRestart('C', " No Connection. Going into Configuration Mode"); // still no success
 	}
-	*/
-	DEBUG_PRINTLN(F("\n WiFi connected\n Device MAC: "));
+	DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
 	DEBUG_PRINTLN(WiFi.macAddress());
 
 	DEBUG_PRINT(F(" Device IP Address: "));
@@ -323,7 +319,7 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	} 
 	if (res == 'U')  updateHappened = true;
 
-	DEBUG_PRINTLN(F(" \nReturning from IOTAppStory.com"));
+	DEBUG_PRINTLN(F("\n Returning from IOTAppStory.com"));
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 
 	
@@ -351,6 +347,7 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 	
 	DEBUG_PRINT(F(" updates from: "));
 	String url = F("https://");
+	DEBUG_PRINT(url);
 	if(loc == 0){
 		// location 1
 		DEBUG_PRINT(config.HOST1);
