@@ -75,7 +75,11 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'P'
+  IAS.begin();
+	//IAS.begin(true);
+	//IAS.begin(true, 'F');
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
