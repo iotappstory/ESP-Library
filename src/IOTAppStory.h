@@ -5,7 +5,8 @@
     #include <functional>
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
-    #define MAGICBYTES "CFG"
+    #define IASCNF 1					// IAS Config pages
+	#define MAGICBYTES "CFG"
     #define EEPROM_SIZE 1024
 	#define WIFI_MANAGER_MAX_PARAMS 12
     #define MAXNUMEXTRAFIELDS 12
@@ -13,11 +14,12 @@
     #define UDP_PORT 514
     #define RTCMEMBEGIN 68
     #define MAGICBYTE 85
-    #define STRUCT_CHAR_ARRAY_SIZE 50  // length of config variables
+    #define STRUCT_CHAR_ARRAY_SIZE 50  	// length of config variables
     #define STRUCT_COMPDATE_SIZE 20
 	#define STRUCT_BNAME_SIZE 30
     #define STRUCT_HOST_SIZE 24
     #define STRUCT_FILE_SIZE 32
+	
 
     // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
     #define MODE_BUTTON_SHORT_PRESS       500
@@ -48,15 +50,6 @@
     #define         DEBUG_PRINTF(...) { if(_serialDebug) Serial.printf(__VA_ARGS__);  }
     #define         DEBUG_PRINTF_P(...) { if(_serialDebug) Serial.printf_P(__VA_ARGS__);  }
     #define         DEBUG_PRINTLN(x)  { if(_serialDebug) Serial.println(x); }
-
-
-    #ifdef LEDS_INVERSE
-        #define LEDON  0
-        #define LEDOFF 1
-    #else
-        #define LEDON  1
-        #define LEDOFF 0
-    #endif
 	
 
 	 
@@ -169,8 +162,11 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom
-            void firstBoot(bool ea=false);
+            //void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom / erase all but config / erase nothing
+            //void begin(bool bootstats=true);							// for backwards comp
+			void begin(bool bootstats=true, char ea='P'); 					// ea = erase all eeprom / erase all but config / erase nothing
+            
+            void firstBoot(char ea);
 
             bool readRTCmem();
             void writeRTCmem();
