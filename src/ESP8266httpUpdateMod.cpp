@@ -93,19 +93,32 @@ String ESP8266HTTPUpdate::getLastErrorString(void)
     }
 
     // error from http client
-    if(_lastError > -100) {
+    if(_lastError > -94) {
         return String(F("HTTP error: ")) + HTTPClient::errorToString(_lastError);
     }
 
     switch(_lastError) {
+    case HTTP_UE_WRONG_CORE_VERSION:
+        return F("Use core ver >= 2.4.0-rc2");
+    case HTTP_UE_NO_PROJECT:
+        return F("Select project");
+    case HTTP_UE_NO_APP:
+        return F("Select App");
+/*
+	case HTTP_UE_BLOCKED:
+        return F("Account blocked");
+*/	
+		
     case HTTP_UE_TOO_LESS_SPACE:
         return F("To less space");
     case HTTP_UE_SERVER_NOT_REPORT_SIZE:
         return F("Server not Report Size");
-    case HTTP_UE_SERVER_FILE_NOT_FOUND:
+/*
+   case HTTP_UE_SERVER_FILE_NOT_FOUND:
         return F("File not Found (404)");
     case HTTP_UE_SERVER_FORBIDDEN:
         return F("Forbidden (403)");
+*/
     case HTTP_UE_SERVER_WRONG_HTTP_CODE:
         return F("Wrong HTTP code");
     case HTTP_UE_SERVER_FAULTY_MD5:
@@ -281,6 +294,7 @@ HTTPUpdateResult ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, const String&
         ///< Not Modified (No updates)
         ret = HTTP_UPDATE_NO_UPDATES;
         break;
+	/*
     case HTTP_CODE_NOT_FOUND:
         _lastError = HTTP_UE_SERVER_FILE_NOT_FOUND;
         ret = HTTP_UPDATE_FAILED;
@@ -289,6 +303,7 @@ HTTPUpdateResult ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, const String&
         _lastError = HTTP_UE_SERVER_FORBIDDEN;
         ret = HTTP_UPDATE_FAILED;
         break;
+	*/
     default:
         _lastError = HTTP_UE_SERVER_WRONG_HTTP_CODE;
         ret = HTTP_UPDATE_FAILED;
