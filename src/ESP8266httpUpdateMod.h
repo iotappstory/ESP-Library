@@ -34,20 +34,25 @@
 #include "IOTAppStory.h"
 
 #ifdef DEBUG_ESP_HTTP_UPDATE
-#ifdef DEBUG_ESP_PORT
-#define DEBUG_HTTP_UPDATE(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
-#endif
+	#ifdef DEBUG_ESP_PORT
+		#define DEBUG_HTTP_UPDATE(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
+	#endif
 #endif
 
 #ifndef DEBUG_HTTP_UPDATE
-#define DEBUG_HTTP_UPDATE(...)
+	#define DEBUG_HTTP_UPDATE(...)
 #endif
 
 /// note we use HTTP client errors too so we start at 100
+#define HTTP_UE_WRONG_CORE_VERSION          (-95)
+#define HTTP_UE_NO_PROJECT          		(-96)
+#define HTTP_UE_NO_APP          			(-97)
+//#define HTTP_UE_BLOCKED          			(-98)
+
 #define HTTP_UE_TOO_LESS_SPACE              (-100)
 #define HTTP_UE_SERVER_NOT_REPORT_SIZE      (-101)
-#define HTTP_UE_SERVER_FILE_NOT_FOUND       (-102)
-#define HTTP_UE_SERVER_FORBIDDEN            (-103)
+//#define HTTP_UE_SERVER_FILE_NOT_FOUND       (-102)
+//#define HTTP_UE_SERVER_FORBIDDEN            (-103)
 #define HTTP_UE_SERVER_WRONG_HTTP_CODE      (-104)
 #define HTTP_UE_SERVER_FAULTY_MD5           (-105)
 #define HTTP_UE_BIN_VERIFY_HEADER_FAILED    (-106)
