@@ -38,16 +38,16 @@ IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char
 	
 }
 
-void IOTAppStory::firstBoot(bool ea){
-	DEBUG_PRINT(FPSTR(SER_DEV));
-	DEBUG_PRINTLN(_firmware.c_str());
+void IOTAppStory::firstBoot(char ea){
+	//DEBUG_PRINT(FPSTR(SER_DEV));
+	//DEBUG_PRINTLN(_firmware.c_str());
 
 	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
 	
 	// get json config......
 	
 	// erase eeprom after config (delete extra field data etc.)
-	if(ea == true){
+	if(ea == 'F'){
 		DEBUG_PRINTLN(F(" Erasing full EEPROM"));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
@@ -58,18 +58,17 @@ void IOTAppStory::firstBoot(bool ea){
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-	}else{
+	}else if(ea == 'P'){
 		DEBUG_PRINTLN(F(" Erasing EEPROM but leaving config settings"));
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
+	}else{
+		DEBUG_PRINTLN(F(" Leaving EEPROM intact"));
 	}
 	
 	// update first boot config flag (date)
-	//String tmpdate = _compDate;
-	//String(_compDate).toCharArray(config.compDate, 20);
 	strcpy(config.compDate, _compDate);
 	writeConfig();
-	
-	
+
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 
@@ -111,8 +110,10 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
+// for backwards comp
 
-void IOTAppStory::begin(bool bootstats, bool ea){
+void IOTAppStory::begin(bool bootstats, char ea){
+	//if(ea == ""){ea = 0;}
 	DEBUG_PRINTLN(F("\n"));
 	
 	
@@ -134,8 +135,6 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
-	
-	DEBUG_PRINTLN(system_get_free_heap_size());	// <-- remove on release
 	
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
@@ -213,8 +212,9 @@ void IOTAppStory::writeRTCmem() {
 
 void IOTAppStory::printRTCmem() {
 	DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n"), rtcMem.markerFlag);
-	DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: %c\n"), rtcMem.bootTimes);
-	DEBUG_PRINTF_P(PSTR(" boardMode: %c\n"), rtcMem.boardMode);
+	DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: "));
+	DEBUG_PRINT(rtcMem.bootTimes);
+	DEBUG_PRINTF_P(PSTR("\n boardMode: %c\n"), rtcMem.boardMode);
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 
@@ -222,7 +222,7 @@ void IOTAppStory::configESP() {
 	readConfig();
 	//connectNetwork();
 	
-	DEBUG_PRINT(F("\n\n\n\nC O N F I G U R A T I O N    M O D E\n"));
+	DEBUG_PRINT(F("\n\n\n\nC O N F I G U R A T I O N   M O D E\n"));
 	DEBUG_PRINTLN(system_get_free_heap_size());
 
 	initWiFiManager();
@@ -367,7 +367,7 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 
 	
 	t_httpUpdate_return ret;
-	ESPhttpUpdate.config = &config;					// send pointer of our config struct
+	ESPhttpUpdate.config = &config;						// send pointer of our config struct
 	ret = ESPhttpUpdate.update(url,_firmware,type);		// type == 0 = sketch // type == 1 = spiffs
 
 	
@@ -581,7 +581,7 @@ void IOTAppStory::loopWiFiManager() {
 	// Sets timeout in seconds until configuration portal gets turned off.
 	// If not specified device will remain in configuration mode until
 	// switched off via webserver or device is restarted.
-	wifiManager.setConfigPortalTimeout(1200);
+	wifiManager.setConfigPortalTimeout(120);
 
 	// It starts an access point
 	// and goes into a blocking loop awaiting configuration.
