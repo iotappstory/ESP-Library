@@ -27,7 +27,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-#define IASCNF 1
+
 #define WFM_LABEL_BEFORE 1
 #define WFM_LABEL_AFTER 2
 #define WFM_NO_LABEL 0
@@ -96,7 +96,7 @@ class WiFiManager
     ~WiFiManager();
 
     //boolean       autoConnect(); //Deprecated. Do not use.
-    boolean       autoConnect(char const *apPassword = NULL); //Deprecated. Do not use.
+    //boolean       autoConnect(char const *apPassword = NULL); //Deprecated. Do not use.
 
     //if you want to start the config portal
     //boolean       startConfigPortal();
