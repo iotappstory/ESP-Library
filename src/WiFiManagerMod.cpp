@@ -94,8 +94,8 @@ WiFiManager::~WiFiManager() {
 void WiFiManager::addParameter(WiFiManagerParameter *p) {
   _params[_paramsCount] = p;
   _paramsCount++;
-  DEBUG_WM(F("Adding parameter"));
-  DEBUG_WM(p->getID());
+  //DEBUG_WM(F("Adding parameter"));
+  //DEBUG_WM(p->getID());
 }
 
 void WiFiManager::setupConfigPortal() {
@@ -172,7 +172,7 @@ told to connect but Wifi already does it's best to connect in background. Callin
 method will block until WiFi connects. Sketch can avoid
 blocking call then use (WiFi.status()==WL_CONNECTED) test to see if connected yet.
 See some discussion at https://github.com/tzapu/WiFiManager/issues/68
-*/
+
 boolean WiFiManager::autoConnect(char const *apPassword) {
   DEBUG_WM(F(""));
   DEBUG_WM(F("AutoConnect"));
@@ -200,7 +200,7 @@ boolean WiFiManager::autoConnect(char const *apPassword) {
 
   return startConfigPortal(apPassword);
 }
-
+*/
 
 
 boolean  WiFiManager::startConfigPortal(char const *apPassword) {
@@ -278,6 +278,7 @@ boolean  WiFiManager::startConfigPortal(char const *apPassword) {
     DEBUG_WM(F("Timed out connection result: "));
     DEBUG_WM( getStatus(connRes));
     }
+  //rtcMem.boardMode = 'C';
   server.reset();
   dnsServer.reset();
   return  WiFi.status() == WL_CONNECTED;
@@ -439,7 +440,6 @@ void WiFiManager::handleRoot() {
   }
   String page = FPSTR(HTTP_TEMPLATE);
   page.replace("{h}", _customHeadElement);
-  page.replace("{h}", "");
 
   page += F("<h2>");
   page += config->boardName;
@@ -463,11 +463,16 @@ void WiFiManager::handleRoot() {
   }else{
 	  page.replace("{a}", "");
   }
+  #if IASCNF == 1
   if (WiFi.status()==WL_CONNECTED){
 	  page.replace("{q}", FPSTR(HTTP_PORTAL_IASCFG));
   }else{
 	  page.replace("{q}", "");
   }
+  #endif
+  #if IASCNF == 0
+  page.replace("{q}", "");
+  #endif
   
   page += F("<div class=\"msg\">");
   reportStatus(page);
@@ -501,7 +506,7 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
 	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	
-	if(system_get_free_heap_size() > 31200){
+	if(system_get_free_heap_size() > 31300){
 		url += F("https://"); // 										<<--  https We need to free up RAM first!
 	}else{
 		url += F("http://");
@@ -513,7 +518,6 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	
 	// start HTTPClient
 	DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
-	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
     HTTPClient http;
 
 	// connect to server
@@ -808,6 +812,7 @@ void WiFiManager::handleAppSave() {
 void WiFiManager::handleServerClose() {
     DEBUG_WM(F("Server Close"));
     String page = FPSTR(HTTP_TEMPLATE);
+	page.replace("{h}", _customHeadElement);
     page += F("<div class=\"msg\">My network is <strong>");
     page += WiFi.SSID();
     page += F("</strong><br>My IP address is <strong>");
@@ -915,6 +920,7 @@ void WiFiManager::handleScan() {
 void WiFiManager::handleReset() {
   DEBUG_WM(F("Reset"));
   String page = FPSTR(HTTP_TEMPLATE);
+  page.replace("{h}", _customHeadElement);
   page += F("Module will reset in a few seconds.");
   page += FPSTR(HTTP_END);
   hdlReturn(page);
