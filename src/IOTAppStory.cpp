@@ -110,12 +110,9 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
-// for backwards comp
 
 void IOTAppStory::begin(bool bootstats, char ea){
-	//if(ea == ""){ea = 0;}
 	DEBUG_PRINTLN(F("\n"));
-	
 	
 	// read config if needed
 	if (!_configReaded) {
@@ -344,9 +341,13 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 		// type == spiffs
 		DEBUG_PRINT(F("SPIFFS"));
 	}
-	
+	String url = "";
 	DEBUG_PRINT(F(" updates from: "));
-	String url = F("https://");
+	if(system_get_free_heap_size() > 31300){
+		url = F("https://");
+	}else{
+		url = F("http://");
+	}
 	DEBUG_PRINT(url);
 	if(loc == 0){
 		// location 1
@@ -364,11 +365,16 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 		url += FPSTR(FILE2);
 	}
 	
-
+    HTTPClient http;
+	if(system_get_free_heap_size() > 31300){
+		http.begin(url, config.sha1); // 								<<--  https We need to free up RAM first!
+	}else{
+		http.begin(url);
+	}
 	
 	t_httpUpdate_return ret;
 	ESPhttpUpdate.config = &config;						// send pointer of our config struct
-	ret = ESPhttpUpdate.update(url,_firmware,type);		// type == 0 = sketch // type == 1 = spiffs
+	ret = ESPhttpUpdate.update(http,_firmware,type);		// type == 0 = sketch // type == 1 = spiffs
 
 	
 	switch (ret) {
