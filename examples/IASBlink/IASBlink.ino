@@ -56,7 +56,11 @@ void setup() {
   IAS.addField(blinkTime, "Blinktime(mS)", "blinkTime", 5);
   // reference to org variable | field name | field label value | max char return
 
-  IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+  IAS.begin(true);
+	//IAS.begin();
+	//IAS.begin(true,'P');
 
 
   //-------- Your Setup starts from here ---------------
@@ -67,7 +71,7 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();																				// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.buttonLoop();																	// this routine handles the reaction of the Flash button. If short press: update of skethc, long press: Configuration
 
 
   //-------- Your Sketch starts from here ---------------
