@@ -81,7 +81,12 @@ void setup() {
   oled.clear(PAGE); // Clear the display's internal memory
   oled.clear(ALL);  // Clear the library's display buffer
   oled.display();   // Display what's in the buffer (splashscreen)
-  IAS.begin(true);           // true to view BOOT STATISTICS, has to be placed after oled.begin()
+  
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+  IAS.begin(true);
+	//IAS.begin();
+	//IAS.begin(true,'P');
   
   while (!NTPch.setSNTPtime()) Serial.print("."); // set internal clock
   Serial.println();
