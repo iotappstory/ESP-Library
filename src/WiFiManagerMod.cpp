@@ -526,7 +526,7 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	delay(100);
 	
-	if(system_get_free_heap_size() > 31200){
+	if(system_get_free_heap_size() > 31300){
 		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
