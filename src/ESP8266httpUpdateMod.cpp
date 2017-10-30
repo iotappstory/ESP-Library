@@ -38,10 +38,11 @@ ESP8266HTTPUpdate::~ESP8266HTTPUpdate(void)
 }
 
 
-HTTPUpdateResult ESP8266HTTPUpdate::update(const String& url, const String& currentVersion, bool spiffs)
+///HTTPUpdateResult ESP8266HTTPUpdate::update(const String& url, const String& currentVersion, bool spiffs)
+HTTPUpdateResult ESP8266HTTPUpdate::update(HTTPClient& http, const String& currentVersion, bool spiffs)
 {
-    HTTPClient http;
-    http.begin(url, config->sha1);
+    //HTTPClient http;
+    //http.begin(url, config->sha1);
     return handleUpdate(http, currentVersion, spiffs);
 }
 
