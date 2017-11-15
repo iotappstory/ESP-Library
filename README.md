@@ -2,7 +2,7 @@
 
 Download and update Infrastructure for IOT devices, currenlty the ESP8266. You will need an account at IOTAppStory.com
 
-Wiki pages: http://iotappstory.com/wiki
+Wiki pages: https://iotappstory.com/wiki
 
 ## API
 
