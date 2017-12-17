@@ -5,8 +5,21 @@
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
-    #define EEPROM_SIZE 1024
-    #define MAXNUMEXTRAFIELDS 12
+    
+    // allow for local user definition of EEPROM_SIZE to accomidate additional size needs; ESP8266 allows up to 4096
+    #ifdef LOCAL_EEPROM_SIZE
+        #define EEPROM_SIZE LOCAL_EEPROM_SZIE
+    #else
+        #define EEPROM_SIZE 1024
+    #endif
+    
+    // allow for lcal user definition of MAXNUMEXTRAFIELDS to accomidate additional firmware variables
+    #ifdef LOCAL_MAXNUMEXTRAFIELDS
+        #define MAXNUMEXTRAFIELDS LOCAL_MAXNUMEXTRAFIELDS
+    #else
+        #define MAXNUMEXTRAFIELDS 12
+    #endif
+
     #define MAGICEEP "%"
     #define UDP_PORT 514
     #define MAX_WIFI_RETRIES 15
