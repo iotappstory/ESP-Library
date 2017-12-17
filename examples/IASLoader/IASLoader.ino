@@ -28,8 +28,6 @@
 #define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
-//#define LOCAL_EEPROM_SIZE 2048	// optional definition parameter to allow for increased EEPROM size; up to 4096 for ESP8266
-//#define LOCAL_MAXNUMEXTRAFIELDS 20	// optional definition parameter to allow for increased firmware variables
 
 
 #include <ESP8266WiFi.h>
