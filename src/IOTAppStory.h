@@ -7,14 +7,14 @@
     #define MAGICBYTES "CFG"
     
     // allow for local user definition of EEPROM_SIZE to accomidate additional size needs; ESP8266 allows up to 4096
-    #ifdef LOCAL_EEPROM_SIZE
+    #if defined LOCAL_EEPROM_SIZE
         #define EEPROM_SIZE LOCAL_EEPROM_SIZE
     #else
         #define EEPROM_SIZE 1024
     #endif
     
     // allow for lcal user definition of MAXNUMEXTRAFIELDS to accomidate additional firmware variables
-    #ifdef LOCAL_MAXNUMEXTRAFIELDS
+    #if defined LOCAL_MAXNUMEXTRAFIELDS
         #define MAXNUMEXTRAFIELDS LOCAL_MAXNUMEXTRAFIELDS
     #else
         #define MAXNUMEXTRAFIELDS 12
