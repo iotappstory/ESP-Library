@@ -132,8 +132,8 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom
-            void firstBoot(bool ea=false);
+            void begin(bool bootstats=true, bool ea=false, bool ee=false); 			// ea = erase all eeprom, ee = erase EEPROM only
+            void firstBoot(bool ea=false, ee=false);
 
             bool readRTCmem();
             void writeRTCmem();
