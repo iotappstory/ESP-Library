@@ -8,7 +8,7 @@
     
     // allow for local user definition of EEPROM_SIZE to accomidate additional size needs; ESP8266 allows up to 4096
     #ifdef LOCAL_EEPROM_SIZE
-        #define EEPROM_SIZE LOCAL_EEPROM_SZIE
+        #define EEPROM_SIZE LOCAL_EEPROM_SIZE
     #else
         #define EEPROM_SIZE 1024
     #endif
