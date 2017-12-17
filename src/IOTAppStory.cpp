@@ -32,7 +32,7 @@ IOTAppStory::IOTAppStory(const char *appName, const char *appVersion, const char
 	preSetConfig((String)appName, false);
 }
 
-void IOTAppStory::firstBoot(bool ea){
+void IOTAppStory::firstBoot(bool ea, bool ee){
 	DEBUG_PRINTF(" Running first boot sequence for %s\n", _firmware.c_str());
 
 	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
@@ -51,9 +51,12 @@ void IOTAppStory::firstBoot(bool ea){
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-	}else{
+	}else if(ee == true){
 		DEBUG_PRINTLN(" Erasing EEPROM but leaving config settings");
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
+	}else{
+		DEBUG_PRINTLN(" Leaving EEPROM and config settings");
+		// not erasing EEPROM or config settings
 	}
 	
 	// update first boot config flag (date)
@@ -104,7 +107,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	_setPreSet = true;
 }
 
-void IOTAppStory::begin(bool bootstats, bool ea){
+void IOTAppStory::begin(bool bootstats, bool ea, bool ee){
 	DEBUG_PRINTLN("\n");
 
 	if(_setPreSet == true){
@@ -138,7 +141,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 
 	// on first boot of the app run the firstBoot() function
 	if(String(config.compDate) != String(_compDate)){
-		firstBoot(ea);
+		firstBoot(ea, ee);
 	}
 
 	// process added fields
