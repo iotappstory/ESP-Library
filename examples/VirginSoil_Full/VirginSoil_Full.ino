@@ -77,9 +77,11 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.begin(true);						    // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  //IAS.begin(true, false, true);				    // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase config settings on first boot of the app | 3rd parameter: true or false to erase eeprom on first boot of the app	  
 
 
+	
   //-------- Your Setup starts from here ---------------
 
 }
