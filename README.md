@@ -9,15 +9,14 @@ Wiki pages: https://iotappstory.com/wiki
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
 Tells IAS the name of the application, its version, compilation date and what
-digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `LOCAL_EEPROM_SIZE` and `LOCAL_MAXNUMEXTRAFIELDS` can be defined.
+digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
 
 ```c
 #define APPNAME my_app
 #define VERSION V1.0.0
 #define COMPDATE __DATE__ __TIME__
 #define MODE_BUTTON D3
-//#define LOCAL_EEPROM_SIZE 2048
-//#define LOCAL_MAXNUMEXTRAFIELDS 20
+
 
 #include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
