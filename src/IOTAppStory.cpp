@@ -587,7 +587,7 @@ void IOTAppStory::loopWiFiManager() {
 	// Sets timeout in seconds until configuration portal gets turned off.
 	// If not specified device will remain in configuration mode until
 	// switched off via webserver or device is restarted.
-	wifiManager.setConfigPortalTimeout(120);
+	wifiManager.setConfigPortalTimeout(420);
 
 	// It starts an access point
 	// and goes into a blocking loop awaiting configuration.
