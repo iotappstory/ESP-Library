@@ -146,10 +146,14 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
+            void loop();
             void buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
             void sendDebugMessage();
+            
+            void setCallHome(bool callHome);
+            void setCallHomeInterval(unsigned long interval);
 
         private:
             //String  _appName;				// may not be necessary
@@ -160,6 +164,9 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+            bool    _callHome = false;
+            unsigned long _lastCallHomeTime; //Time when we last called home
+            unsigned long _callHomeInterval = 7200000  //Interval we want to call home at in milliseconds, default start at 2hrs
     };
 
 #endif
