@@ -125,6 +125,10 @@ download.
 
 See `addField()`
 
+## Develop branch
+
+If you want to fork or contribute to the library. Please have a look at the "develop" branch first.
+
 ## Contributions and thanks
 
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
