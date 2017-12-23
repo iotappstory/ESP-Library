@@ -5,18 +5,31 @@
     #include <functional>
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
+    #define MAGICBYTES "CFG"
+    
+    // allow for larger firmware when using an ESP8266
+    #ifdef ESP8266
+        #define EEPROM_SIZE 4096
+    #else
+        #define EEPROM_SIZE 1024
+    #endif
+    
+    // allow for more firmware variables when using an ESP8266
+    #ifdef ESP8266
+        #define MAXNUMEXTRAFIELDS 24
+    #else
+        #define MAXNUMEXTRAFIELDS 12
+    #endif
+    
     #define IASCNF 1					// IAS Config pages
-	#define MAGICBYTES "CFG"
-    #define EEPROM_SIZE 1024
-	#define WIFI_MANAGER_MAX_PARAMS 12
-    #define MAXNUMEXTRAFIELDS 12
+	  #define WIFI_MANAGER_MAX_PARAMS 12
     #define MAGICEEP "%"
     #define UDP_PORT 514
     #define RTCMEMBEGIN 68
     #define MAGICBYTE 85
     #define STRUCT_CHAR_ARRAY_SIZE 50  	// length of config variables
     #define STRUCT_COMPDATE_SIZE 20
-	#define STRUCT_BNAME_SIZE 30
+	  #define STRUCT_BNAME_SIZE 30
     #define STRUCT_HOST_SIZE 24
     #define STRUCT_FILE_SIZE 32
 	
@@ -163,10 +176,10 @@
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
             //void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom / erase all but config / erase nothing
-            //void begin(bool bootstats=true);							// for backwards comp
-			void begin(bool bootstats=true, char ea='P'); 					// ea = erase all eeprom / erase all but config / erase nothing
-            
+            //void begin(bool bootstats=true);							        // for backwards comp
+			      void begin(bool bootstats=true, char ea='P'); 					// ea = erase all eeprom / erase all but config / erase nothing
             void firstBoot(char ea);
+
 
             bool readRTCmem();
             void writeRTCmem();

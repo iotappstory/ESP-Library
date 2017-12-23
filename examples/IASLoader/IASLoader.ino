@@ -48,7 +48,7 @@ void setup() {
   // 1st parameter: true or false to view BOOT STATISTICS
   // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
   IAS.begin(true, 'F');
-  
+
   IAS.callHome(true);
 
   //-------- Your Setup starts from here ---------------
