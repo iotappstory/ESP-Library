@@ -45,7 +45,8 @@ void setup() {
   boardName = APPNAME"_" + WiFi.macAddress();
   IAS.preSetConfig(boardName, false);	    // preset Boardname, automatic upload false
 
-  IAS.begin(true, true);									// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.begin(true, true);									// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom and config settings on first boot of the app  
+  //IAS.begin(true, false, true);								// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase config settings on first boot of the app | 3rd parameter: true or false to erase eeprom on first boot of the app	  
   IAS.callHome(true);
 
   //-------- Your Setup starts from here ---------------

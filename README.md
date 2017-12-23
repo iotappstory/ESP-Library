@@ -13,13 +13,14 @@ If you want to fork or contribute to the library. Please send your pull request 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
 Tells IAS the name of the application, its version, compilation date and what
-digital input is the force-update/reset button.
+digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
 
 ```c
 #define APPNAME my_app
 #define VERSION V1.0.0
 #define COMPDATE __DATE__ __TIME__
 #define MODE_BUTTON D3
+
 
 #include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
@@ -102,14 +103,20 @@ loop () {
 }
 ```
 
-### `begin(bool bootstat, bool ea)`
+### `begin(bool bootstat, bool ea, bool ee)`
 
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
 contents of RTC memory.
 
-If `ea` is true, the EEPROM (wifi credentials and IAS activation code) will be
+If `ea` is true, the entire EEPROM (including wifi credentials and IAS activation code) will be
+erased.
+
+If `ee` is true and `ea` is false, some of the EEPROM ( excluding wifi credentials and IAS activation code) will be
+erased.
+
+If `ee` is flase and `ea` is false (or excluded), none of the EEPROM (including wifi credentials and IAS activation code) will be
 erased.
 
 ### `buttonLoop()`

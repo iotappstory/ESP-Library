@@ -5,8 +5,21 @@
 
     /* ------ ------ ------ DEFINES for library ------ ------ ------ */
     #define MAGICBYTES "CFG"
-    #define EEPROM_SIZE 1024
-    #define MAXNUMEXTRAFIELDS 12
+    
+    // allow for larger firmware when using an ESP8266
+    #ifdef ESP8266
+        #define EEPROM_SIZE 4096
+    #else
+        #define EEPROM_SIZE 1024
+    #endif
+    
+    // allow for more firmware variables when using an ESP8266
+    #ifdef ESP8266
+        #define MAXNUMEXTRAFIELDS 24
+    #else
+        #define MAXNUMEXTRAFIELDS 12
+    #endif
+
     #define MAGICEEP "%"
     #define UDP_PORT 514
     #define MAX_WIFI_RETRIES 15
@@ -119,8 +132,8 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String IOTappStoryPHP1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true, bool ea=false); 			// ea = erase all eeprom
-            void firstBoot(bool ea=false);
+            void begin(bool bootstats=true, bool ea=false, bool ee=false); 			// ea = erase all eeprom, ee = erase EEPROM only
+            void firstBoot(bool ea=false, bool ee=false);
 
             bool readRTCmem();
             void writeRTCmem();
