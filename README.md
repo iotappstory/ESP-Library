@@ -103,21 +103,21 @@ loop () {
 }
 ```
 
-### `begin(bool bootstat, bool ea, bool ee)`
+### `begin(bool bootstat, char ea)`
 
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
 contents of RTC memory.
 
-If `ea` is true, the entire EEPROM (including wifi credentials and IAS activation code) will be
-erased.
+If `ea` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.
 
-If `ee` is true and `ea` is false, some of the EEPROM ( excluding wifi credentials and IAS activation code) will be
-erased.
+If `ea` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.
 
-If `ee` is flase and `ea` is false (or excluded), none of the EEPROM (including wifi credentials and IAS activation code) will be
-erased.
+If `ea` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.
 
 ### `buttonLoop()`
 
