@@ -4,6 +4,8 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
+https://github.com/iotappstory/ESP8266-Library/releases/latest
+
 ## Develop branch
 
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
