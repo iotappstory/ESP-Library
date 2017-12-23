@@ -4,23 +4,18 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
-## Develop branch
-
-If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
-
 ## API
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
 Tells IAS the name of the application, its version, compilation date and what
-digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
+digital input is the force-update/reset button.
 
 ```c
 #define APPNAME my_app
 #define VERSION V1.0.0
 #define COMPDATE __DATE__ __TIME__
 #define MODE_BUTTON D3
-
 
 #include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
@@ -103,21 +98,15 @@ loop () {
 }
 ```
 
-### `begin(bool bootstat, char ea)`
+### `begin(bool bootstat, bool ea)`
 
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
 contents of RTC memory.
 
-If `ea` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
-
-If `ea` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
-
-If `ea` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
+If `ea` is true, the EEPROM (wifi credentials and IAS activation code) will be
+erased.
 
 ### `buttonLoop()`
 

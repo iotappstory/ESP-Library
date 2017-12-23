@@ -58,7 +58,6 @@ void IOTAppStory::firstBoot(char ea){
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-
 	}else if(ea == 'P'){
 		DEBUG_PRINTLN(F(" Erasing EEPROM but leaving config settings"));
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
