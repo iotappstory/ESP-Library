@@ -124,7 +124,11 @@ void setup() {
 	IAS.addField(LEDpin, "ledpin", "Led Pin", 2);					// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
 	IAS.addField(btnDefPin, "btnpin", "Button Pin", 2);		// reference to org variable | field name | field label value | max char return
 
-	IAS.begin(true);                                      // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+  IAS.begin(true);
+	//IAS.begin();
+	//IAS.begin(true,'P');
 
 
 	//-------- Sketch Specific starts from here ---------------

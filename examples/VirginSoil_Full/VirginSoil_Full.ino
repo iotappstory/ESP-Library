@@ -26,7 +26,7 @@
 */
 
 #define APPNAME "virginSoilFull"
-#define VERSION "V2.1.1"
+#define VERSION "V2.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
@@ -75,11 +75,50 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);						    // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
-  //IAS.begin(true, false, true);				    // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase config settings on first boot of the app | 3rd parameter: true or false to erase eeprom on first boot of the app	  
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+  IAS.begin(true,'P');
+	//IAS.begin();
+	//IAS.begin(true);
 
 
-	
+  // You can configure callback functions that can give feedback to the app user about the current state of the application.
+  // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
+  /*
+  IAS.onModeButtonNoPress([]() {
+    Serial.println(" Mode Button is not pressed.");
+    Serial.println("*-------------------------------------------------------------------------*");
+  });
+  */
+
+  IAS.onModeButtonShortPress([]() {
+    Serial.println(" If mode button is released, I will enter in firmware update mode.");
+    Serial.println("*-------------------------------------------------------------------------*");
+  });
+
+  IAS.onModeButtonLongPress([]() {
+    Serial.println(" If mode button is released, I will enter in configuration mode.");
+    Serial.println("*-------------------------------------------------------------------------*");
+  });
+
+  IAS.onModeButtonVeryLongPress([]() {
+    Serial.println(" If mode button is released, I won't do anything.");
+    Serial.println("*-------------------------------------------------------------------------*");
+    /* TIP! You can use this callback to put your app on it's own configuration mode */
+  });
+  
+  /*
+  IAS.onModeButtonFirmwareUpdate([]() {
+    Serial.println(" Checking if there is a firmware update available.");
+    Serial.println("*-------------------------------------------------------------------------*");
+  });
+
+  IAS.onModeButtonConfigMode([]() {
+    Serial.println(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1.");
+    Serial.println("*-------------------------------------------------------------------------*");
+  });
+  */
+
   //-------- Your Setup starts from here ---------------
 
 }
@@ -90,7 +129,7 @@ void setup() {
 void loop() {
   IAS.buttonLoop();                                                 // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
-  if (millis() - callHomeEntry > 60000) {                          // only for development. Please change it to at least 2 hours in production
+  if (millis() - callHomeEntry > 60000) {                           // only for development. Please change it to at least 2 hours in production
     IAS.callHome();
     callHomeEntry = millis();
   }
@@ -99,24 +138,26 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
 
-  if (millis() - printEntry > 10000) {                                // Serial.print the example variables every 5 seconds
+  if (millis() - printEntry > 10000) {                               // Serial.print the example variables every 10 seconds
 
-    Serial.print("Label 1: ");
+    Serial.println(" LABEL\t\t| VAR\t\t| VALUE");
+
+    Serial.print(" Label 1\t\t| lbl1\t\t| ");
     Serial.println(lbl1);
 
-    Serial.print("Label 2: ");
+    Serial.print(" Label 2\t\t| lbl2\t\t| ");
     Serial.println(lbl2);
 
-    Serial.print("Example url: ");
+    Serial.print(" Example url\t| exampleURL\t| ");
     Serial.println(exampleURL);
 
-    Serial.print("Timezone: ");
+    Serial.print(" Timezone\t| timeZone\t| ");
     Serial.println(atof(timeZone));
 
-    Serial.print("Led pin: ");
+    Serial.print(" Led pin\t\t| ledPin\t| ");
     Serial.println(atoi(ledPin));
-
-    Serial.println("-------------------------------------------");
+    
+    Serial.println("*-------------------------------------------------------------------------*");
     printEntry = millis();
   }
 

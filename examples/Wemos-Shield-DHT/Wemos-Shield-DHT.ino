@@ -59,9 +59,15 @@ void setup() {
   // Before you can start using the OLED, call begin() to init
   // all of the pins and configure the OLED.
   oled.begin();
-  oled.clear(ALL); // will clear out the OLED's graphic memory.
-  oled.clear(PAGE);  // Clear the display's memory (gets rid of artifacts)
- IAS.begin(true);           // true to view BOOT STATISTICS, has to be placed after oled.begin()
+  oled.clear(ALL);    // will clear out the OLED's graphic memory.
+  oled.clear(PAGE);   // Clear the display's memory (gets rid of artifacts)
+
+   
+	// 1st parameter: true or false to view BOOT STATISTICS
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+  IAS.begin(true);
+	//IAS.begin();
+	//IAS.begin(true,'P');
 
 }
 

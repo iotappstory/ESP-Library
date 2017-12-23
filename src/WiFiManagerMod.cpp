@@ -94,8 +94,8 @@ WiFiManager::~WiFiManager() {
 void WiFiManager::addParameter(WiFiManagerParameter *p) {
   _params[_paramsCount] = p;
   _paramsCount++;
-  DEBUG_WM("Adding parameter");
-  DEBUG_WM(p->getID());
+  //DEBUG_WM(F("Adding parameter"));
+  //DEBUG_WM(p->getID());
 }
 
 void WiFiManager::setupConfigPortal() {
@@ -111,7 +111,7 @@ void WiFiManager::setupConfigPortal() {
   _configPortalStart = millis();
 
   DEBUG_WM(F("Configuring access point... "));
-  DEBUG_WM(_apName);
+  DEBUG_WM(config->boardName);
   if (_apPassword != NULL) {
     if (strlen(_apPassword) < 8 || strlen(_apPassword) > 63) {
       // fail passphrase to short or long!
@@ -128,9 +128,9 @@ void WiFiManager::setupConfigPortal() {
   }
 
   if (_apPassword != NULL) {
-    WiFi.softAP(_apName, _apPassword);//password option
+    WiFi.softAP(config->boardName, _apPassword);//password option
   } else {
-    WiFi.softAP(_apName);
+    WiFi.softAP(config->boardName);
   }
 
   delay(500); // Without delay I've seen the IP address blank
@@ -142,48 +142,38 @@ void WiFiManager::setupConfigPortal() {
   dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
-  server->on("/", std::bind(&WiFiManager::handleRoot, this));
-  server->on("/wifi", std::bind(&WiFiManager::handleWifi, this));
-  server->on("/wifisave", std::bind(&WiFiManager::handleWifiSave, this));
+  server->on(F("/"), std::bind(&WiFiManager::handleRoot, this));
+  server->on(F("/wifi"), std::bind(&WiFiManager::handleWifi, this));
+  server->on(F("/wifisave"), std::bind(&WiFiManager::handleWifiSave, this));
   
-  server->on("/app", std::bind(&WiFiManager::handleApp, this));
-  server->on("/appsave", std::bind(&WiFiManager::handleAppSave, this));
+  server->on(F("/app"), std::bind(&WiFiManager::handleApp, this));
+  server->on(F("/appsave"), std::bind(&WiFiManager::handleAppSave, this));
   
-  server->on("/close", std::bind(&WiFiManager::handleServerClose, this));
-  server->on("/i", std::bind(&WiFiManager::handleInfo, this));
-  server->on("/r", std::bind(&WiFiManager::handleReset, this));
-  server->on("/state", std::bind(&WiFiManager::handleState, this));
-  server->on("/scan", std::bind(&WiFiManager::handleScan, this));
+  server->on(F("/close"), std::bind(&WiFiManager::handleServerClose, this));
+  server->on(F("/i"), std::bind(&WiFiManager::handleInfo, this));
+  server->on(F("/r"), std::bind(&WiFiManager::handleReset, this));
+  //server->on(F("/state"), std::bind(&WiFiManager::handleState, this));
+  server->on(F("/scan"), std::bind(&WiFiManager::handleScan, this));
   
   #if IASCNF == 1
-	  server->on("/ias", std::bind(&WiFiManager::handleIAScfg, this));
-	  server->on("/addpage", std::bind(&WiFiManager::handleAddPage, this));
-	  server->on("/add", std::bind(&WiFiManager::handleDevSave, this));
-	  
-	  server->on("/editPro", std::bind(&WiFiManager::handleEditProPage, this));
-	  server->on("/newPro", std::bind(&WiFiManager::handleNewProPage, this));
-	  server->on("/addToPro", std::bind(&WiFiManager::handleAddToProPage, this));
-	  server->on("/savePro", std::bind(&WiFiManager::handleSavePro, this));
-	  server->on("/saveATP", std::bind(&WiFiManager::handleSaveATP, this));
+	  server->on(F("/ias"), std::bind(&WiFiManager::handleIAScfg, this));
   #endif
   
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
   DEBUG_WM(F("HTTP server started"));
+  DEBUG_WM(system_get_free_heap_size());
 
 }
 
-boolean WiFiManager::autoConnect() {
-  String ssid = "ESP" + String(ESP.getChipId());
-  return autoConnect(ssid.c_str(), NULL);
-}
+
 /* This is not very useful as there has been an assumption that device has to be
 told to connect but Wifi already does it's best to connect in background. Calling this
 method will block until WiFi connects. Sketch can avoid
 blocking call then use (WiFi.status()==WL_CONNECTED) test to see if connected yet.
 See some discussion at https://github.com/tzapu/WiFiManager/issues/68
-*/
-boolean WiFiManager::autoConnect(char const *apName, char const *apPassword) {
+
+boolean WiFiManager::autoConnect(char const *apPassword) {
   DEBUG_WM(F(""));
   DEBUG_WM(F("AutoConnect"));
 
@@ -208,29 +198,25 @@ boolean WiFiManager::autoConnect(char const *apName, char const *apPassword) {
 		}
     }
 
-  return startConfigPortal(apName, apPassword);
+  return startConfigPortal(apPassword);
 }
+*/
 
-boolean  WiFiManager::startConfigPortal() {
-  String ssid = "ESP" + String(ESP.getChipId());
-  return startConfigPortal(ssid.c_str(),NULL);
-}
 
-boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPassword) {
+boolean  WiFiManager::startConfigPortal(char const *apPassword) {
   //setup AP
   int connRes = WiFi.waitForConnectResult();
   if (connRes == WL_CONNECTED){
 	  WiFi.mode(WIFI_AP_STA); //Dual mode works fine if it is connected to WiFi
-	  DEBUG_WM("SET AP STA");
+	  DEBUG_WM(F("SET AP STA"));
   	}
   	else {
     WiFi.mode(WIFI_AP); // Dual mode becomes flaky if not connected to a WiFi network.
     // When ESP8266 station is trying to find a target AP, it will scan on every channel,
     // that means ESP8266 station is changing its channel to scan. This makes the channel of ESP8266 softAP keep changing too..
     // So the connection may break. From http://bbs.espressif.com/viewtopic.php?t=671#p2531
-    DEBUG_WM("SET AP");
+    DEBUG_WM(F("SET AP"));
 	}
-  _apName = apName;
   _apPassword = apPassword;
 
   //notify we entered AP mode
@@ -252,10 +238,10 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
       connect = false;
       TimedOut=false;
       delay(2000);
-      DEBUG_WM(F("Connecting to new AP"));
+      //DEBUG_WM(F("Connecting to new AP"));
 
-      // using user-provided  _ssid, _pass in place of system-stored ssid and pass
-      if (connectWifi(_ssid, _pass) != WL_CONNECTED) {
+      // using user-provided  config->ssid, config->password in place of system-stored ssid and pass
+      if (connectWifi(config->ssid, config->password) != WL_CONNECTED) {
         DEBUG_WM(F("Failed to connect."));
         WiFi.mode(WIFI_AP); // Dual mode becomes flaky if not connected to a WiFi network.
 		    // I think this might be because too much of the processor is being utilised
@@ -289,9 +275,10 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
   if (TimedOut & WiFi.status() != WL_CONNECTED) {
 	WiFi.begin();
     int connRes = waitForConnectResult();
-    DEBUG_WM ("Timed out connection result: ");
-    DEBUG_WM ( getStatus(connRes));
+    DEBUG_WM(F("Timed out connection result: "));
+    DEBUG_WM( getStatus(connRes));
     }
+  //rtcMem.boardMode = 'C';
   server.reset();
   dnsServer.reset();
   return  WiFi.status() == WL_CONNECTED;
@@ -319,7 +306,7 @@ int WiFiManager::connectWifi(String ssid, String pass) {
   }
 
   int connRes = waitForConnectResult();
-  DEBUG_WM ("Connection result: ");
+  DEBUG_WM (F("Connection result: "));
   DEBUG_WM ( getStatus(connRes));
   //not connected, WPS enabled, no pass - first attempt
   if (_tryWPS && connRes != WL_CONNECTED && pass == "") {
@@ -380,7 +367,7 @@ char* WiFiManager::getStatus(int status)
 }
 
 String WiFiManager::getConfigPortalSSID() {
-  return _apName;
+  return config->boardName;
 }
 
 void WiFiManager::resetSettings() {
@@ -451,196 +438,172 @@ void WiFiManager::handleRoot() {
   if (captivePortal()) { // If caprive portal redirect instead of displaying the error page.
       return;
   }
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Options");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  page += "<h2>";
-  page += _apName;
+  String page = FPSTR(HTTP_TEMPLATE);
+  page.replace("{h}", _customHeadElement);
+
+  page += F("<h2>");
+  page += config->boardName;
   if (WiFi.SSID() != ""){
 	  if (WiFi.status()==WL_CONNECTED){
-		  page += " on ";
+		  page += F(" on ");
 		  page += WiFi.SSID();
 	  }
 	  else{
-		  page += " <s>on ";
+		  page += F(" <s>on ");
 		  page += WiFi.SSID();
-		  page += "</s>";
+		  page += F("</s>");
 	  }
 
   }
-  page += "</h2>";
+  page += F("</h2>");
   page += FPSTR(HTTP_PORTAL_OPTIONS);
-  //DEBUG_WM(F("_paramsCount"));
-  //DEBUG_WM(_paramsCount);
+
   if (_paramsCount > 0){
 	  page.replace("{a}", FPSTR(HTTP_PORTAL_APPCFG));
   }else{
 	  page.replace("{a}", "");
   }
+  #if IASCNF == 1
   if (WiFi.status()==WL_CONNECTED){
 	  page.replace("{q}", FPSTR(HTTP_PORTAL_IASCFG));
   }else{
 	  page.replace("{q}", "");
   }
-  
+  #endif
+  #if IASCNF == 0
+  page.replace("{q}", "");
+  #endif
   
   page += F("<div class=\"msg\">");
   reportStatus(page);
   page += F("</div>");
   page += FPSTR(HTTP_END);
 
-  server->send(200, "text/html", page);
-
+  hdlReturn(page);
 }
 
 
 #if IASCNF == 1
 /** IOTAppStory config page handler */
 void WiFiManager::handleIAScfg() {
-
-	if(server->arg("d") != ""){
-		// check the entered code
-		hdlIasCfgPages("IOTAppStory.com config","ias-check.php","&ias_id="+server->arg("d"));
-		
-	}else if(devPass == "000000" || devPass == ""){
-		// send "enter your code" page
-		hdlIasCfgPages("IOTAppStory.com config","ias-id.php");
-		
-	}else{
-		// check device status
-		hdlIasCfgPages("IOTAppStory.com config","dev_check.php","&ias_id="+devPass);
+	String args = "";
+	
+	for(uint8_t i = 0; i < server->args(); i++){
+		if(i == 0){
+			args += "?";
+		}else{
+			args += "&";
+		}
+		args += server->argName(i) + "=" + server->arg(i);
 	}
-}
-
-/** IOTAppStory add device page handler */
-void WiFiManager::handleAddPage() {
-	hdlIasCfgPages("Add Device","dev_new.php");
-}
-
-
-/** IOTAppStory edit project page handler */
-void WiFiManager::handleEditProPage() {
-	hdlIasCfgPages("Edit Project","proj_edit.php");
-}
-
-
-/** IOTAppStory new project page handler */
-void WiFiManager::handleNewProPage() {
-	hdlIasCfgPages("New Project","proj_edit.php","&new=1");
-}
-
-
-/** IOTAppStory add to existing project page handler */
-void WiFiManager::handleAddToProPage() {
-	hdlIasCfgPages("Add to a Project","proj_addto.php");
-}
-
-
-void WiFiManager::hdlIasCfgPages(String title, String file, String para){
-	const char* host = "iotappstory.com";
 	
-	////Serial.print("connecting to ");
-	////Serial.println(host);
+	hdlIasCfgPages(F("IOTAppStory.com config"),args);
+}
 
-	// Use WiFiClient class to create TCP connections
-	WiFiClient client;
+void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String args){
+
+	String url = "";
+	DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
+	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	
-	if (!client.connect(host, 80)) {
-		//Serial.println("connection failed");
+	if(system_get_free_heap_size() > 31300){
+		url += F("https://"); // 										<<--  https We need to free up RAM first!
+	}else{
+		url += F("http://");
+	}
+
+	url += FPSTR(HOST2);
+	url += F("/ota/cfg/cfg.php");
+	url += args;
+	
+	// start HTTPClient
+	DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
+    HTTPClient http;
+
+	// connect to server
+	DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
+	DEBUG_WM(url);// 													<-- remove on release ?
+	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	delay(100);
+	
+	if(system_get_free_heap_size() > 31300){
+		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
+	}else{
+		http.begin(url);
+	}
+	
+	DEBUG_WM(F("after http.begin"));// 									<-- remove on release
+	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
+	
+	// add headers
+    http.setUserAgent(F("ESP8266-http-Update"));
+	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
+	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
+    http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
+	
+    const char * headerkeys[] = { "x-MD5" };
+    size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+
+    // track these headers
+    http.collectHeaders(headerkeys, headerkeyssize);
+    
+	// respons code
+	int httpCode = http.GET();
+	
+	// httpCode will be negative on error
+	if(httpCode < 1) {
+		DEBUG_WM(F("[HTTP] GET... failed, error: "));
+		DEBUG_WM(http.errorToString(httpCode).c_str());
+		return;
+	}
+	
+	// respons string
+	String line = "";
+	
+	// file found at server
+	if(httpCode == HTTP_CODE_OK) {
+		line = http.getString();
+		//DEBUG_WM(line);
+	}else{
 		return;
 	}
 
-	// We now create a URI for the request
-	String url = "/ota/cnf/" + file;
-	url += "?chip_id=";
-	url += ESP.getChipId();
-	url += "&flash_chip_id=";
-	url += ESP.getFlashChipId();
-	url += "&flash_size=";
-	url += ESP.getFlashChipRealSize();
-	url += "&mac=";
-	url += WiFi.macAddress();
-	url += para;
-
-	//Serial.print("Requesting URL: ");
-	//Serial.println(url);
-
-	// This will send the request to the server
-	client.print(String("GET ") + url + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
-	unsigned long timeout = millis();
-	while (client.available() == 0) {
-		if (millis() - timeout > 5000) {
-			Serial.println(">>> Client Timeout !");
-			client.stop();
-			return;
-		}
-	}
-	String line = "";
-
-	int st = 0;
-	// Read all the lines of the reply from server and print them to Serial
-	while(client.available()){
-			// from : close
-			if(st == 0){
-				client.readStringUntil('{hstart}');
-				st = 1;
-			}else if(st == 1){
-				line += client.readStringUntil('\r');
-				st = 2;
-			}else if(st == 2){
-				if(client.readStringUntil('\r') == "1"){
-					Serial.println(client.readStringUntil('\r'));
-					devPass = server->arg("d");
-				}
-				st = 3;
-				break;
-			}
-	}
-	//Serial.println(line);
+	// end HTTPClient
+	http.end();
 	
-
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", title);
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
-  
-  page += line;
-  
-  page += FPSTR(HTTP_END);
-  
-
-
-  server->send(200, "text/html", page);
-
-  DEBUG_WM("Sent " + title);
+	// save received activation code
+	if(server->arg("c") && line == "(Y)"){
+		server->arg("c").toCharArray(config->devPass,7);
+		hdlIasCfgPages(F("IOTAppStory.com config"));
+	}else{
+		hdlReturn(line);
+	}
+	//DEBUG_WM(F("Sent "));
+	//DEBUG_WM(title);
 }
 #endif
 
 
-/** Wifi config page handler */
-void WiFiManager::handleWifi() {
+
+/** Wifi return page handler */
+void WiFiManager::hdlReturn(String &message, String type) {
   server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   server->sendHeader("Pragma", "no-cache");
   server->sendHeader("Expires", "-1");
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Config ESP");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  
+  server->send(200, type, message);
+}
+
+
+
+/** Wifi config page handler */
+void WiFiManager::handleWifi() {
+
+  String page = "";
   page += F("<h2>Wifi Configuration</h2>");
+  
   //Print list of WiFi networks that were found in earlier scan
     if (numberOfNetworks == 0) {
       page += F("WiFi scan found no networks. Restart configuration portal to scan again.");
@@ -679,7 +642,7 @@ void WiFiManager::handleWifi() {
     String item = FPSTR(HTTP_FORM_PARAM);
     item.replace("{i}", "ip");
     item.replace("{n}", "ip");
-    item.replace("{p}", "Static IP");
+    item.replace("{p}", F("Static IP"));
     item.replace("{l}", "15");
     item.replace("{v}", _sta_static_ip.toString());
 
@@ -688,7 +651,7 @@ void WiFiManager::handleWifi() {
     item = FPSTR(HTTP_FORM_PARAM);
     item.replace("{i}", "gw");
     item.replace("{n}", "gw");
-    item.replace("{p}", "Static Gateway");
+    item.replace("{p}", F("Static Gateway"));
     item.replace("{l}", "15");
     item.replace("{v}", _sta_static_gw.toString());
 
@@ -697,7 +660,7 @@ void WiFiManager::handleWifi() {
     item = FPSTR(HTTP_FORM_PARAM);
     item.replace("{i}", "sn");
     item.replace("{n}", "sn");
-    item.replace("{p}", "Subnet");
+    item.replace("{p}", F("Subnet"));
     item.replace("{l}", "15");
     item.replace("{v}", _sta_static_sn.toString());
 
@@ -706,19 +669,13 @@ void WiFiManager::handleWifi() {
     page += "<br/>";
   }
 
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", "submit");
-  page.replace("{b}", "Save");
-  page += FPSTR(HTTP_FORM_END);
-
-  
+  page += FPSTR(HTTP_FORM_SAVEBTN);
+  page.replace("{u}", F("/wifisave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
 
-  page += FPSTR(HTTP_END);
+  hdlReturn(page);
 
-  server->send(200, "text/html", page);
-
-  DEBUG_WM(F("Sent config page"));
+  //DEBUG_WM(F("Sent config page"));
 }
 
 /** Handle the WLAN save form and redirect to WLAN config page again */
@@ -726,10 +683,8 @@ void WiFiManager::handleWifiSave() {
   DEBUG_WM(F("WiFi save"));
 
   //SAVE/connect here
-  _ssid = server->arg("s").c_str();
-  _pass = server->arg("p").c_str();
-
-
+  server->arg("s").toCharArray(config->ssid, STRUCT_CHAR_ARRAY_SIZE);
+  server->arg("p").toCharArray(config->password, STRUCT_CHAR_ARRAY_SIZE);
 
   if (server->arg("ip") != "") {
     DEBUG_WM(F("static ip"));
@@ -751,21 +706,16 @@ void WiFiManager::handleWifiSave() {
     optionalIPFromString(&_sta_static_sn, sn.c_str());
   }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Credentials Saved");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+
+  String page = "";
   page += FPSTR(HTTP_SAVED);
-  page.replace("{v}", _apName);
-  page.replace("{x}", _ssid);
+  page.replace("{v}", config->boardName);
+  page.replace("{x}", config->ssid);
   page += FPSTR(HTTP_FORM_BACKBTN);
-  page += FPSTR(HTTP_END);
 
-  server->send(200, "text/html", page);
+  hdlReturn(page);
 
-  DEBUG_WM(F("Sent wifi save page"));
+  //DEBUG_WM(F("Sent wifi save page"));
 
   connect = true; //signal ready to connect/reset
 }
@@ -774,18 +724,9 @@ void WiFiManager::handleWifiSave() {
 
 /** Wifi config page handler */
 void WiFiManager::handleApp() {
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Config App");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = "";
   page += F("<h2>App Configuration</h2>");
 
-  page += FPSTR(HTTP_AFORM_START);
   //char parLength[2];
   // add the extra parameters to the form
   for (int i = 0; i < _paramsCount; i++) {
@@ -829,25 +770,18 @@ void WiFiManager::handleApp() {
 
 
 
-  page += FPSTR(HTTP_FORM_BTN);
-  page.replace("{t}", "submit");
-  page.replace("{b}", "Save");
-  page += FPSTR(HTTP_FORM_END);
-
-  
+  page += FPSTR(HTTP_FORM_SAVEBTN);
+  page.replace("{u}", F("/appsave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
 
-  page += FPSTR(HTTP_END);
+  hdlReturn(page);
 
-  server->send(200, "text/html", page);
-
-  DEBUG_WM(F("Sent config page"));
+  //DEBUG_WM(F("Sent config page"));
 }
 
 /** Handle the WLAN save form and redirect to WLAN config page again */
 void WiFiManager::handleAppSave() {
   DEBUG_WM(F("App save"));
-
 
 
   //parameters
@@ -864,109 +798,63 @@ void WiFiManager::handleAppSave() {
     DEBUG_WM(value);
   }
 
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "App Config Saved");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = "";
   page += FPSTR(HTTP_APPSAVED);
-
-
-  
   page += FPSTR(HTTP_FORM_BACKBTN);
-  
-  page += FPSTR(HTTP_END);
 
-  server->send(200, "text/html", page);
+  hdlReturn(page);
 
-  DEBUG_WM(F("Sent app save page"));
-
-
+  //DEBUG_WM(F("Sent app save page"));
 }
-
-
-
-
-
-
-
-
-
-
 
 
 /** Handle shut down the server page */
 void WiFiManager::handleServerClose() {
     DEBUG_WM(F("Server Close"));
-    server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    server->sendHeader("Pragma", "no-cache");
-    server->sendHeader("Expires", "-1");
-    String page = FPSTR(HTTP_HEAD);
-    page.replace("{v}", "Close Server");
-    page += FPSTR(HTTP_SCRIPT);
-    page += FPSTR(HTTP_STYLE);
-    page += _customHeadElement;
-    page += FPSTR(HTTP_HEAD_END);
-    page += F("<div class=\"msg\">");
-    page += F("My network is <strong>");
+    String page = FPSTR(HTTP_TEMPLATE);
+	page.replace("{h}", _customHeadElement);
+    page += F("<div class=\"msg\">My network is <strong>");
     page += WiFi.SSID();
-    page += F("</strong><br>");
-    page += F("My IP address is <strong>");
+    page += F("</strong><br>My IP address is <strong>");
     page += WiFi.localIP().toString();
-    page += F("</strong><br><br>");
-    page += F("Configuration server closed...<br><br>");
+    page += F("</strong><br><br>Configuration server closed...<br><br>");
     //page += F("Push button on device to restart configuration server!");
     page += FPSTR(HTTP_END);
-    server->send(200, "text/html", page);
+    hdlReturn(page);
     stopConfigPortal = true; //signal ready to shutdown config portal
-  DEBUG_WM(F("Sent server close page"));
+	//DEBUG_WM(F("Sent server close page"));
 
 }
 /** Handle the info page */
 void WiFiManager::handleInfo() {
   DEBUG_WM(F("Info"));
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = "";
   page += F("<h2>Information</h2>");			// removed "Wifi" from the title
   //page += F("Android app from <a href=\"https://play.google.com/store/apps/details?id=au.com.umranium.espconnect\">https://play.google.com/store/apps/details?id=au.com.umranium.espconnect</a> provides easier ESP WiFi configuration.<p/>");
   // removed this add because the app refered to won't work with the IAS loader
   reportStatus(page);
   
   page += FPSTR(HTTP_PORTAL_INFO);
-  page.replace("{si}", WiFi.SSID());
-  page.replace("{api}", WiFi.softAPIP().toString());
-  page.replace("{apm}", WiFi.softAPmacAddress());
-  page.replace("{cid}", String(ESP.getChipId()));
-  page.replace("{fid}", String(ESP.getFlashChipId()));
-  page.replace("{ifs}", String(ESP.getFlashChipSize()));
-  page.replace("{rfs}", String(ESP.getFlashChipRealSize()));
-  page.replace("{dip}", WiFi.localIP().toString());
-  page.replace("{mac}", WiFi.macAddress());
-  page += "<br/>";
+  page.replace(F("{si}"), WiFi.SSID());
+  page.replace(F("{api}"), WiFi.softAPIP().toString());
+  page.replace(F("{apm}"), WiFi.softAPmacAddress());
+  page.replace(F("{cid}"), String(ESP.getChipId()));
+  page.replace(F("{fid}"), String(ESP.getFlashChipId()));
+  page.replace(F("{ifs}"), String(ESP.getFlashChipSize()));
+  page.replace(F("{rfs}"), String(ESP.getFlashChipRealSize()));
+  page.replace(F("{dip}"), WiFi.localIP().toString());
+  page.replace(F("{mac}"), WiFi.macAddress());
+  page += F("<br/>");
   
   page += FPSTR(HTTP_FORM_BACKBTN);
-  
-  page += FPSTR(HTTP_END);
 
-  server->send(200, "text/html", page);
+  hdlReturn(page);
 
-  DEBUG_WM(F("Sent info page"));
+  //DEBUG_WM(F("Sent info page"));
 }
 /** Handle the state page */
 void WiFiManager::handleState() {
-  DEBUG_WM(F("State - json"));
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
+  DEBUG_WM(FPSTR(ST_JS));
   String page = F("{\"Soft_AP_IP\":\"");
   page += WiFi.softAPIP().toString();
   page += F("\",\"Soft_AP_MAC\":\"");
@@ -985,16 +873,13 @@ void WiFiManager::handleState() {
   page += F("\"SSID\":\"");
   page += WiFi.SSID();
   page += F("\"}");
-  server->send(200, "application/json", page);
-  DEBUG_WM(F("Sent state page in json format"));
+  hdlReturn(page, "application/json");
+  //DEBUG_WM(F("Sent state page in json format"));
 }
 
 /** Handle the scan page */
 void WiFiManager::handleScan() {
-  DEBUG_WM(F("State - json"));
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
+  DEBUG_WM(FPSTR(ST_JS));
 
   int n;
   int *indices;
@@ -1027,68 +912,20 @@ void WiFiManager::handleScan() {
   }
   free(indices); //indices array no longer required so free memory
   page += F("]}");
-  server->send(200, "application/json", page);
-  DEBUG_WM(F("Sent WiFi scan data ordered by signal strength in json format"));
+  hdlReturn(page, "application/json");
+  //DEBUG_WM(F("Sent WiFi scan data ordered by signal strength in json format"));
 }
-
-
-
-
-
-
-
-
-#if IASCNF == 1
-/* Handle the save device to IAS request */				// added for IAS
-void WiFiManager::handleDevSave() {
-
-	String devName = server->arg("n").c_str();
-	devName.replace(" ", "%20");
-	
-	hdlIasCfgPages("Device added to IOTAppStory.com","dev_save.php","&ias_id="+devPass+"&name="+devName+"&dt="+server->arg("d").c_str());
-}
-
-
-/* Handle the add device to IAS request */				// added for IAS
-void WiFiManager::handleSavePro() {
-
-	String name = server->arg("n").c_str();
-	name.replace(" ", "%20");
-	
-	hdlIasCfgPages("Project saved","proj_save.php","&ias_id="+devPass+"&id="+server->arg("id")+"&name="+name+"&app="+server->arg("a"));
-}
-
-
-/* Handle the add device to IAS request */				// added for IAS
-void WiFiManager::handleSaveATP() {
-
-	hdlIasCfgPages("Added to Project","proj_addto_save.php","&ias_id="+devPass+"&proj="+server->arg("p"));
-}
-#endif
-
-
-
-
-
-
 
 /** Handle the reset page */
 void WiFiManager::handleReset() {
   DEBUG_WM(F("Reset"));
-  server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server->sendHeader("Pragma", "no-cache");
-  server->sendHeader("Expires", "-1");
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "WiFi Information");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += _customHeadElement;
-  page += FPSTR(HTTP_HEAD_END);
+  String page = FPSTR(HTTP_TEMPLATE);
+  page.replace("{h}", _customHeadElement);
   page += F("Module will reset in a few seconds.");
   page += FPSTR(HTTP_END);
-  server->send(200, "text/html", page);
+  hdlReturn(page);
 
-  DEBUG_WM(F("Sent reset page"));
+  //DEBUG_WM(F("Sent reset page"));
   delay(5000);
   WiFi.disconnect(true); // Wipe out WiFi credentials.
   ESP.reset();
@@ -1099,14 +936,14 @@ void WiFiManager::handleNotFound() {
   if (captivePortal()) { // If caprive portal redirect instead of displaying the error page.
       return;
   }
-  String message = "File Not Found\n\n";
-  message += "URI: ";
+  String message = F("File Not Found\n\n");
+  message += F("URI: ");
   message += server->uri();
-  message += "\nMethod: ";
+  message += F("\nMethod: ");
   message += ( server->method() == HTTP_GET ) ? "GET" : "POST";
-  message += "\nArguments: ";
+  message += F("\nArguments: ");
   message += server->args();
-  message += "\n";
+  message += F("\n");
 
   for ( uint8_t i = 0; i < server->args(); i++ ) {
     message += " " + server->argName ( i ) + ": " + server->arg ( i ) + "\n";
@@ -1121,7 +958,7 @@ void WiFiManager::handleNotFound() {
 that case so the page handler do not try to handle the request again. */
 boolean WiFiManager::captivePortal() {
   if (!isIp(server->hostHeader()) && server->hostHeader() != (String(myHostname))) {
-    DEBUG_WM(F("Request redirected to captive portal"));
+    //DEBUG_WM(F("Request redirected to captive portal"));
     server->sendHeader("Location", ("http://") +String(myHostname), true);
     server->setContentLength(0);
     server->send ( 302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
