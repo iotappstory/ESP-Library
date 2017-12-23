@@ -37,7 +37,7 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 // ================================================ EXAMPLE VARS =========================================
-unsigned long printEntry;
+
 
 // We want to be able to edit these example variables from the wifi config manager
 // Currently only char arrays are supported.
@@ -75,8 +75,9 @@ void setup() {
   /* TIP! delete the lines above when not used */
 
 
-  IAS.begin(true);																										// 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
-
+  IAS.begin(true);													 // 1st parameter: true or false to view BOOT STATISTICS | 2nd parameter: true or false to erase eeprom on first boot of the app
+  IAS.setCallHome(true);											 // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);										 // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
   //-------- Your Setup starts from here ---------------
 
@@ -86,13 +87,7 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();                                                 // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
-
-  if (millis() - callHomeEntry > 60000) {                          // only for development. Please change it to at least 2 hours in production
-    IAS.callHome();
-    callHomeEntry = millis();
-  }
-
+  IAS.loop();                                                 // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------

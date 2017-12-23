@@ -722,6 +722,14 @@ bool IOTAppStory::readConfig() {
 	return ret;
 }
 
+void IOTAppStory::loop() {
+   this->buttonLoop();
+
+   if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
+      this->callHome();
+      _lastCallHomeTime = millis();
+   }
+}
 
 void IOTAppStory::buttonLoop() {
   unsigned long _buttonTime = -1;
@@ -783,3 +791,11 @@ void IOTAppStory::sendDebugMessage() {
 	//sendSysLogMessage(6, 1, config.boardName, FIRMWARE, 10, counter++, sysMessage);
 }
 */
+
+void IOTAppStory::setCallHome(bool callHome) {
+   _callHome = callHome;
+}
+
+void IOTAppStory::setCallHomeInterval(unsigned long interval) {
+   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
+}
