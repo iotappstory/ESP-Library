@@ -4,6 +4,10 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
+## Develop branch
+
+If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
+
 ## API
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
@@ -124,10 +128,6 @@ download.
 ### `dPinConv(...)`
 
 See `addField()`
-
-## Develop branch
-
-If you want to fork or contribute to the library. Please have a look at the "develop" branch first.
 
 ## Contributions and thanks
 
