@@ -4,8 +4,8 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
-## Latest release
-[![Latest release](https://img.shields.io/github/release/esp8266/Arduino.svg)](https://github.com/iotappstory/ESP8266-Library/releases/latest)
+## Latest release 1.0.6
+https://github.com/iotappstory/ESP8266-Library/releases/latest
 
 ## Develop branch
 
