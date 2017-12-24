@@ -288,6 +288,9 @@
                 return String("[" + String(value, DEC) + "]");
               } 
             }
+            bool    _callHome = false;
+            unsigned long _lastCallHomeTime; //Time when we last called home
+            unsigned long _callHomeInterval = 7200000;  //Interval we want to call home at in milliseconds, default start at 2hrs
     };
 
 #endif
