@@ -48,10 +48,9 @@ void IOTAppStory::firstBoot(char ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
-		DEBUG_PRINTLN(F(" Erasing full EEPROM"));
+		DEBUG_PRINTLN(F(" Fully erase EEPROM"));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
-		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
-		
+		eraseFlash(0,EEPROM_SIZE);
 		
 		String emty = F("000000");
 		emty.toCharArray(config.devPass, 7);
@@ -60,10 +59,10 @@ void IOTAppStory::firstBoot(char ea){
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 
 	}else if(ea == 'P'){
-		DEBUG_PRINTLN(F(" Erasing EEPROM but leaving config settings"));
-		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
+		DEBUG_PRINTLN(F(" Partial erase EEPROM, leave config settings"));
+		eraseFlash((sizeof(config)+2),EEPROM_SIZE);
 	}else{
-		DEBUG_PRINTLN(F(" Leaving EEPROM intact"));
+		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
 	}
 	
 	// update first boot config flag (date)
@@ -111,6 +110,19 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
+
+void IOTAppStory::begin(bool bootstats){
+	begin(bootstats, 'P');
+}
+
+void IOTAppStory::begin(bool bootstats, bool ea){
+	//#error "begin(bool bootstats, bool ea) is depreciated. Use: begin(bool bootstats, char ea) instead. See VirginSoil examples for more info."
+	if(ea == true){
+		begin(bootstats, 'F');
+	}else{
+		begin(bootstats, 'P');
+	}
+}
 
 void IOTAppStory::begin(bool bootstats, char ea){
 	DEBUG_PRINTLN(F("\n"));
