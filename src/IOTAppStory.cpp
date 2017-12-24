@@ -892,16 +892,20 @@ void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
 	_noPressCallback = value;
 }
 
+void IOTAppStory::setCallHome(bool callHome) {
+   _callHome = callHome;
+}
+
+void IOTAppStory::setCallHomeInterval(unsigned long interval) {
+   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
+}
+
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
 	_shortPressCallback = value;
 }
 
 void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
 	_longPressCallback = value;
-}
-
-void IOTAppStory::setCallHomeInterval(unsigned long interval) {
-   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
 void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
