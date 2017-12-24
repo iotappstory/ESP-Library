@@ -205,6 +205,7 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
+            void loop();
             ModeButtonState buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
@@ -230,6 +231,9 @@
             // called when the app is about to enter in configuration mode
             void onModeButtonConfigMode(THandlerFunction fn);
     
+            
+            void setCallHome(bool callHome);
+            void setCallHomeInterval(unsigned long interval);
 
         private:
             //const char *_appName;
