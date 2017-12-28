@@ -1,5 +1,5 @@
 #include <ESP8266WiFi.h>
-#include "ESP8266httpUpdateMod.h"
+#include "ESP8266httpUpdateIasMod.h"
 #include <DNSServer.h>
 #include <ESP8266mDNS.h>
 #include <EEPROM.h>
@@ -48,9 +48,10 @@ void IOTAppStory::firstBoot(char ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
-		DEBUG_PRINTLN(F(" Fully erase EEPROM"));
+		DEBUG_PRINTLN(F(" Full erase of EEPROM"));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
-		eraseFlash(0,EEPROM_SIZE);
+		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
+		
 		
 		String emty = F("000000");
 		emty.toCharArray(config.devPass, 7);
@@ -59,8 +60,8 @@ void IOTAppStory::firstBoot(char ea){
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 
 	}else if(ea == 'P'){
-		DEBUG_PRINTLN(F(" Partial erase EEPROM, leave config settings"));
-		eraseFlash((sizeof(config)+2),EEPROM_SIZE);
+		DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
+		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
 	}else{
 		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
 	}
@@ -299,59 +300,51 @@ bool IOTAppStory::isNetworkConnected() {
 //---------- IOTappStory FUNCTIONS ----------
 bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	// update from IOTappStory.com
-	bool updateHappened=false;
-	byte res;
+	bool updateHappened = false;
 
-	DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s\n\n"), _firmware.c_str());
+	DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s"), _firmware.c_str());
 	
 	if (_firmwareUpdateCallback){
 		_firmwareUpdateCallback();
 	}
 	
-	ESPhttpUpdate.rebootOnUpdate(false);
-	res = iotUpdater(0,0);
+	// try to update from address 1
+	updateHappened = iotUpdater(0,0);
 	
-	if (res == 'F') {
-		// if address 1 was unsuccesfull try address 2
-		res = iotUpdater(0,1) ;
+	// if address 1 was unsuccesfull try address 2
+	if (updateHappened == false) {
+		updateHappened = iotUpdater(0,1);
 	}
-	if (res == 'U')  updateHappened = true;
 	
 
 
 	if (spiffs) {
-		DEBUG_PRINTLN("");
-		res = iotUpdater(1,0);
-		if (res == 'F') {
-			// if address 1 was unsuccesfull try address 2
-			res = iotUpdater(1,1);
+		
+		// try to update spiffs from address 1
+		updateHappened = iotUpdater(1,0);
+		
+		// if address 1 was unsuccesfull try address 2
+		if (updateHappened == false) {
+			updateHappened = iotUpdater(1,1);
 		}
-	} 
-	if (res == 'U')  updateHappened = true;
+	}
 
-	DEBUG_PRINTLN(F("\n Returning from IOTAppStory.com"));
+	DEBUG_PRINTLN(F("\n\n Returning from IOTAppStory.com"));
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 
-	
-	
-	if (updateHappened) {
-		// set boardMode to normal and reboot
-		rtcMem.boardMode = 'N';
-		ESP.restart();
-	}
 	return updateHappened;
 }
 
-byte IOTAppStory::iotUpdater(bool type, bool loc) {
-	byte retValue;
+bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
+	//byte retValue;
 
-	DEBUG_PRINT(F(" Checking for "));
-	if(type == 0){
-		// type == sketch
+	DEBUG_PRINT(F("\n\n Checking for "));
+	if(spiffs == false){
+		// type = sketch
 		DEBUG_PRINT(F("App(Sketch)"));
 	}
-	if(type == 1){
-		// type == spiffs
+	if(spiffs == true){
+		// type = spiffs
 		DEBUG_PRINT(F("SPIFFS"));
 	}
 	String url = "";
@@ -385,28 +378,89 @@ byte IOTAppStory::iotUpdater(bool type, bool loc) {
 		http.begin(url);
 	}
 	
-	t_httpUpdate_return ret;
-	ESPhttpUpdate.config = &config;						// send pointer of our config struct
-	ret = ESPhttpUpdate.update(http,_firmware,type);		// type == 0 = sketch // type == 1 = spiffs
-
+	//ret = ESPhttpUpdate.update(http,_firmware,spiffs);		// type == 0 = sketch // type == 1 = spiffs
 	
-	switch (ret) {
-		case HTTP_UPDATE_FAILED:
-			if(_serialDebug == true){
-				DEBUG_PRINTF_P(PSTR(" Update Failed. Error (%d): %s\n"), ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-			}
-			retValue = 'F';
-		break;
-		case HTTP_UPDATE_NO_UPDATES:
-			DEBUG_PRINTLN(F(" No updates"));
-			retValue = 'A';
-		break;
-		case HTTP_UPDATE_OK:
-			DEBUG_PRINTLN(F(" Received update"));
-			retValue = 'U';
-		break;
+    // use HTTP/1.0 the update handler does not support transfer encoding
+    http.useHTTP10(true);
+    http.setTimeout(8000);
+    http.setUserAgent(F("ESP8266-http-Update"));
+    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
+    //http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
+    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
+    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
+    http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
+    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-core-version"), ESP.getCoreVersion());
+    http.addHeader(F("x-ESP8266-act-id"), String(config.devPass));
+	http.addHeader(F("x-ESP8266-version"), _firmware);
+	
+    if(spiffs) {
+        http.addHeader(F("x-ESP8266-mode"), F("spiffs"));
+    } else {
+        http.addHeader(F("x-ESP8266-mode"), F("sketch"));
+    }
+
+    
+
+
+    // track these headers for later use
+    const char * headerkeys[] = { "x-MD5" };
+    size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+    http.collectHeaders(headerkeys, headerkeyssize);
+
+
+    int code = http.GET();
+    int len = http.getSize();
+
+    /*
+    DEBUG_PRINT("GET code: ");
+    DEBUG_PRINTLN(code);
+    DEBUG_PRINTLN("");
+    */
+
+
+	if(code == HTTP_CODE_OK){
+		
+		ESP8266HTTPUpdate ESPhttpUpdate;
+		ESPhttpUpdate.rebootOnUpdate(true);
+		
+		DEBUG_PRINTLN(F(" Downloading update..."));
+
+		/*
+		DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
+		DEBUG_PRINTLN("[httpUpdate] Server header:\n");
+		DEBUG_PRINTf("[httpUpdate]  - code: %d\n", code);
+		DEBUG_PRINTf("[httpUpdate]  - len: %d\n", len);
+
+		if(http.hasHeader("x-MD5")) {
+			DEBUG_PRINTf("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
+		}
+
+		DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
+		DEBUG_PRINTf("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
+		DEBUG_PRINTf("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
+
+		if(currentVersion && currentVersion[0] != 0x00) {
+			DEBUG_PRINTf("[httpUpdate]  - current version: %s\n", currentVersion.c_str() );
+		}
+		*/
+
+		ESPhttpUpdate.handleUpdate(http, len, spiffs);
+		return true;
+
+	}else{
+		DEBUG_PRINT(http.getString());
+		
+		//DEBUG_PRINTLN(code);
+		if(code == HTTP_CODE_NOT_MODIFIED){
+			return true;
+		}else{
+			return false;
+		}
+
 	}
-	return retValue;
+
+	http.end();
 }
 
 
@@ -548,7 +602,7 @@ void IOTAppStory::processField(){
 int IOTAppStory::dPinConv(String orgVal){
 	#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
 
-		//Serial.println("- Generic ESP's -");
+		//DEBUG_PRINTLN("- Generic ESP's -");
 		if      (orgVal == "D0"  || orgVal == "16")   return 16;
 		else if (orgVal == "D1"  || orgVal == "5")    return 5;
 		else if (orgVal == "D2"  || orgVal == "4")    return 4;
@@ -563,7 +617,7 @@ int IOTAppStory::dPinConv(String orgVal){
 
 	#else
 
-		//Serial.println("- Special ESP's -");
+		//DEBUG_PRINTLN("- Special ESP's -");
 		if      (orgVal == "D0"  || orgVal == "16")   return D0;
 		else if (orgVal == "D1"  || orgVal == "5")    return D1;
 		else if (orgVal == "D2"  || orgVal == "4")    return D2;
