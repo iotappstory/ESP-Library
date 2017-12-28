@@ -39,10 +39,10 @@
     #define MODE_BUTTON_LONG_PRESS        4000
     #define MODE_BUTTON_VERY_LONG_PRESS   10000
 
-		// sets the default value for the maximum number of retries when trying to connect to the wifi
-		#ifndef MAX_WIFI_RETRIES
-				#define MAX_WIFI_RETRIES 15
-		#endif
+    // sets the default value for the maximum number of retries when trying to connect to the wifi
+    #ifndef MAX_WIFI_RETRIES
+        #define MAX_WIFI_RETRIES 15
+    #endif // !MAX_WIFI_RETRIES
 
     // macros for debugging
     #ifdef DEBUG_PORT
@@ -51,10 +51,12 @@
         #define DEBUG_MSG(...)
     #endif
 	
-		// set to true to include code for show EEPROM contents in debug
-		#ifndef DEBUG_EEPROM_CONFIG
-				#define DEBUG_EEPROM_CONFIG false
-		#endif
+	
+    // set to true to include code for show EEPROM contents in debug
+    #ifndef DEBUG_EEPROM_CONFIG
+        #define DEBUG_EEPROM_CONFIG false
+    #endif
+
 
 
     #define         DEBUG_PRINT(x)    { if(_serialDebug) Serial.print(x);   }
@@ -126,7 +128,7 @@
 		
         public:
             /* ------ ------ ------ VARIABLES ------ ------ ------ */
-			rtcMemDef rtcMem;
+						rtcMemDef rtcMem;
 
             strConfig config = {
                 "",
@@ -173,9 +175,9 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true);
-            void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
-						void begin(bool bootstats, char ea='P'); 
+            void begin(bool bootstats=true);				// for backwards comp
+            void begin(bool bootstats, bool ea); 			// ea = erase all eeprom / erase all but config / erase nothing
+						void begin(bool bootstats, char ea='P'); 		// ea = erase all eeprom / erase all but config / erase nothing
             void firstBoot(char ea);
 
 
@@ -189,7 +191,7 @@
             bool isNetworkConnected();
 
             bool callHome(bool spiffs = true);
-            byte iotUpdater(bool type, bool loc = false);
+            bool iotUpdater(bool spiffs, bool loc = false);
 
             void addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length);
             void processField();
