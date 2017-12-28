@@ -162,7 +162,7 @@ void WiFiManager::setupConfigPortal() {
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
   DEBUG_WM(F("HTTP server started"));
-  DEBUG_WM(system_get_free_heap_size());
+  //DEBUG_WM(system_get_free_heap_size());
 
 }
 
@@ -376,9 +376,11 @@ void WiFiManager::resetSettings() {
   delay(200);
   return;
 }
+/*
 void WiFiManager::setTimeout(unsigned long seconds) {
   setConfigPortalTimeout(seconds);
 }
+*/
 
 void WiFiManager::setConfigPortalTimeout(unsigned long seconds) {
   _configPortalTimeout = seconds * 1000;
@@ -497,14 +499,14 @@ void WiFiManager::handleIAScfg() {
 		args += server->argName(i) + "=" + server->arg(i);
 	}
 	
-	hdlIasCfgPages(F("IOTAppStory.com config"),args);
+	hdlIasCfgPages(args);
 }
 
-void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String args){
+void WiFiManager::hdlIasCfgPages(const String args){
 
 	String url = "";
-	DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
-	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	//DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	
 	if(system_get_free_heap_size() > 31300){
 		url += F("https://"); // 										<<--  https We need to free up RAM first!
@@ -517,13 +519,13 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	url += args;
 	
 	// start HTTPClient
-	DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
+	//DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
     HTTPClient http;
 
 	// connect to server
 	DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
 	DEBUG_WM(url);// 													<-- remove on release ?
-	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	delay(100);
 	
 	if(system_get_free_heap_size() > 31300){
@@ -532,7 +534,7 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 		http.begin(url);
 	}
 	
-	DEBUG_WM(F("after http.begin"));// 									<-- remove on release
+	//DEBUG_WM(F("after http.begin"));// 									<-- remove on release
 	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
 	
 	// add headers
