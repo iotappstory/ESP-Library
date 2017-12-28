@@ -175,7 +175,7 @@
 
             void begin(bool bootstats=true);
             void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
-						void begin(bool bootstats, char ea='P'); 
+				void begin(bool bootstats, char ea='P'); 
             void firstBoot(char ea);
 
 
@@ -203,6 +203,7 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
+            void updateLoop();
             ModeButtonState buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
@@ -228,6 +229,9 @@
             // called when the app is about to enter in configuration mode
             void onModeButtonConfigMode(THandlerFunction fn);
     
+            
+            void setCallHome(bool callHome);
+            void setCallHomeInterval(unsigned long interval);
 
         private:
             //const char *_appName;
@@ -286,6 +290,9 @@
                 return String("[" + String(value, DEC) + "]");
               } 
             }
+            bool    _callHome = false;
+            unsigned long _lastCallHomeTime; //Time when we last called home
+            unsigned long _callHomeInterval = 7200000;  //Interval we want to call home at in milliseconds, default start at 2hrs
     };
 
 #endif

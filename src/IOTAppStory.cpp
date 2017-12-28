@@ -789,9 +789,16 @@ bool IOTAppStory::readConfig() {
 	return ret;
 }
 
+void IOTAppStory::updateLoop() {
+   if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
+      this->callHome();
+      _lastCallHomeTime = millis();
+   }
+}
 
 ModeButtonState IOTAppStory::buttonLoop() {
-	return getModeButtonState();
+   this->updateLoop();
+   return getModeButtonState();
 }
 
 void IOTAppStory::saveConfigCallback () {        								// <<-- could be deleted ?
@@ -882,6 +889,14 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 
 void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
 	_noPressCallback = value;
+}
+
+void IOTAppStory::setCallHome(bool callHome) {
+   _callHome = callHome;
+}
+
+void IOTAppStory::setCallHomeInterval(unsigned long interval) {
+   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
