@@ -175,7 +175,7 @@
 
             void begin(bool bootstats=true);
             void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
-						void begin(bool bootstats, char ea='P'); 
+				void begin(bool bootstats, char ea='P'); 
             void firstBoot(char ea);
 
 
@@ -203,7 +203,7 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
-            void loop();
+            void updateLoop();
             ModeButtonState buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
