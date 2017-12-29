@@ -89,15 +89,17 @@ void IOTAppStory::preSetConfig(bool automaticUpdate){
 	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate /*= false*/){
+void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate, bool automaticConfig){
 	preSetConfig(automaticUpdate);
 	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate /*= false*/){
+void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate, bool automaticConfig){
 	preSetConfig(automaticUpdate);
 	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
 }
 
 void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate /*= false*/){
@@ -110,7 +112,6 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
-
 
 void IOTAppStory::begin(bool bootstats){
 	begin(bootstats, 'P');
@@ -256,7 +257,9 @@ void IOTAppStory::connectNetwork() {
 		DEBUG_PRINTLN(F(" No Connection. Try to connect with saved PW"));
 
 		WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-		if (!isNetworkConnected()) espRestart('C', " No Connection. Going into Configuration Mode"); // still no success
+		if (!isNetworkConnected()){  // still no success
+			if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
+		}
 	}
 	DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
 	DEBUG_PRINTLN(WiFi.macAddress());

@@ -31,7 +31,7 @@
     #define STRUCT_COMPDATE_SIZE 20
 		#define STRUCT_BNAME_SIZE 30
     #define STRUCT_HOST_SIZE 24
-    #define STRUCT_FILE_SIZE 32
+    #define STRUCT_FILE_SIZE 31
 	
 
     // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
@@ -99,6 +99,7 @@
 		//const char IOTappStoryPHP2[20];
 
 		bool automaticUpdate;	// right after boot
+		bool automaticConfig;
 		char compDate[STRUCT_COMPDATE_SIZE];
 		char sha1[60];
 		char devPass[7];
@@ -141,6 +142,7 @@
                 //"iotappstory.com",
                 //"/ota/esp8266-v1.php",
                 false,
+				true,
                 "",
                 "76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",			// <<--- needs a field in the config pages
                 "",
@@ -169,9 +171,9 @@
             void serialdebug(bool onoff,int speed=115200);
 
             // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and FILE1
-            void preSetConfig(String boardName, bool automaticUpdate = false);
+            void preSetConfig(String boardName, bool automaticUpdate = false, bool automaticConfig = false);
             void preSetConfig(bool automaticUpdate = false);
-            void preSetConfig(String ssid, String password, bool automaticUpdate = false);
+            void preSetConfig(String ssid, String password, bool automaticUpdate = false, bool automaticConfig = false);
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
