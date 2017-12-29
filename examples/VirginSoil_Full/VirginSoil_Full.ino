@@ -48,8 +48,10 @@ char* lbl2        = "Living Room";
 char* exampleURL  = "http://someapi.com/getdata.php?userid=1234&key=7890abc";
 char* timeZone    = "0.0";
 char* ledPin      = "2";
-unsigned long callHomeEntry = millis();
 
+
+// used in this example to print variables every 10 seconds
+unsigned long printEntry;
 
 
 // ================================================ SETUP ================================================
