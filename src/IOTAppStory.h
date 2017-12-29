@@ -177,9 +177,9 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true);
+            void begin(bool bootstats = true);
             void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
-				    void begin(bool bootstats, char ea='P'); 
+			void begin(bool bootstats, char ea); 
 
             void firstBoot(char ea);
 
