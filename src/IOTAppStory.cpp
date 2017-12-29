@@ -113,7 +113,7 @@ void IOTAppStory::preSetConfig(String ssid, String password, String boardName, S
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
-void IOTAppStory::begin(bool bootstats){
+void IOTAppStory::begin(bool bootstats /*= true*/){
 	begin(bootstats, 'P');
 }
 
