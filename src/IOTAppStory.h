@@ -175,11 +175,11 @@
             void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
             void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
 
-            void begin(bool bootstats=true);				// for backwards comp
-            void begin(bool bootstats, bool ea); 			// ea = erase all eeprom / erase all but config / erase nothing
-						void begin(bool bootstats, char ea='P'); 		// ea = erase all eeprom / erase all but config / erase nothing
-            void firstBoot(char ea);
+            void begin(bool bootstats=true);
+            void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
+				    void begin(bool bootstats, char ea='P'); 
 
+            void firstBoot(char ea);
 
             bool readRTCmem();
             void writeRTCmem();
@@ -205,6 +205,7 @@
 
             void writeConfig(bool wifiSave=false);
             bool readConfig();
+            void updateLoop();
             ModeButtonState buttonLoop();
             void JSONerror(String err);
             void saveConfigCallback();
@@ -230,6 +231,9 @@
             // called when the app is about to enter in configuration mode
             void onModeButtonConfigMode(THandlerFunction fn);
     
+            
+            void setCallHome(bool callHome);
+            void setCallHomeInterval(unsigned long interval);
 
         private:
             //const char *_appName;
@@ -288,6 +292,9 @@
                 return String("[" + String(value, DEC) + "]");
               } 
             }
+            bool    _callHome = false;
+            unsigned long _lastCallHomeTime; //Time when we last called home
+            unsigned long _callHomeInterval = 7200000;  //Interval we want to call home at in milliseconds, default start at 2hrs
     };
 
 #endif
