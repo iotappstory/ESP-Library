@@ -114,7 +114,7 @@ class WiFiManager
     //usefully for devices that failed to connect at some point and got stuck in a webserver loop
     //in seconds setConfigPortalTimeout is a new name for setTimeout
     void          setConfigPortalTimeout(unsigned long seconds);
-    void          setTimeout(unsigned long seconds);
+    //void          setTimeout(unsigned long seconds);
 
     //sets timeout for which to attempt connecting, usefull if you get a lot of failed connects
     void          setConnectTimeout(unsigned long seconds);
@@ -209,8 +209,8 @@ class WiFiManager
     void          handleScan();
 
 #if IASCNF == 1
-    void          handleIAScfg();				// added for IAS
-    void          hdlIasCfgPages(const __FlashStringHelper *title, const String para = "");				// added for IAS
+    void          handleIAScfg();											// added for IAS
+    void          hdlIasCfgPages(const String para = "");					// added for IAS
 #endif
 
     void          handleReset();

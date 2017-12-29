@@ -1,0 +1,190 @@
+/**
+ *
+ * @file ESP8266HTTPUpdate.cpp
+ * @date 21.06.2015
+ * @author Markus Sattler
+ *
+ * Copyright (c) 2015 Markus Sattler. All rights reserved.
+ * This file is part of the ESP8266 Http Updater.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+#include "ESP8266httpUpdateIasMod.h"
+#include <StreamString.h>
+
+extern "C" uint32_t _SPIFFS_start;
+extern "C" uint32_t _SPIFFS_end;
+
+
+/**
+ *
+ * @param http HTTPClient *
+ * @param currentVersion const char *
+ * @return HTTPUpdateResult
+ */
+void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
+
+	if(len <= 0){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTF_P(PSTR(" Error: Received Content-Length header is %d"), len);
+		#else
+			DEBUG_PRINT(F(" Error: Content-Length"));
+		#endif
+	}else{
+
+		int freeSpace;
+		bool error = false;
+		if(spiffs){
+			// current spiffs space
+			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
+		}else{
+			// current FreeSketchSpace
+			freeSpace = ESP.getFreeSketchSpace();
+		}
+	
+		if(len > freeSpace){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, len);
+			#else
+				DEBUG_PRINT(F(" Error: space"));
+			#endif
+			
+			// if the Received Content-Length is larger than the free space exit update proces and return error
+			//return String(printf_P(PSTR("Not enough space (%d) update size: %d"), freeSpace, len));
+		}else{
+			
+			WiFiClient * tcp = http.getStreamPtr();
+
+			WiFiUDP::stopAll();
+			WiFiClient::stopAllExcept(tcp);
+			delay(100);
+
+			int command;
+			if(spiffs){
+				
+				command = U_SPIFFS;
+				//DEBUG_PRINTLN("[httpUpdate] runUpdate spiffs...\n");
+				
+			}else{
+				
+				command = U_FLASH;
+				//DEBUG_PRINTLN("[httpUpdate] runUpdate flash...\n");
+				
+				// Analise received bin file
+				uint8_t buf[4];
+				if(tcp->peekBytes(&buf[0], 4) != 4) {
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN(F(" Error: Failed to verify the bin header"));
+					#endif
+					error = true;
+				}
+				if(buf[0] != 0xE9) {
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN(F(" Error: Header did not start with magic byte 0xE9"));
+					#endif
+					error = true;
+				}
+				uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
+				if(bin_flash_size > ESP.getFlashChipRealSize()) {
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN(F(" Error: Received file to large for flash"));
+					#endif
+					error = true;
+				}
+				
+			}
+			
+			if(!error){
+				if(runUpdate(*tcp, len, http.header("x-MD5"), command)){
+					#if DEBUG_LVL >= 1
+						DEBUG_PRINT(F(" Received and \"installed\" update"));
+					#endif
+					http.end();
+
+					if(_rebootOnUpdate && spiffs == false) {
+						#if DEBUG_LVL >= 1
+							DEBUG_PRINTLN(F(". Reboot necessary!"));
+						#endif
+						ESP.restart();
+					}
+
+				}
+			}
+			#if DEBUG_LVL < 2
+			else{
+				DEBUG_PRINTLN(F(" Error: File error"));
+			}
+			#endif
+			
+		}
+	}
+}
+
+
+/**
+ * write Update to flash
+ * @param in Stream&
+ * @param size uint32_t
+ * @param md5 String
+ * @return true if Update ok
+ */
+bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int command){
+
+	#if DEBUG_LVL == 3
+		StreamString error;
+	#endif
+
+    if(!Update.begin(size, command)) {
+		#if DEBUG_LVL == 3
+			Update.printError(error);
+			error.trim(); // remove line ending
+			DEBUG_PRINTF_P(PSTR(" Error: Update.begin failed! (%s)\n"), error.c_str());
+		#endif
+        return false;
+    }
+
+    if(md5.length()) {
+        if(!Update.setMD5(md5.c_str())) {
+			#if DEBUG_LVL == 3
+				DEBUG_PRINTF_P(PSTR(" Error: Update.setMD5 failed! (%s)\n"), md5.c_str());
+			#endif
+            return false;
+        }
+    }
+
+    if(Update.writeStream(in) != size) {
+		#if DEBUG_LVL == 3
+			Update.printError(error);
+			error.trim(); // remove line ending
+			DEBUG_PRINTF_P(PSTR(" Error: Update.writeStream failed! (%s)\n"), error.c_str());
+		#endif
+        return false;
+    }
+
+    if(!Update.end()) {
+		#if DEBUG_LVL == 3
+			Update.printError(error);
+			error.trim(); // remove line ending
+			DEBUG_PRINTF_P(PSTR(" Error: Update.end failed! (%s)\n"), error.c_str());
+		#endif
+        return false;
+    }
+
+    return true;
+}
+
+
