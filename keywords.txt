@@ -20,6 +20,8 @@ addField	KEYWORD2
 begin	KEYWORD2
 buttonLoop	KEYWORD2
 callHome	KEYWORD2
+setCallHome	KEYWORD2
+setCallHomeInterval	KEYWORD2
 dPinConv	KEYWORD2
 
 #######################################
