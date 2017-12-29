@@ -37,8 +37,6 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 // ================================================ EXAMPLE VARS =========================================
-
-
 // We want to be able to edit these example variables from the wifi config manager
 // Currently only char arrays are supported.
 // Use functions like atoi() and atof() to transform the char array to integers or floats
@@ -78,48 +76,49 @@ void setup() {
 
 
 	// 1st parameter: true or false to view BOOT STATISTICS
-	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
+	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
   IAS.begin(true,'P');
 	//IAS.begin();
 	//IAS.begin(true);
-  IAS.setCallHome(true);											 // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);										 // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  
+  IAS.setCallHome(true);											      // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);										  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
   /*
   IAS.onModeButtonNoPress([]() {
-    Serial.println(" Mode Button is not pressed.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" Mode Button is not pressed.");
+    Serial.println(F("*-------------------------------------------------------------------------*");
   });
   */
 
   IAS.onModeButtonShortPress([]() {
-    Serial.println(" If mode button is released, I will enter in firmware update mode.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
   IAS.onModeButtonLongPress([]() {
-    Serial.println(" If mode button is released, I will enter in configuration mode.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" If mode button is released, I will enter in configuration mode."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
   IAS.onModeButtonVeryLongPress([]() {
-    Serial.println(" If mode button is released, I won't do anything.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" If mode button is released, I won't do anything."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
     /* TIP! You can use this callback to put your app on it's own configuration mode */
   });
   
   /*
   IAS.onModeButtonFirmwareUpdate([]() {
-    Serial.println(" Checking if there is a firmware update available.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" Checking if there is a firmware update available."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
   IAS.onModeButtonConfigMode([]() {
-    Serial.println(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1.");
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
   });
   */
 
@@ -131,31 +130,31 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();                                                 // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.buttonLoop();                                                  // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------
 
   if (millis() - printEntry > 10000) {                               // Serial.print the example variables every 10 seconds
 
-    Serial.println(" LABEL\t\t| VAR\t\t| VALUE");
+    Serial.println(F(" LABEL\t\t| VAR\t\t| VALUE"));
 
-    Serial.print(" Label 1\t\t| lbl1\t\t| ");
+    Serial.print(F(" Label 1\t\t| lbl1\t\t| "));
     Serial.println(lbl1);
 
-    Serial.print(" Label 2\t\t| lbl2\t\t| ");
+    Serial.print(F(" Label 2\t\t| lbl2\t\t| "));
     Serial.println(lbl2);
 
-    Serial.print(" Example url\t| exampleURL\t| ");
+    Serial.print(F(" Example url\t| exampleURL\t| "));
     Serial.println(exampleURL);
 
-    Serial.print(" Timezone\t| timeZone\t| ");
+    Serial.print(F(" Timezone\t| timeZone\t| "));
     Serial.println(atof(timeZone));
 
-    Serial.print(" Led pin\t\t| ledPin\t| ");
+    Serial.print(F(" Led pin\t\t| ledPin\t| "));
     Serial.println(atoi(ledPin));
     
-    Serial.println("*-------------------------------------------------------------------------*");
+    Serial.println(F("*-------------------------------------------------------------------------*"));
     printEntry = millis();
   }
 
