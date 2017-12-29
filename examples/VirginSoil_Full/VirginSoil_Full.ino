@@ -26,7 +26,7 @@
 */
 
 #define APPNAME "virginSoilFull"
-#define VERSION "V2.2.0"
+#define VERSION "V2.2.1"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
