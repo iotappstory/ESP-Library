@@ -55,34 +55,32 @@ unsigned long printEntry;
 // ================================================ SETUP ================================================
 void setup() {
   /* TIP! delete lines below when not used */
-  IAS.serialdebug(true);                                             // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                                    // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.serialdebug(true);                              // 1st parameter: true or false for serial debugging. Default: false
+  //IAS.serialdebug(true,115200);                     // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
 
-  IAS.preSetConfig("VirginSoil-Full");                               // preset Boardname
-  //IAS.preSetConfig("ssid","password");                             // preset Wifi
-  //IAS.preSetConfig("ssid","password",true);                        // preset Wifi & automaticUpdate
-  //IAS.preSetConfig("ssid","password","testboard");                 // preset Wifi & boardName
-  //IAS.preSetConfig("ssid","password","testboard",true);            // preset Wifi, boardName & automaticUpdate
+  IAS.preSetBoardname("VirginSoil-Full");             // preset Boardname
+  //IAS.preSetAutoUpdate(true);                       // automaticUpdate (true, false)
+  //IAS.preSetAutoConfig(true);                       // automaticConfig (true, false)
+  //IAS.preSetWifi("ssid","password");                // preset Wifi
   /* TIP! Delete Wifi cred. when you publish your App. */
 
 
-  IAS.addField(lbl1, "label1", "Label 1", 16);                       // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(lbl2, "label2", "Label 2", 16);                       // reference to org variable | field name | field label value | max char return
+  IAS.addField(lbl1, "label1", "Label 1", 16);        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(lbl2, "label2", "Label 2", 16);        // reference to org variable | field name | field label value | max char return
   IAS.addField(exampleURL, "url", "Example url", 80);
   IAS.addField(timeZone, "timezone", "Timezone", 4);
   IAS.addField(ledPin, "ledpin", "ledPin", 2);
   /* TIP! delete the lines above when not used */
 
-
-	// 1st parameter: true or false to view BOOT STATISTICS
-	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.begin(true,'P');
-	//IAS.begin();
-	//IAS.begin(true);
   
-  IAS.setCallHome(true);											      // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);										  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+	//IAS.begin();
+	//IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS
+  IAS.begin(true,'P');                                // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+
+  IAS.setCallHome(true);											        // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);										    // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -130,12 +128,12 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();                                                  // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.buttonLoop();                                   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------
 
-  if (millis() - printEntry > 10000) {                               // Serial.print the example variables every 10 seconds
+  if (millis() - printEntry > 10000) {                // Serial.print the example variables every 10 seconds
 
     Serial.println(F(" LABEL\t\t| VAR\t\t| VALUE"));
 
