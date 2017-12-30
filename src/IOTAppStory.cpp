@@ -82,36 +82,62 @@ void IOTAppStory::serialdebug(bool onoff,int speed){
 }
 
 
-void IOTAppStory::preSetConfig(bool automaticUpdate){
+void IOTAppStory::preSetBoardname(String boardName){
+	if (!_configReaded) {
+		readConfig();
+	}
+	SetConfigValueCharArray(config.boardName, boardName, STRUCT_BNAME_SIZE, _setPreSet);
+}
+
+void IOTAppStory::preSetAutoUpdate(bool automaticUpdate){
 	if (!_configReaded) {
 		readConfig();
 	}
 	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate, bool automaticConfig){
-	preSetConfig(automaticUpdate);
-	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+void IOTAppStory::preSetAutoConfig(bool automaticConfig){
+	if (!_configReaded) {
+		readConfig();
+	}
 	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String ssid, String password, bool automaticUpdate, bool automaticConfig){
-	preSetConfig(automaticUpdate);
+void IOTAppStory::preSetWifi(String ssid, String password){
+	if (!_configReaded) {
+		readConfig();
+	}
 	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
 }
 
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName, bool automaticUpdate /*= false*/){
-	preSetConfig(ssid, password, automaticUpdate);
-	SetConfigValueCharArray(config.boardName, boardName, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-}
-
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName, String HOST1, String FILE1, bool automaticUpdate /*= false*/) {
-	preSetConfig(ssid, password, boardName, automaticUpdate);
+void IOTAppStory::preSetServer(String HOST1, String FILE1){
+	if (!_configReaded) {
+		readConfig();
+	}
 	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
+
+
+// for backwards comp | depreciated
+void IOTAppStory::preSetConfig(String boardName){
+	preSetBoardname(boardName);
+}
+// for backwards comp | depreciated
+void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
+	preSetBoardname(boardName);
+}
+// for backwards comp | depreciated
+void IOTAppStory::preSetConfig(String ssid, String password){
+	preSetWifi(ssid, password);
+}
+// for backwards comp | depreciated
+void IOTAppStory::preSetConfig(String ssid, String password, String boardName){
+	preSetWifi(ssid, password);
+	preSetBoardname(boardName);
+}
+
 
 void IOTAppStory::begin(bool bootstats /*= true*/){
 	begin(bootstats, 'P');
@@ -128,6 +154,7 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 
 void IOTAppStory::begin(bool bootstats, char ea){
 	DEBUG_PRINTLN(F("\n"));
+	DEBUG_PRINTLN(_setPreSet);
 	
 	// read config if needed
 	if (!_configReaded) {
@@ -136,7 +163,8 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	
 	// set appName as default boardName in case the app developer does not set it
 	if (config.boardName == "yourFirstApp") {
-		preSetConfig((*config.appName), config.automaticUpdate);
+		//preSetConfig((*config.appName), config.automaticUpdate);
+		preSetBoardname((*config.appName));
 	}
 	
 	// write config if detected changes
