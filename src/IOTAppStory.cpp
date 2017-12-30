@@ -50,6 +50,7 @@ void IOTAppStory::firstBoot(char ea){
 	if(ea == 'F'){
 		DEBUG_PRINTLN(F(" Full erase of EEPROM"));
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
+		delay(200);
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
 		
 		
@@ -58,6 +59,7 @@ void IOTAppStory::firstBoot(char ea){
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+		config.automaticConfig = true;	// temp fix
 
 	}else if(ea == 'P'){
 		DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
@@ -289,12 +291,16 @@ void IOTAppStory::connectNetwork() {
 			if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
 		}
 	}
-	DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
-	DEBUG_PRINTLN(WiFi.macAddress());
+	if (!isNetworkConnected()) {
+		// this point is only reached if config.automaticConfig = false
+		DEBUG_PRINT(F("\n WiFi NOT connected\n Continuing anyway"));
+	}else{
+		DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
+		DEBUG_PRINTLN(WiFi.macAddress());
 
-	DEBUG_PRINT(F(" Device IP Address: "));
-	DEBUG_PRINTLN(WiFi.localIP());
-	
+		DEBUG_PRINT(F(" Device IP Address: "));
+		DEBUG_PRINTLN(WiFi.localIP());
+	}
 	
 	
 
