@@ -170,15 +170,21 @@
 
             void serialdebug(bool onoff,int speed=115200);
 
-            // function for pre setting config parameters ssid & password, boardname, automatic update, IOTappStory1 and FILE1
-            void preSetConfig(String boardName, bool automaticUpdate = false, bool automaticConfig = false);
-            void preSetConfig(bool automaticUpdate = false);
-            void preSetConfig(String ssid, String password, bool automaticUpdate = false, bool automaticConfig = false);
-            void preSetConfig(String ssid, String password, String boardName, bool automaticUpdate = false);
-            void preSetConfig(String ssid, String password, String boardName, String IOTappStory1, String FILE1, bool automaticUpdate = false);
+            // function for pre setting config parameters ssid & password, boardname, automatic update, HOST1 and FILE1
+            void preSetBoardname(String boardName);
+			void preSetAutoUpdate(bool automaticUpdate);
+			void preSetAutoConfig(bool automaticConfig);
+			void preSetWifi(String ssid, String password);
+			void preSetServer(String HOST1, String FILE1);
+			
+			void preSetConfig(String boardName);								// for backwards comp | depreciated
+			void preSetConfig(String boardName, bool automaticUpdate);			// for backwards comp | depreciated
+			void preSetConfig(String ssid, String password);					// for backwards comp | depreciated
+			void preSetConfig(String ssid, String password, String boardName);	// for backwards comp | depreciated
+
 
             void begin(bool bootstats = true);
-            void begin(bool bootstats, bool ea); 			// for backwards comp | depreciated use begin(bool bootstats, char) instead
+            void begin(bool bootstats, bool ea); 								// for backwards comp | depreciated use begin(bool bootstats, char) instead
 			void begin(bool bootstats, char ea); 
 
             void firstBoot(char ea);
