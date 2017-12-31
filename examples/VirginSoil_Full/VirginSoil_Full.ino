@@ -37,19 +37,20 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
 // ================================================ EXAMPLE VARS =========================================
-// We want to be able to edit these example variables from the wifi config manager
+// used in this example to print variables every 10 seconds
+unsigned long printEntry;
+
+// We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
+
 char* lbl1        = "Light Show";
 char* lbl2        = "Living Room";
 char* exampleURL  = "http://someapi.com/getdata.php?userid=1234&key=7890abc";
 char* timeZone    = "0.0";
 char* ledPin      = "2";
 
-
-// used in this example to print variables every 10 seconds
-unsigned long printEntry;
 
 
 // ================================================ SETUP ================================================
@@ -59,9 +60,9 @@ void setup() {
   //IAS.serialdebug(true,115200);                     // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
 
-  IAS.preSetBoardname("VirginSoil-Full");             // preset Boardname
-  //IAS.preSetAutoUpdate(true);                       // automaticUpdate (true, false)
-  //IAS.preSetAutoConfig(true);                       // automaticConfig (true, false)
+  IAS.preSetBoardname("virginSoil-full");             // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
+  //IAS.preSetAutoUpdate(false);                      // automaticUpdate (true, false)
+  //IAS.preSetAutoConfig(false);                      // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                // preset Wifi
   /* TIP! Delete Wifi cred. when you publish your App. */
 
@@ -85,13 +86,6 @@ void setup() {
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
-  /*
-  IAS.onModeButtonNoPress([]() {
-    Serial.println(F(" Mode Button is not pressed.");
-    Serial.println(F("*-------------------------------------------------------------------------*");
-  });
-  */
-
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -109,6 +103,11 @@ void setup() {
   });
   
   /*
+  IAS.onModeButtonNoPress([]() {
+    Serial.println(F(" Mode Button is not pressed.");
+    Serial.println(F("*-------------------------------------------------------------------------*");
+  });
+  
   IAS.onModeButtonFirmwareUpdate([]() {
     Serial.println(F(" Checking if there is a firmware update available."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -119,6 +118,7 @@ void setup() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
   */
+
 
   //-------- Your Setup starts from here ---------------
 
