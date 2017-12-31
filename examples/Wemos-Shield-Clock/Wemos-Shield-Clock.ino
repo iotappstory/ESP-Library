@@ -1,4 +1,4 @@
-/* This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+/* This is an initial APPNAME to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
 
 
@@ -24,31 +24,34 @@
 
 */
 
-#define SKETCH "WemosClock"
-#define VERSION "V1.0.0"
+#define APPNAME "WemosClock"
+#define VERSION "V1.1.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
 
-#define PIN_RESET 255  //
-#define DC_JUMPER 0  // I2C Addres: 0 - 0x3C, 1 - 0x3D
+#define PIN_RESET 255       //
+#define DC_JUMPER 0         // I2C Addres: 0 - 0x3C, 1 - 0x3D
 
 #include <IOTAppStory.h>
 
 #include <SNTPtime.h>
-#include <Wire.h>  // Include Wire if you're using I2C
+#include <Wire.h>           // Include Wire if you're using I2C
 #include <SFE_MicroOLED.h>  // Include the SFE_MicroOLED library
 
-IOTAppStory IAS(SKETCH, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
-MicroOLED oled(PIN_RESET, DC_JUMPER);  // I2C Example
+MicroOLED oled(PIN_RESET, DC_JUMPER); // Example I2C declaration
 SNTPtime NTPch("ch.pool.ntp.org");
 
+
+
+// ================================================ VARS =================================================
 strDateTime dateTime;
+
 // How fast do you want the clock to spin? Set this to 1 for fun.
 // Set this to 1000 to get _about_ 1 second timing.
 const int CLOCK_SPEED = 1000;
-
 
 // Global variables to help draw the clock face:
 const int MIDDLE_Y = oled.getLCDHeight() / 2;
@@ -63,50 +66,79 @@ int S_LENGTH;
 int M_LENGTH;
 int H_LENGTH;
 
-
 unsigned long lastDraw = 0;
+int lastSecond;
+
+// We want to be able to edit these example variables below from the wifi config manager
+// Currently only char arrays are supported.
+// Use functions like atoi() and atof() to transform the char array to integers or floats
+// Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
 char* timeZone = "1.0";
-int lastSecond;
-unsigned long iotEntry = millis();
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.serialdebug(true);                              // 1st parameter: true or false for serial debugging. Default: false
+  //IAS.serialdebug(true,115200);                     // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
 
-  oled.begin();     // Initialize the OLED
-  oled.clear(PAGE); // Clear the display's internal memory
-  oled.clear(ALL);  // Clear the library's display buffer
-  oled.display();   // Display what's in the buffer (splashscreen)
+
+  oled.begin();                                       // Initialize the OLED
+  oled.clear(PAGE);                                   // Clear the display's internal memory
+  oled.clear(ALL);                                    // Clear the library's display buffer
+  oled.display();                                     // Display what's in the buffer (splashscreen)
+
+
+  IAS.preSetBoardname("wemos-clock");                 // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
+  IAS.preSetAutoUpdate(true);                         // automaticUpdate (true, false)
+
+
+  IAS.addField(timeZone, "timezone", "Timezone", 4);  // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+                                                      // reference to org variable | field name | field label value | max char return
+
+  IAS.begin(true,'P');                                // 1st parameter: true or false to view BOOT STATISTICS
+                                                      // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+  IAS.setCallHome(true);                              // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                        // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+
+
+  // You can configure callback functions that can give feedback to the app user about the current state of the application.
+  // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
+  IAS.onModeButtonShortPress([]() {
+    Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onModeButtonLongPress([]() {
+    Serial.println(F(" If mode button is released, I will enter in configuration mode."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+
+  //-------- Your Setup starts from here ---------------
   
-	// 1st parameter: true or false to view BOOT STATISTICS
-	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact | Leave emty = 'L'
-  IAS.begin(true);
-	//IAS.begin();
-	//IAS.begin(true,'P');
-  
-  while (!NTPch.setSNTPtime()) Serial.print("."); // set internal clock
+  while (!NTPch.setSNTPtime()) Serial.print(F("."));  // set internal clock
   Serial.println();
-  Serial.println("Time set");
+  Serial.println(F("Time set"));
 
   initClockVariables();
 
 }
 
 
+
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();
-  if (millis() > iotEntry + 10000) {              // only for development. Please change it to at least 2 hours in production
-    IAS.callHome();
-    iotEntry = millis();
-  }
+  IAS.buttonLoop();                                   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+
+
+  //-------- Your Sketch starts from here ---------------
+
   dateTime = NTPch.getTime(1.0, 1); // get time from internal clock
   if (dateTime.second != lastSecond) {
-    NTPch.printDateTime(dateTime);
+    //NTPch.printDateTime(dateTime);
     oled.clear(PAGE);  // Clear the buffer
     drawFace();
     drawArms(dateTime.hour, dateTime.minute, dateTime.second);
