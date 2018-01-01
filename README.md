@@ -4,7 +4,7 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
-## Latest release 1.0.6
+## Latest release 1.1.0
 https://github.com/iotappstory/ESP8266-Library/releases/latest
 
 ## Develop branch
@@ -43,54 +43,59 @@ data.</br></br>
 With preSet's you can set various options to influence how `begin()` sets things up. All calls to
 these function's must be done before calling `begin()`.
 
-#### `preSetBoardname("example-name")`
-Set the boardname, this is also your MDNS responder: http://example-name.local
+#### `preSetBoardname(String)`
+Set the boardname, this is used as your Wifi Ap name in WIFI_AP mode. And is also used for your MDNS responder: http://example-name.local
 
-#### `preSetAutoUpdate(true / false)`
+#### `preSetAutoUpdate(bool)`
 Setting to `true` will make the device do an update-check immediately after calling `begin()`. The default is `true`
 
-#### `preSetAutoConfig(true / false)`
+#### `preSetAutoConfig(bool)`
 Set whether or not the device should go into config mode after after failing to connect to a Wifi AP. The default is `true`
 
-#### `preSetWifi("ssid","password")`
+#### `preSetWifi(String, String)`
 Set the WiFi credentials without going through the captive portal. For development only! Make sure to delete this preSet when you publish your App.
 
 
 Example of using preSet's:
 ```c
-#define APPNAME my_awesome_app
-IOTAppStory(APPNAME, ...);
+...
 
 setup () {
+    ...
 
-    IAS.preSetBoardname("VirginSoil-Full");           // preset Boardname
-    IAS.preSetAutoUpdate(true);                       // automaticUpdate (true, false)
-    IAS.preSetAutoConfig(true);                       // automaticConfig (true, false)
-    IAS.preSetWifi("ssid","password");                // preset Wifi
+    IAS.preSetBoardname("virginsoil-full");
+    IAS.preSetAutoUpdate(true);
+    IAS.preSetAutoConfig(true);
+    IAS.preSetWifi("ssid","password");
 
-    // Now start it up
     IAS.begin();
 }
 ```
 </br>
 
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
-
-These fields are added to the config wifimanager and saved to eeprom.  Updated
+These fields are added to the config wifimanager and saved to eeprom. Updated
 values are returned to the original variable.
 
+Currently only char arrays are supported.
+Use functions like atoi() and atof() to transform the char array to integers or floats
+Use dPinConv() to convert Dpin numbers(pin-name) to integers (D6 > 14)
+
+Example of adding fields:
+
 ```c
-char* LEDpin = "D4";
+...
+
+char* LEDpin    = "D4";
+char* lbl1      = "Light Show";
 
 setup () {
+    ...
+    
     IAS.addField(LEDpin, "ledpin", "ledPin", 2);
+    IAS.addField(lbl1, "label1", "Label 1", 16);
+    
     IAS.begin();
-}
-
-loop () {
-    IAS.buttonLoop();
-    // dPinConv() converts pin-name to appropriate number
-    pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 }
 ```
 </br>
@@ -141,8 +146,11 @@ Called when the app is about to enter in configuration mode.
 In this example we use serial print to demonstrate the call backs. But you could use leds etc:
 ```c
 ...
+
 setup () {
     ...
+    IAS.begin();
+    
     IAS.onModeButtonShortPress([]() {
         Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
         Serial.println(F("*-------------------------------------------------------------------------*"));
