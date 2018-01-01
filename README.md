@@ -10,7 +10,7 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 ## Develop branch
 
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
-
+</hr></br>
 ## API
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
@@ -38,7 +38,7 @@ Set if sending debug over serial is enabled and, if so, at what speed to send
 data.
 
 
-</br></br>
+</br>
 ### `preSet...();`
 With preSet's you can set various options to influence how `begin()` sets things up. All calls to
 these function's must be done before calling `begin()`.
@@ -74,7 +74,7 @@ setup () {
 ```
 
 
-
+</br>
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
 
 These fields are added to the config wifimanager and saved to eeprom.  Updated
