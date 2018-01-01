@@ -10,7 +10,8 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 ## Develop branch
 
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
-</hr></br>
+</br>
+
 ## API
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
@@ -39,7 +40,7 @@ data.
 
 
 </br>
-### `preSet...();`
+### `preSet...()`
 With preSet's you can set various options to influence how `begin()` sets things up. All calls to
 these function's must be done before calling `begin()`.
 
