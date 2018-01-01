@@ -10,7 +10,7 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 </br></br>
 
 ## Arduino IDE librairy manager
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
+<img src="https://github.com/iotappstory/ESP8266-Library/blob/develop/arduinoIDE_lib_manager.jpg"/>
 </br></br>
 
 ## API
