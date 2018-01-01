@@ -117,7 +117,7 @@ Set to 'true' to enable calling home frequently (disabled by default)</br></br>
 Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.</br></br>
 
 ### `callbacks...()`
-You can configure callback functions that can give feedback to the app user about the current state of the application.</br></br>
+You can configure callback functions that can give feedback to the app user about the current state of the application.
 
 
 #### `onModeButtonNoPress(THandlerFunction)`
@@ -137,7 +137,24 @@ Called when the app is about to update the firmware.
 
 #### `onModeButtonConfigMode(THandlerFunction)`
 Called when the app is about to enter in configuration mode.
-</br></br>
+
+In this example we use serial print to demonstrate the call backs. But you could use leds etc:
+```c
+...
+setup () {
+    ...
+    IAS.onModeButtonShortPress([]() {
+        Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
+        Serial.println(F("*-------------------------------------------------------------------------*"));
+    });
+
+    IAS.onModeButtonLongPress([]() {
+        Serial.println(F(" If mode button is released, I will enter in configuration mode."));
+        Serial.println(F("*-------------------------------------------------------------------------*"));
+    });
+}
+```
+</br>
 
 
 
