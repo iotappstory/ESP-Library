@@ -96,7 +96,6 @@ loop () {
 </br>
 
 ### `begin(bool bootstat, char ea)`
-
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
@@ -111,25 +110,52 @@ erased on first boot of the sketch/app.
 If `ea` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.</br></br>
 
-### `buttonLoop()`
+### `setCallHome(bool)`
+Set to 'true' to enable calling home frequently (disabled by default)</br></br>
 
-Checks if the button is depressed and what mode to enter when once it is
-released. Call in `loop()`.</br></br>
+### `setCallHomeInterval(int)`
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.</br></br>
+
+### `callbacks...()`
+You can configure callback functions that can give feedback to the app user about the current state of the application.</br></br>
+
+
+#### `onModeButtonNoPress(THandlerFunction)`
+Called when state is changed to idle. (mode button is not pressed)
+
+#### `onModeButtonShortPress(THandlerFunction)`
+Called when state is changed to short press.
+
+#### `onModeButtonLongPress(THandlerFunction)`
+Called when state is changed to long press.
+
+#### `onModeButtonVeryLongPress(THandlerFunction)`
+Called when state is changed to very long press.
+
+#### `onModeButtonFirmwareUpdate(THandlerFunction)`
+Called when the app is about to update the firmware.
+
+#### `onModeButtonConfigMode(THandlerFunction)`
+Called when the app is about to enter in configuration mode.
+</br></br>
+
+
+
+
+
+
+### `buttonLoop()`
+Checks if the button is depressed and what mode to enter when once it is released. Call in `loop()`.</br></br>
 
 ### `callHome(bool spiffs)`
+Calls IOTAppStory.com to check for updates. OK to call every ~5 minutes in development, but production setups should call at most every two hours.
 
-Calls IOTAppStory.com to check for updates. OK to call every ~5 minutes in
-development, but production setups should call at most every two hours.
-
-If `spiffs` is true, the call also checks if there is a new filesystem image to
-download.</br></br>
+If `spiffs` is true, the call also checks if there is a new filesystem image to download.</br></br>
 
 ### `dPinConv(...)`
-
 See `addField()`</br></br>
 
 ## Contributions and thanks
-
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
 
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
