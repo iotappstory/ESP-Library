@@ -32,6 +32,7 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 setup () { ... }
 loop () { ... }
 ```
+</br>
 
 ### `serialdebug(bool enabled, int speed)`
 
@@ -71,7 +72,7 @@ setup () {
     IAS.begin();
 }
 ```
-</br></br>
+</br>
 
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
 
@@ -92,6 +93,7 @@ loop () {
     pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 }
 ```
+</br>
 
 ### `begin(bool bootstat, char ea)`
 
@@ -107,12 +109,12 @@ If `ea` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS
 erased on first boot of the sketch/app.
 
 If `ea` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
+erased on first boot of the sketch/app.</br></br>
 
 ### `buttonLoop()`
 
 Checks if the button is depressed and what mode to enter when once it is
-released. Call in `loop()`.
+released. Call in `loop()`.</br></br>
 
 ### `callHome(bool spiffs)`
 
@@ -120,11 +122,11 @@ Calls IOTAppStory.com to check for updates. OK to call every ~5 minutes in
 development, but production setups should call at most every two hours.
 
 If `spiffs` is true, the call also checks if there is a new filesystem image to
-download.
+download.</br></br>
 
 ### `dPinConv(...)`
 
-See `addField()`
+See `addField()`</br></br>
 
 ## Contributions and thanks
 
