@@ -38,7 +38,7 @@ Set if sending debug over serial is enabled and, if so, at what speed to send
 data.
 
 
-
+</br></br>
 ### `preSet...();`
 With preSet's you can set various options to influence how `begin()` sets things up. All calls to
 these function's must be done before calling `begin()`.
