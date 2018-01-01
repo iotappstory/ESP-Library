@@ -4,7 +4,7 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 
 Wiki pages: https://iotappstory.com/wiki
 
-## Latest release 1.1.0
+## Latest release 1.0.6
 https://github.com/iotappstory/ESP8266-Library/releases/latest
 
 ## Develop branch
@@ -37,53 +37,42 @@ loop () { ... }
 Set if sending debug over serial is enabled and, if so, at what speed to send
 data.
 
-### `preSetConfig(...)`
 
-Sets various options to influence how `begin()` sets things up. All calls to
-this function must be done before calling `begin()`.
 
-#### `preSetConfig(bool automaticUpdate)`
+### `preSet...();`
+With preSet's you can set various options to influence how `begin()` sets things up. All calls to
+these function's must be done before calling `begin()`.
 
-Setting to `true` will make the device do an update-check immediately after
-calling `begin()`.
+#### `preSetBoardname("example-name")`
+Set the boardname, this is also your MDNS responder: http://example-name.local
 
-#### `preSetConfig(string boardName, bool automaticUpdate)`
+#### `preSetAutoUpdate(true / false)`
+Setting to `true` will make the device do an update-check immediately after calling `begin()`. The default is `true`
 
-Set the device hostname. This is important as devices by default has APPNAME as
-hostname (set by the `IOTAppStory` constructor), which can lead to all sorts of
-networking issues.
+#### `preSetAutoConfig(true / false)`
+Set whether or not the device should go into config mode after after failing to connect to a Wifi AP. The default is `true`
 
-Examples of setting it:
+#### `preSetWifi("ssid","password")`
+Set the WiFi credentials without going through the captive portal. For development only! Make sure to delete this preSet when you publish your App.
+
+
+Example of using preSet's:
 ```c
 #define APPNAME my_awesome_app
 IOTAppStory(APPNAME, ...);
 
-begin () {
-    // C++-style appname + mac
-    IAS.preSetConfig(APPNAME"_" + WiFi.macAddress());
+setup () {
 
-    // C-style w. sprintf (ex. "ESP_DEF123")
-    char hostString[16] = {0};
-    sprintf(hostString, "ESP_%06X", ESP.getChipId());
-    IAS.preSetConfig(hostString, false);
+    IAS.preSetBoardname("VirginSoil-Full");           // preset Boardname
+    IAS.preSetAutoUpdate(true);                       // automaticUpdate (true, false)
+    IAS.preSetAutoConfig(true);                       // automaticConfig (true, false)
+    IAS.preSetWifi("ssid","password");                // preset Wifi
 
     // Now start it up
-    IAS.start();
+    IAS.begin();
 }
 ```
 
-#### `preSetConfig(string ssid, string password, bool automaticUpdate)`
-
-Set the WiFi credentials without going through the captive portal.
-
-#### `preSetConfig(string ssid, string password, string boardName, bool automaticUpdate)`
-
-As the two above; sets WiFi credentials and boardName.
-
-
-#### `preSetConfig(string ssid, string password, string boardName, string url1, string url2, bool automaticUpdate)`
-
-As above + set urls for contacting IOTAppStory.com. Generally not needed.
 
 
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
