@@ -3,13 +3,14 @@
 Download and update Infrastructure for IOT devices, currenlty the ESP8266. You will need an account at IOTAppStory.com
 
 Wiki pages: https://iotappstory.com/wiki
+</br></br>
 
 ## Latest release 1.1.0
 https://github.com/iotappstory/ESP8266-Library/releases/latest
+</br></br>
 
-## Develop branch
-
-If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.
+## Arduino IDE librairy manager
+<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"
 </br></br>
 
 ## API
@@ -34,10 +35,21 @@ loop () { ... }
 ```
 </br>
 
-### `serialdebug(bool enabled, int speed)`
+### `serialdebug(bool enabled, int speed=115200)`
+Set enabled to true to send debuging feedback over serial. You can set the port speed as the second parameter. The default speed id 115200. Use this during development only! And remove these lines for published apps.
 
-Set if sending debug over serial is enabled and, if so, at what speed to send
-data.</br></br>
+Example:
+```c
+...
+
+setup () {
+  IAS.serialdebug(true);
+  //IAS.serialdebug(true,115200);
+
+    IAS.begin();
+}
+```
+</br>
 
 ### `preSet...()`
 With preSet's you can set various options to influence how `begin()` sets things up. All calls to
@@ -56,7 +68,7 @@ Set whether or not the device should go into config mode after after failing to 
 Set the WiFi credentials without going through the captive portal. For development only! Make sure to delete this preSet when you publish your App.
 
 
-Example of using preSet's:
+Example:
 ```c
 ...
 
@@ -74,14 +86,15 @@ setup () {
 </br>
 
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
-These fields are added to the config wifimanager and saved to eeprom. Updated
-values are returned to the original variable.
+reference to org variable | html field name | html field label | max nr of char
+
+These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
 
 Currently only char arrays are supported.
 Use functions like atoi() and atof() to transform the char array to integers or floats
 Use dPinConv() to convert Dpin numbers(pin-name) to integers (D6 > 14)
 
-Example of adding fields:
+Example:
 
 ```c
 ...
@@ -100,26 +113,42 @@ setup () {
 ```
 </br>
 
-### `begin(bool bootstat, char ea)`
+### `begin(bool bootstat, char eraseEeprom)`
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
 contents of RTC memory.
 
-If `ea` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
+If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
-If `ea` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
+If `eraseEeprom` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
-If `ea` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
+If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.</br></br>
 
 ### `setCallHome(bool)`
 Set to 'true' to enable calling home frequently (disabled by default)</br></br>
 
 ### `setCallHomeInterval(int)`
-Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.</br></br>
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+
+Example:
+
+```c
+...
+
+setup () {
+    ...
+    
+    IAS.begin(true,'P');
+    
+    IAS.setCallHome(true);
+    IAS.setCallHomeInterval(60);
+}
+```
+</br>
 
 ### `callbacks...()`
 You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -164,18 +193,29 @@ setup () {
 ```
 </br>
 
-
-
-
-
-
 ### `buttonLoop()`
-Checks if the button is depressed and what mode to enter when once it is released. Call in `loop()`.</br></br>
+Checks if the button is depressed and what mode to enter when once it is released. This is essential and needs to be called on the first line of your `loop()`.</br></br>
 
 ### `callHome(bool spiffs)`
-Calls IOTAppStory.com to check for updates. OK to call every ~5 minutes in development, but production setups should call at most every two hours.
+Calls IOTAppStory.com to check for updates. The setCallHomeInterval() function mentioned above already handles calling home at a certain interval. But if you would like to decide yourself under which circumstances and when to call home. This is for you.
+
+Write whatever conditions you want and simply add the callHome() function.
 
 If `spiffs` is true, the call also checks if there is a new filesystem image to download.</br></br>
+
+```c
+...
+
+void loop() {
+    IAS.buttonLoop();
+    
+    if(batLvl >= 20 && lstUpd != today){
+        IAS.callHome();
+        lstUpd = today;
+    }
+}
+```
+</br>
 
 ### `dPinConv(...)`
 See `addField()`</br></br>
