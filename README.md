@@ -197,7 +197,7 @@ setup () {
 Checks if the button is depressed and what mode to enter when once it is released. This is essential and needs to be called on the first line of your `loop()`.</br></br>
 
 ### `callHome(bool spiffs)`
-Calls IOTAppStory.com to check for updates. The setCallHomeInterval() function mentioned above already handles calling home at a certain interval. But if you would like to decide yourself under which circumstances and when to call home. This is for you.
+Calls IOTAppStory.com to check for updates. The `setCallHomeInterval()` function mentioned above already handles calling home at a certain interval. But if you would like to decide yourself under which circumstances and when to call home. This is for you.
 
 Write whatever conditions you want and simply add the callHome() function.
 
@@ -218,7 +218,7 @@ void loop() {
 </br>
 
 ### `dPinConv(...)`
-See `addField()`</br></br>
+Use `dPinConv()` to convert Dpin numbers to integers (D6 > 14)</br></br>
 
 ## Contributions and thanks
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
