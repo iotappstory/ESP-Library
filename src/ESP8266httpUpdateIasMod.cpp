@@ -8,7 +8,7 @@
  * It is specifically modified for IotAppStory.com But feel free to use it in any way you would like to.
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
- * This file is part of the ESP8266 Http Updater.
+ * This file was originally part of the ESP8266 Http Updater.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
