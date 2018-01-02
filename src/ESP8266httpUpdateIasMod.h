@@ -1,11 +1,14 @@
 /**
  *
- * @file ESP8266HTTPUpdate.h
- * @date 21.06.2015
- * @author Markus Sattler
+ * @file ESP8266HTTPUpdateIasMod.cpp
+ * @date 01.01.2018
+ * @author Onno Dirkzwager
+ *
+ * This is a heavily modified version of the original ESP8266HTTPUpdate.cpp written by Markus Sattler
+ * It is specifically modified for IotAppStory.com But feel free to use it in any way you would like to.
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
- * This file is part of the ESP8266 Http Updater.
+ * This file was originally part of the ESP8266 Http Updater.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
