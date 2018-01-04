@@ -221,6 +221,9 @@
             bool isModeButtonPressed();
             ModeButtonState getModeButtonState();
     
+            // called at the end of firstBoot
+            void onFirstBoot(THandlerFunction fn);
+    
             // called when state is changed to idle (mode button is not pressed)
             void onModeButtonNoPress(THandlerFunction fn);
     
@@ -257,6 +260,7 @@
             unsigned long   _debugEntry;
             AppState        _appState;
     
+            THandlerFunction _firstBootCallback;
             THandlerFunction _noPressCallback;
             THandlerFunction _shortPressCallback;
             THandlerFunction _longPressCallback;
