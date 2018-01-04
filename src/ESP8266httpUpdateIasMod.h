@@ -35,12 +35,14 @@
 	#include <WiFiUdp.h>
 	#include <ESP8266HTTPClient.h>
 
-	#define DEBUG_LVL 2	// 1, 2 or 3
-	#if DEBUG_LVL >= 1
-		#define         DEBUG_PRINT(x)    { Serial.print(x);  }
-		#define         DEBUG_PRINTF(...) { Serial.printf(__VA_ARGS__);  }
-		#define         DEBUG_PRINTF_P(...) { Serial.printf_P(__VA_ARGS__);  }
-		#define         DEBUG_PRINTLN(x)  { Serial.println(x); }
+    #ifndef DEBUG_LVL
+		#define DEBUG_LVL 2	// 1, 2 or 3
+		#if DEBUG_LVL >= 1
+			#define         DEBUG_PRINT(x)    { Serial.print(x);  }
+			#define         DEBUG_PRINTF(...) { Serial.printf(__VA_ARGS__);  }
+			#define         DEBUG_PRINTF_P(...) { Serial.printf_P(__VA_ARGS__);  }
+			#define         DEBUG_PRINTLN(x)  { Serial.println(x); }
+		#endif
 	#endif
 
 	class ESP8266HTTPUpdate{
