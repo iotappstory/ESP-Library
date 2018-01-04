@@ -21,6 +21,7 @@ extern "C" {
 IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton)
 : _modeButton(modeButton)
 , _compDate(compDate)
+, _firstBootCallback(NULL)
 , _noPressCallback(NULL)
 , _shortPressCallback(NULL)
 , _longPressCallback(NULL)
@@ -73,6 +74,12 @@ void IOTAppStory::firstBoot(char ea){
 	writeConfig();
 
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
+	
+	if (_firstBootCallback){
+		_firstBootCallback();
+		DEBUG_PRINTLN(F(" Run first boot callback"));
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	}
 }
 
 void IOTAppStory::serialdebug(bool onoff,int speed){
@@ -156,7 +163,6 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 
 void IOTAppStory::begin(bool bootstats, char ea){
 	DEBUG_PRINTLN(F("\n"));
-	DEBUG_PRINTLN(_setPreSet);
 	
 	// read config if needed
 	if (!_configReaded) {
@@ -265,7 +271,7 @@ void IOTAppStory::configESP() {
 	//connectNetwork();
 	
 	DEBUG_PRINT(F("\n\n\n\nC O N F I G U R A T I O N   M O D E\n"));
-	DEBUG_PRINTLN(system_get_free_heap_size());
+	//DEBUG_PRINTLN(system_get_free_heap_size());
 
 	initWiFiManager();
 
@@ -421,16 +427,23 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
     http.useHTTP10(true);
     http.setTimeout(8000);
     http.setUserAgent(F("ESP8266-http-Update"));
+
+
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    //http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
+    http.addHeader(F("x-ESP8266-act-id"), String(config.devPass));
+
+	
     http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
     http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
     http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
-    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
-    http.addHeader(F("x-ESP8266-core-version"), ESP.getCoreVersion());
-    http.addHeader(F("x-ESP8266-act-id"), String(config.devPass));
-	http.addHeader(F("x-ESP8266-version"), _firmware);
+
 	
+	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipId()));
+	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
+	
+    http.addHeader(F("x-ESP8266-core-version"), ESP.getCoreVersion());
+	http.addHeader(F("x-ESP8266-version"), _firmware);
     if(spiffs) {
         http.addHeader(F("x-ESP8266-mode"), F("spiffs"));
     } else {
@@ -976,6 +989,10 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 		}
 	}
 	return ModeButtonNoPress; // will never reach here (used just to avoid compiler warnings)
+}
+
+void IOTAppStory::onFirstBoot(THandlerFunction value) {
+	_firstBootCallback = value;
 }
 
 void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
