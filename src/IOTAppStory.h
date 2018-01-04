@@ -22,11 +22,11 @@
         #define MAXNUMEXTRAFIELDS 12
     #endif
     
-	// Wifi & Wifi Manager defines
-	#define USEMDNS false				// include MDNS responder
-    #define WIFIMAN false				// include wifi manager
-	#define IASCNF false					// include IAS Config pages
-	#define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
+    // Wifi & Wifi Manager defines
+    #define USEMDNS true								// include MDNS responder
+    #define WIFIMAN true								// include wifi manager
+    #define IASCNF true									// include IAS Config pages
+    #define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
 
     #define MAGICBYTES "CFG"	
     #define MAGICEEP "%"
