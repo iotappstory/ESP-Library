@@ -523,8 +523,8 @@ void WiFiManager::hdlIasCfgPages(const String args){
     HTTPClient http;
 
 	// connect to server
-	DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
-	DEBUG_WM(url);// 													<-- remove on release ?
+	//DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
+	//DEBUG_WM(url);// 													<-- remove on release ?
 	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	delay(100);
 	
@@ -535,13 +535,13 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	}
 	
 	//DEBUG_WM(F("after http.begin"));// 									<-- remove on release
-	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
 	
 	// add headers
     http.setUserAgent(F("ESP8266-http-Update"));
 	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
 	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
-    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipId()));
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
     http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
 	
