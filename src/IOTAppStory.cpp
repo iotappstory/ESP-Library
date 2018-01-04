@@ -49,7 +49,9 @@ void IOTAppStory::firstBoot(char ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
+#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(F(" Full erase of EEPROM"));
+#endif
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
 		delay(200);
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
@@ -63,11 +65,20 @@ void IOTAppStory::firstBoot(char ea){
 		config.automaticConfig = true;	// temp fix
 
 	}else if(ea == 'P'){
+#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
+#endif
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
-	}else{
-		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
 	}
+#if DEBUG_LVL >= 1
+	else{
+		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
+#endif
+	}
+	
+	// reset previous boardname
+	String emty = "yourESP";
+	emty.toCharArray(config.boardName, STRUCT_BNAME_SIZE);
 	
 	// update first boot config flag (date)
 	strcpy(config.compDate, _compDate);
@@ -77,8 +88,10 @@ void IOTAppStory::firstBoot(char ea){
 	
 	if (_firstBootCallback){
 		_firstBootCallback();
+#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F(" Run first boot callback"));
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
+#endif
 	}
 }
 
@@ -168,27 +181,27 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	if (!_configReaded) {
 		readConfig();
 	}
-	
-	// set appName as default boardName in case the app developer does not set it
-	if (config.boardName == "yourFirstApp") {
-		//preSetConfig((*config.appName), config.automaticUpdate);
-		preSetBoardname((*config.appName));
-	}
-	
+
 	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
+#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(F("Saving config presets...\n"));
+#endif
 	}
-
+#if DEBUG_LVL >= 1
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
-	
+#endif
+#if DEBUG_LVL >= 2
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
 	DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.boardName);
 	DEBUG_PRINTF_P(PSTR(" Automatic update: %d\n"), config.automaticUpdate);
+#endif
+#if DEBUG_LVL >= 1
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
+#endif
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
@@ -216,8 +229,10 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	
 	
 	//---------- SELECT BOARD MODE -----------------------------
+#if WIFIMAN == true
 	if (rtcMem.boardMode == 'C') configESP();
-
+#endif
+	
 	// --------- READ FULL CONFIG --------------------------
 	//readConfig();
 	
@@ -234,8 +249,10 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 	_appState = AppStateNoPress;
 
+#if DEBUG_LVL >= 1
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
 	DEBUG_PRINT(F("\n\n\n\n\n"));
+#endif
 }
 
 
@@ -289,42 +306,54 @@ void IOTAppStory::connectNetwork() {
 
 	WiFi.mode(WIFI_STA);
 	if (!isNetworkConnected()) {
-		DEBUG_PRINTLN("");
-		DEBUG_PRINTLN(F(" No Connection. Try to connect with saved PW"));
-
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(F("\n No Connection. Try to connect with saved PW"));
+	#endif
 		WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+	#if WIFIMAN == true
 		if (!isNetworkConnected()){  // still no success
 			if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
 		}
+	#endif
 	}
+	#if DEBUG_LVL >= 1
 	if (!isNetworkConnected()) {
 		// this point is only reached if config.automaticConfig = false
 		DEBUG_PRINT(F("\n WiFi NOT connected\n Continuing anyway"));
 	}else{
-		DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
-		DEBUG_PRINTLN(WiFi.macAddress());
-
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
+			DEBUG_PRINTLN(WiFi.macAddress());
+		#else
+			DEBUG_PRINTLN("");
+		#endif
 		DEBUG_PRINT(F(" Device IP Address: "));
 		DEBUG_PRINTLN(WiFi.localIP());
 	}
-	
-	
+	#endif
 
-	
+	#if USEMDNS == true
+		// Register host name in WiFi and mDNS
+		String hostNameWifi = config.boardName;   // boardName is device name
+		hostNameWifi.concat(".local");
+		wifi_station_set_hostname(config.boardName);
+		//   WiFi.hostname(hostNameWifi);
+		if (MDNS.begin(config.boardName)) {
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F(" MDNS responder started: http://"));
+			DEBUG_PRINT(hostNameWifi);
+		#endif
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F("\n\n To use MDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"));
+		#endif
+		} else {
+			espRestart('N', "MDNS not started");
+		}
+	#endif
 
-	// Register host name in WiFi and mDNS
-	String hostNameWifi = config.boardName;   // boardName is device name
-	hostNameWifi.concat(".local");
-	wifi_station_set_hostname(config.boardName);
-	//   WiFi.hostname(hostNameWifi);
-	if (MDNS.begin(config.boardName)) {
-		DEBUG_PRINT(F(" MDNS responder started: http://"));
-		DEBUG_PRINT(hostNameWifi);
-		DEBUG_PRINTLN(F("\n\n To use MDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"));
+	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
-	} else {
-		espRestart('N', "MDNS not started");
-	}
+	#endif
 }
 
 // Wait until network is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
@@ -344,9 +373,11 @@ bool IOTAppStory::isNetworkConnected() {
 bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	// update from IOTappStory.com
 	bool updateHappened = false;
-
-	DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s"), _firmware.c_str());
 	
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s\n"), _firmware.c_str());
+	#endif
+
 	if (_firmwareUpdateCallback){
 		_firmwareUpdateCallback();
 	}
@@ -371,48 +402,69 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 			updateHappened = iotUpdater(1,1);
 		}
 	}
-
-	DEBUG_PRINTLN(F("\n\n Returning from IOTAppStory.com"));
-	DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(F("\n Returning from IOTAppStory.com"));
+	#endif
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
 
 	return updateHappened;
 }
 
 bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
-	//byte retValue;
-
-	DEBUG_PRINT(F("\n\n Checking for "));
-	if(spiffs == false){
-		// type = sketch
-		DEBUG_PRINT(F("App(Sketch)"));
-	}
-	if(spiffs == true){
-		// type = spiffs
-		DEBUG_PRINT(F("SPIFFS"));
-	}
 	String url = "";
-	DEBUG_PRINT(F(" updates from: "));
+	
+	#if DEBUG_LVL == 1
+		DEBUG_PRINT(F(" Checking for "));
+	#endif
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(F("\n Checking for "));
+	#endif
+	#if DEBUG_LVL >= 1
+		if(spiffs == false){
+			// type = sketch
+			DEBUG_PRINT(F("App(Sketch)"));
+		}
+		if(spiffs == true){
+			// type = spiffs
+			DEBUG_PRINT(F("SPIFFS"));
+		}
+	#endif
+
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(F(" updates from: "));
+	#else
+		DEBUG_PRINT(F(" updates"));
+	#endif
+
 	if(system_get_free_heap_size() > 31300){
 		url = F("https://");
 	}else{
 		url = F("http://");
 	}
-	DEBUG_PRINT(url);
+
 	if(loc == 0){
 		// location 1
-		DEBUG_PRINT(config.HOST1);
-		DEBUG_PRINTLN(config.FILE1);
+		//DEBUG_PRINT(config.HOST1);
+		//DEBUG_PRINTLN(config.FILE1);
 
 		url += config.HOST1;
 		url += config.FILE1;
 	}else{
 		// location 1
-		DEBUG_PRINT(FPSTR(HOST2));
-		DEBUG_PRINTLN(FPSTR(FILE2));
+		//DEBUG_PRINT(FPSTR(HOST2));
+		//DEBUG_PRINTLN(FPSTR(FILE2));
 
 		url += FPSTR(HOST2);
 		url += FPSTR(FILE2);
 	}
+	
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(url);
+	#else
+		DEBUG_PRINTLN("");		
+	#endif
 	
     HTTPClient http;
 	if(system_get_free_heap_size() > 31300){
@@ -462,46 +514,42 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
     int code = http.GET();
     int len = http.getSize();
 
-    /*
-    DEBUG_PRINT("GET code: ");
-    DEBUG_PRINTLN(code);
-    DEBUG_PRINTLN("");
-    */
-
-
-	if(code == HTTP_CODE_OK){
+    if(code == HTTP_CODE_OK){
 		
 		ESP8266HTTPUpdate ESPhttpUpdate;
 		ESPhttpUpdate.rebootOnUpdate(true);
 		
-		DEBUG_PRINTLN(F(" Downloading update..."));
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F(" Downloading update..."));
+		#endif
 
-		/*
-		DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
-		DEBUG_PRINTLN("[httpUpdate] Server header:\n");
-		DEBUG_PRINTf("[httpUpdate]  - code: %d\n", code);
-		DEBUG_PRINTf("[httpUpdate]  - len: %d\n", len);
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
+			DEBUG_PRINTLN("[httpUpdate] Server header:\n");
+			DEBUG_PRINTf("[httpUpdate]  - code: %d\n", code);
+			DEBUG_PRINTf("[httpUpdate]  - len: %d\n", len);
 
-		if(http.hasHeader("x-MD5")) {
-			DEBUG_PRINTf("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
-		}
+			if(http.hasHeader("x-MD5")) {
+				DEBUG_PRINTf("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
+			}
 
-		DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
-		DEBUG_PRINTf("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
-		DEBUG_PRINTf("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
+			DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
+			DEBUG_PRINTf("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
+			DEBUG_PRINTf("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
 
-		if(currentVersion && currentVersion[0] != 0x00) {
-			DEBUG_PRINTf("[httpUpdate]  - current version: %s\n", currentVersion.c_str() );
-		}
-		*/
+			if(currentVersion && currentVersion[0] != 0x00) {
+				DEBUG_PRINTf("[httpUpdate]  - current version: %s\n", currentVersion.c_str() );
+			}
+		#endif
 
 		ESPhttpUpdate.handleUpdate(http, len, spiffs);
 		return true;
 
 	}else{
-		DEBUG_PRINT(http.getString());
-		
-		//DEBUG_PRINTLN(code);
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(http.getString());
+		#endif
+
 		if(code == HTTP_CODE_NOT_MODIFIED){
 			return true;
 		}else{
@@ -952,7 +1000,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 				continue;
 			}
 			return ModeButtonShortPress;
-		
+
 		case AppStateLongPress:
 			if (buttonTime > MODE_BUTTON_VERY_LONG_PRESS) {
 				_appState = AppStateVeryLongPress;
@@ -960,12 +1008,14 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 					_veryLongPressCallback();
 				continue;
 			}
+#if WIFIMAN == true
 			if (!isModeButtonPressed()) {
 				_appState = AppStateConfigMode;
 				continue;
 			}
+#endif
 			return ModeButtonLongPress;
-			
+	
 		case AppStateVeryLongPress:
 			if (!isModeButtonPressed()) {
 				_appState = AppStateNoPress;
@@ -980,12 +1030,13 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 			//DEBUG_PRINTLN("Calling Home");
 			callHome();
 			continue;
-		
+#if WIFIMAN == true	
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
 			DEBUG_PRINTLN(F(" Entering in Configuration Mode"));
 			espRestart('C', "Going into Configuration Mode");
 			continue;
+#endif
 		}
 	}
 	return ModeButtonNoPress; // will never reach here (used just to avoid compiler warnings)
