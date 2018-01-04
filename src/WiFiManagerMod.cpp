@@ -155,7 +155,7 @@ void WiFiManager::setupConfigPortal() {
   //server->on(F("/state"), std::bind(&WiFiManager::handleState, this));
   server->on(F("/scan"), std::bind(&WiFiManager::handleScan, this));
   
-  #if IASCNF == 1
+  #if IASCNF == true
 	  server->on(F("/ias"), std::bind(&WiFiManager::handleIAScfg, this));
   #endif
   
