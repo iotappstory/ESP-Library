@@ -111,7 +111,7 @@ void setup() {
     /* TIP! You can use this callback to put your app on it's own configuration mode */
   });
   
-  /* */
+  /* 
   IAS.onModeButtonNoPress([]() {
     Serial.println(F(" Mode Button is not pressed."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -126,7 +126,7 @@ void setup() {
     Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
-  
+  */
 
 
   //-------- Your Setup starts from here ---------------
