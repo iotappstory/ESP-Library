@@ -26,7 +26,9 @@ onModeButtonNoPress	KEYWORD2
 onModeButtonShortPress	KEYWORD2
 onModeButtonLongPress	KEYWORD2
 onModeButtonVeryLongPress	KEYWORD2
-onModeButtonConfigMode	KEYWORD2
+onFirstBoot	KEYWORD2
+onFirmwareUpdate	KEYWORD2
+onConfigMode	KEYWORD2
 
 addField	KEYWORD2
 begin	KEYWORD2
