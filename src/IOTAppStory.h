@@ -251,10 +251,10 @@
             void onModeButtonVeryLongPress(THandlerFunction fn);
     
             // called when the app is about to update the firmware
-            void onModeButtonFirmwareUpdate(THandlerFunction fn);
+            void onFirmwareUpdate(THandlerFunction fn);
     
             // called when the app is about to enter in configuration mode
-            void onModeButtonConfigMode(THandlerFunction fn);
+            void onConfigMode(THandlerFunction fn);
     
             
             void setCallHome(bool callHome);
