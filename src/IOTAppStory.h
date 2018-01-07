@@ -22,11 +22,11 @@
         #define MAXNUMEXTRAFIELDS 12
     #endif
     
-    // Wifi & Wifi Manager defines
-    #define USEMDNS true								// include MDNS responder
+		// Wifi & Wifi Manager defines
+		#define USEMDNS true								// include MDNS responder
     #define WIFIMAN true								// include wifi manager
-    #define IASCNF true									// include IAS Config pages
-    #define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
+		#define IASCNF true									// include IAS Config pages
+		#define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
 
     #define MAGICBYTES "CFG"	
     #define MAGICEEP "%"
@@ -35,11 +35,11 @@
     #define MAGICBYTE 85
 	
 	// length of config variables
-    #define STRUCT_CHAR_ARRAY_SIZE 50  	
-    #define STRUCT_COMPDATE_SIZE 20
-	#define STRUCT_BNAME_SIZE 30
-    #define STRUCT_HOST_SIZE 24
-    #define STRUCT_FILE_SIZE 31
+    #define STRUCT_CHAR_ARRAY_SIZE	50  	
+    #define STRUCT_COMPDATE_SIZE	20
+		#define STRUCT_BNAME_SIZE		30
+    #define STRUCT_HOST_SIZE		24
+    #define STRUCT_FILE_SIZE		31
 	
     // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
     #define MODE_BUTTON_SHORT_PRESS       500
@@ -115,7 +115,7 @@
 		bool automaticConfig;
 		char compDate[STRUCT_COMPDATE_SIZE];
 		char sha1[60];
-		char devPass[7];
+		char actCode[7];
 		
 		char magicBytes[4];
 	} strConfig;
@@ -269,6 +269,7 @@
             int     _nrXF = 0;				// nr of extra fields required in the config manager
             bool    _serialDebug;
             bool    _setPreSet = false;		// ;)
+            bool    _setBoardName = false;
 
             unsigned long   _buttonEntry;
             unsigned long   _debugEntry;
