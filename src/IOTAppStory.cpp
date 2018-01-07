@@ -58,7 +58,7 @@ void IOTAppStory::firstBoot(char ea){
 		
 		
 		String emty = F("000000");
-		emty.toCharArray(config.devPass, 7);
+		emty.toCharArray(config.actCode, 7);
 		emty = "";
 		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
@@ -75,10 +75,6 @@ void IOTAppStory::firstBoot(char ea){
 		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
 #endif
 	}
-	
-	// reset previous boardname
-	String emty = "yourESP";
-	emty.toCharArray(config.boardName, STRUCT_BNAME_SIZE);
 	
 	// update first boot config flag (date)
 	strcpy(config.compDate, _compDate);
@@ -108,6 +104,7 @@ void IOTAppStory::preSetBoardname(String boardName){
 	if (!_configReaded) {
 		readConfig();
 	}
+	_setBoardName = true;
 	SetConfigValueCharArray(config.boardName, boardName, STRUCT_BNAME_SIZE, _setPreSet);
 }
 
@@ -129,8 +126,12 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	if (!_configReaded) {
 		readConfig();
 	}
-	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	
+	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+	_setPreSet = true;
+	//SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	//SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetServer(String HOST1, String FILE1){
@@ -175,6 +176,11 @@ void IOTAppStory::begin(bool bootstats, bool ea){
 }
 
 void IOTAppStory::begin(bool bootstats, char ea){
+	// if boardName is not set, set it to the appName
+	if(_setBoardName == false){
+		preSetBoardname("yourESP");
+	}
+	
 	DEBUG_PRINTLN(F("\n"));
 	
 	// read config if needed
@@ -482,7 +488,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 
 
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    http.addHeader(F("x-ESP8266-act-id"), String(config.devPass));
+    http.addHeader(F("x-ESP8266-act-id"), String(config.actCode));
 
 	
     http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
@@ -773,8 +779,8 @@ void IOTAppStory::loopWiFiManager() {
 	for(unsigned int i = 0; i < _nrXF; i++){
 		strcpy((*fieldStruct[i].varPointer), parArray[i].getValue());
 	}
-	//wifiManager.devPass.toCharArray(config.devPass,7);
-	//DEBUG_PRINTLN(wifiManager.devPass);
+	//wifiManager.actCode.toCharArray(config.actCode,7);
+	//DEBUG_PRINTLN(wifiManager.actCode);
 	
 	writeConfig(true);
 	readConfig();  // read back to fill all variables
@@ -815,7 +821,7 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 #if DEBUG_EEPROM_CONFIG
-		DEBUG_PRINT_P(PSTR("Stored %s\n %s\n"), config.ssid, config.password);   // devPass
+		DEBUG_PRINT_P(PSTR("Stored %s\n %s\n"), config.ssid, config.password);   // actCode
 #endif		
 	}
 	
