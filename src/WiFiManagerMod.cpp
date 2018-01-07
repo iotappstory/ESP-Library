@@ -528,12 +528,12 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	delay(100);
 	
-	if(system_get_free_heap_size() > 31300){
+	if(system_get_free_heap_size() > 31500){
 		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
 	}
-	
+	delay(100);
 	//DEBUG_WM(F("after http.begin"));// 									<-- remove on release
 	//DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
 	
@@ -543,7 +543,7 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
     http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipId()));
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
+    http.addHeader(F("x-ESP8266-act-id"), String(config->actCode));
 	
     const char * headerkeys[] = { "x-MD5" };
     size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
@@ -556,8 +556,9 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	
 	// httpCode will be negative on error
 	if(httpCode < 1) {
-		DEBUG_WM(F("[HTTP] GET... failed, error: "));
-		DEBUG_WM(http.errorToString(httpCode).c_str());
+		DEBUG_WM(F("[HTTP] GET... failed, try again"));
+		//DEBUG_WM(F("[HTTP] GET... failed, error: "));
+		//DEBUG_WM(http.errorToString(httpCode).c_str());
 		return;
 	}
 	
@@ -577,7 +578,7 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	
 	// save received activation code
 	if(server->arg("c") && line == "(Y)"){
-		server->arg("c").toCharArray(config->devPass,7);
+		server->arg("c").toCharArray(config->actCode,7);
 		hdlIasCfgPages(F("IOTAppStory.com config"));
 	}else{
 		hdlReturn(line);
