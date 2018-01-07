@@ -40,7 +40,7 @@ extern "C" uint32_t _SPIFFS_end;
  * @return HTTPUpdateResult
  */
 void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
-
+	
 	if(len <= 0){
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINTF_P(PSTR(" Error: Received Content-Length header is %d"), len);
@@ -69,7 +69,7 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 			// if the Received Content-Length is larger than the free space exit update proces and return error
 			//return String(printf_P(PSTR("Not enough space (%d) update size: %d"), freeSpace, len));
 		}else{
-			
+
 			WiFiClient * tcp = http.getStreamPtr();
 
 			WiFiUDP::stopAll();
@@ -114,13 +114,14 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 			if(!error){
 				if(runUpdate(*tcp, len, http.header("x-MD5"), command)){
 					#if DEBUG_LVL >= 1
-						DEBUG_PRINT(F(" Received and \"installed\" update"));
+						DEBUG_PRINT(F(" Received & installed: "));
+						DEBUG_PRINT(http.header("x-name").c_str());
 					#endif
 					http.end();
 
 					if(_rebootOnUpdate && spiffs == false) {
 						#if DEBUG_LVL >= 1
-							DEBUG_PRINTLN(F(". Reboot necessary!"));
+							DEBUG_PRINTLN(F(" Reboot necessary!"));
 						#endif
 						ESP.restart();
 					}
@@ -151,6 +152,7 @@ bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int com
 		StreamString error;
 	#endif
 
+
     if(!Update.begin(size, command)) {
 		#if DEBUG_LVL == 3
 			Update.printError(error);
@@ -159,6 +161,8 @@ bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int com
 		#endif
         return false;
     }
+	
+
 
     if(md5.length()) {
         if(!Update.setMD5(md5.c_str())) {
@@ -167,7 +171,8 @@ bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int com
 			#endif
             return false;
         }
-    }
+	}
+
 
     if(Update.writeStream(in) != size) {
 		#if DEBUG_LVL == 3
@@ -177,6 +182,10 @@ bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int com
 		#endif
         return false;
     }
+	
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINT(F("."));
+	#endif
 
     if(!Update.end()) {
 		#if DEBUG_LVL == 3
@@ -186,6 +195,10 @@ bool ESP8266HTTPUpdate::runUpdate(Stream& in, uint32_t size, String md5, int com
 		#endif
         return false;
     }
+	
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINT(F("."));
+	#endif
 
     return true;
 }
