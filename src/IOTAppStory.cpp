@@ -49,9 +49,9 @@ void IOTAppStory::firstBoot(char ea){
 	
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
-#if DEBUG_LVL >= 1
-		DEBUG_PRINTLN(F(" Full erase of EEPROM"));
-#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(" Full erase of EEPROM"));
+		#endif
 		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
 		delay(200);
 		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
@@ -65,15 +65,15 @@ void IOTAppStory::firstBoot(char ea){
 		config.automaticConfig = true;	// temp fix
 
 	}else if(ea == 'P'){
-#if DEBUG_LVL >= 1
-		DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
-#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
+		#endif
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
 	}
-#if DEBUG_LVL >= 1
+	#if DEBUG_LVL >= 1
 	else{
 		DEBUG_PRINTLN(F(" Leave EEPROM intact"));
-#endif
+	#endif
 	}
 	
 	// update first boot config flag (date)
@@ -83,11 +83,10 @@ void IOTAppStory::firstBoot(char ea){
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 	
 	if (_firstBootCallback){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" Run first boot callback"));
+		#endif
 		_firstBootCallback();
-#if DEBUG_LVL >= 2
-		DEBUG_PRINTLN(F(" Run first boot callback"));
-		DEBUG_PRINTLN(FPSTR(SER_DEV));
-#endif
 	}
 }
 
@@ -191,23 +190,23 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
-#if DEBUG_LVL >= 1
-		DEBUG_PRINTLN(F("Saving config presets...\n"));
-#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F("Saving config presets...\n"));
+		#endif
 	}
-#if DEBUG_LVL >= 1
-	DEBUG_PRINTLN(FPSTR(SER_DEV));
-	DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
-#endif
-#if DEBUG_LVL >= 2
-	DEBUG_PRINTLN(FPSTR(SER_DEV));
-	DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
-	DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.boardName);
-	DEBUG_PRINTF_P(PSTR(" Automatic update: %d\n"), config.automaticUpdate);
-#endif
-#if DEBUG_LVL >= 1
-	DEBUG_PRINTLN(FPSTR(SER_DEV));
-#endif
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+		DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
+	#endif
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+		DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
+		DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.boardName);
+		DEBUG_PRINTF_P(PSTR(" Automatic update: %d\n"), config.automaticUpdate);
+	#endif
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
 
 	// ----------- PINS ----------------
 	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
@@ -235,9 +234,9 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	
 	
 	//---------- SELECT BOARD MODE -----------------------------
-#if WIFIMAN == true
-	if (rtcMem.boardMode == 'C') configESP();
-#endif
+	#if WIFIMAN == true
+		if (rtcMem.boardMode == 'C') configESP();
+	#endif
 	
 	// --------- READ FULL CONFIG --------------------------
 	//readConfig();
@@ -255,10 +254,10 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 	_appState = AppStateNoPress;
 
-#if DEBUG_LVL >= 1
 	// ----------- END SPECIFIC SETUP CODE ----------------------------
-	DEBUG_PRINT(F("\n\n\n\n\n"));
-#endif
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINT(F("\n\n\n\n\n"));
+	#endif
 }
 
 
@@ -312,30 +311,30 @@ void IOTAppStory::connectNetwork() {
 
 	WiFi.mode(WIFI_STA);
 	if (!isNetworkConnected()) {
-	#if DEBUG_LVL >= 1
-		DEBUG_PRINTLN(F("\n No Connection. Try to connect with saved PW"));
-	#endif
-		WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-	#if WIFIMAN == true
-		if (!isNetworkConnected()){  // still no success
-			if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
-		}
-	#endif
-	}
-	#if DEBUG_LVL >= 1
-	if (!isNetworkConnected()) {
-		// this point is only reached if config.automaticConfig = false
-		DEBUG_PRINT(F("\n WiFi NOT connected\n Continuing anyway"));
-	}else{
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
-			DEBUG_PRINTLN(WiFi.macAddress());
-		#else
-			DEBUG_PRINTLN("");
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F("\n No Connection. Try to connect with saved PW"));
 		#endif
-		DEBUG_PRINT(F(" Device IP Address: "));
-		DEBUG_PRINTLN(WiFi.localIP());
+			WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
+		#if WIFIMAN == true
+			if (!isNetworkConnected()){  // still no success
+				if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
+			}
+		#endif
 	}
+	#if DEBUG_LVL >= 1
+		if (!isNetworkConnected()) {
+			// this point is only reached if config.automaticConfig = false
+			DEBUG_PRINT(F("\n WiFi NOT connected\n Continuing anyway"));
+		}else{
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
+				DEBUG_PRINTLN(WiFi.macAddress());
+			#else
+				DEBUG_PRINTLN("");
+			#endif
+			DEBUG_PRINT(F(" Device IP Address: "));
+			DEBUG_PRINTLN(WiFi.localIP());
+		}
 	#endif
 
 	#if USEMDNS == true
@@ -512,7 +511,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 
 
     // track these headers for later use
-    const char * headerkeys[] = { "x-MD5" };
+    const char * headerkeys[] = { "x-MD5", "x-name" };
     size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
     http.collectHeaders(headerkeys, headerkeyssize);
 
@@ -820,9 +819,9 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 	if (WiFi.psk() != "") {
 		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-#if DEBUG_EEPROM_CONFIG
-		DEBUG_PRINT_P(PSTR("Stored %s\n %s\n"), config.ssid, config.password);   // actCode
-#endif		
+		#if DEBUG_EEPROM_CONFIG
+			DEBUG_PRINT_P(PSTR("Stored %s\n %s\n"), config.ssid, config.password);   // actCode
+		#endif		
 	}
 	
 	EEPROM.begin(EEPROM_SIZE);
@@ -836,16 +835,16 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 	for (unsigned int t = 0; t < sizeof(config); t++) {
 		EEPROM.write(t, *((char*)&config + t));
 		
-#if DEBUG_EEPROM_CONFIG
-		// DEBUG (show all config EEPROM slots in one line)
-		DEBUG_PRINT(GetCharToDisplayInDebug(*((char*)&config + t)));
-#endif
+		#if DEBUG_EEPROM_CONFIG
+			// DEBUG (show all config EEPROM slots in one line)
+			DEBUG_PRINT(GetCharToDisplayInDebug(*((char*)&config + t)));
+		#endif
 		
 	}
 	EEPROM.commit();
-#if DEBUG_EEPROM_CONFIG
-	DEBUG_PRINTLN();
-#endif
+	#if DEBUG_EEPROM_CONFIG
+		DEBUG_PRINTLN();
+	#endif
 	
 	if(wifiSave == true && _nrXF > 0){
 		// LOOP THROUGH ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
@@ -898,10 +897,10 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 					}
 					EEPROM.put(t, valueTowrite);
 					
-#if DEBUG_EEPROM_CONFIG
-					// DEBUG (show all wifiSave EEPROM slots in one line)
-					DEBUG_PRINT(GetCharToDisplayInDebug(valueTowrite));
-#endif
+					#if DEBUG_EEPROM_CONFIG
+						// DEBUG (show all wifiSave EEPROM slots in one line)
+						DEBUG_PRINT(GetCharToDisplayInDebug(valueTowrite));
+					#endif
 		
 				}
 			}
@@ -925,15 +924,15 @@ bool IOTAppStory::readConfig() {
 			char valueReaded = EEPROM.read(t);
 			*((char*)&config + t) = valueReaded;
 			
-#if DEBUG_EEPROM_CONFIG
-			// DEBUG (show all config EEPROM slots in one line)
-			DEBUG_PRINT(GetCharToDisplayInDebug(valueReaded));
-#endif
+			#if DEBUG_EEPROM_CONFIG
+				// DEBUG (show all config EEPROM slots in one line)
+				DEBUG_PRINT(GetCharToDisplayInDebug(valueReaded));
+			#endif
 		}
 		EEPROM.end();
-#if DEBUG_EEPROM_CONFIG
-		DEBUG_PRINTLN();
-#endif
+		#if DEBUG_EEPROM_CONFIG
+			DEBUG_PRINTLN();
+		#endif
 		ret = true;
 
 	} else {
@@ -959,7 +958,7 @@ ModeButtonState IOTAppStory::buttonLoop() {
    return getModeButtonState();
 }
 
-void IOTAppStory::saveConfigCallback () {        								// <<-- could be deleted ?
+void IOTAppStory::saveConfigCallback () {
 	writeConfig();
 }
 
@@ -1048,13 +1047,6 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 	return ModeButtonNoPress; // will never reach here (used just to avoid compiler warnings)
 }
 
-void IOTAppStory::onFirstBoot(THandlerFunction value) {
-	_firstBootCallback = value;
-}
-
-void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
-	_noPressCallback = value;
-}
 
 void IOTAppStory::setCallHome(bool callHome) {
    _callHome = callHome;
@@ -1062,6 +1054,15 @@ void IOTAppStory::setCallHome(bool callHome) {
 
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
    _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
+}
+
+
+void IOTAppStory::onFirstBoot(THandlerFunction value) {
+	_firstBootCallback = value;
+}
+
+void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
+	_noPressCallback = value;
 }
 
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
@@ -1076,11 +1077,11 @@ void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
 	_veryLongPressCallback = value;
 }
 
-void IOTAppStory::onModeButtonFirmwareUpdate(THandlerFunction value) {
+void IOTAppStory::onFirmwareUpdate(THandlerFunction value) {
 	_firmwareUpdateCallback = value;
 }
 
-void IOTAppStory::onModeButtonConfigMode(THandlerFunction value) {
+void IOTAppStory::onConfigMode(THandlerFunction value) {
 	_configModeCallback = value;
 }
 
