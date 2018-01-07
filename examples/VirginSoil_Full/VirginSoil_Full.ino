@@ -74,6 +74,13 @@ void setup() {
   IAS.addField(ledPin, "ledpin", "ledPin", 2);
   /* TIP! delete the lines above when not used */
 
+
+  /*
+  IAS.onFirstBoot([]() {                              // if you want to run or display something on the first time this app boots
+    Serial.println(F(" Do stuff..."));
+  });
+  */
+  
   
 	//IAS.begin();
 	//IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS
@@ -84,8 +91,10 @@ void setup() {
   IAS.setCallHomeInterval(60);										    // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
+
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
+
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -97,27 +106,27 @@ void setup() {
   });
 
   IAS.onModeButtonVeryLongPress([]() {
-    Serial.println(F(" If mode button is released, I won't do anything."));
+    Serial.println(F(" If mode button is released, I won't do anything unless you program me to."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     /* TIP! You can use this callback to put your app on it's own configuration mode */
   });
   
-  /*
+  /* */
   IAS.onModeButtonNoPress([]() {
-    Serial.println(F(" Mode Button is not pressed.");
-    Serial.println(F("*-------------------------------------------------------------------------*");
+    Serial.println(F(" Mode Button is not pressed."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
   });
   
-  IAS.onModeButtonFirmwareUpdate([]() {
+  IAS.onFirmwareUpdate([]() {
     Serial.println(F(" Checking if there is a firmware update available."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
-  IAS.onModeButtonConfigMode([]() {
+  IAS.onConfigMode([]() {
     Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
-  */
+  
 
 
   //-------- Your Setup starts from here ---------------
