@@ -505,11 +505,18 @@ void WiFiManager::handleIAScfg() {
 void WiFiManager::hdlIasCfgPages(const String args){
 
 	String url = "";
-	//DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
-	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	bool httpSwitch = false;
 	
-	if(system_get_free_heap_size() > 31500){
-		url += F("https://"); // 										<<--  https We need to free up RAM first!
+	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+		httpSwitch = true;
+	}
+	
+	
+	//DEBUG_WM(F("Start hdlIasCfgPages()"));							//<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size()); 							//<-- remove on release
+	
+	if(httpSwitch == true){
+		url += F("https://");  											//<<--  https We need to free up RAM first!
 	}else{
 		url += F("http://");
 	}
@@ -519,23 +526,23 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	url += args;
 	
 	// start HTTPClient
-	//DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
+	//DEBUG_WM(F("Start HTTPClient")); 									//<-- remove on release
     HTTPClient http;
 
 	// connect to server
-	//DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
-	//DEBUG_WM(url);// 													<-- remove on release ?
-	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	//DEBUG_WM(F("Connecting to: ")); 									//<-- remove on release ?
+	//DEBUG_WM(url); 													//<-- remove on release ?
+	//DEBUG_WM(system_get_free_heap_size()); 							//<-- remove on release
 	delay(100);
 	
-	if(system_get_free_heap_size() > 31500){
-		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
+	if(httpSwitch == true){
+		http.begin(url, config->sha1);  								//<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
 	}
 	delay(100);
-	//DEBUG_WM(F("after http.begin"));// 									<-- remove on release
-	//DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
+	//DEBUG_WM(F("after http.begin")); 									//<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size());	 						//<-- remove on release
 	
 	// add headers
     http.setUserAgent(F("ESP8266-http-Update"));
