@@ -22,24 +22,27 @@
         #define MAXNUMEXTRAFIELDS 12
     #endif
     
-		// Wifi & Wifi Manager defines
-		#define USEMDNS true								// include MDNS responder
-    #define WIFIMAN true								// include wifi manager
-		#define IASCNF true									// include IAS Config pages
-		#define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
+    // Wifi & Wifi Manager defines
+    #define USEMDNS true				// include MDNS responder
+    #define WIFIMAN true				// include wifi manager
+    #define IASCNF true					// include IAS Config pages
+    #define WIFI_MANAGER_MAX_PARAMS 12	// wifimanger | max num of fields that can be added
 
-    #define MAGICBYTES "CFG"	
-    #define MAGICEEP "%"
-    #define UDP_PORT 514
-    #define RTCMEMBEGIN 68
-    #define MAGICBYTE 85
+		#define HTTPS 				true
+    #define HEAPFORHTTPS 	31500
+
+    #define MAGICBYTES 		"CFG"	
+    #define MAGICEEP 			"%"
+    #define UDP_PORT 			514
+    #define RTCMEMBEGIN 	68
+    #define MAGICBYTE 		85
 	
-	// length of config variables
+    // length of config variables
     #define STRUCT_CHAR_ARRAY_SIZE	50  	
-    #define STRUCT_COMPDATE_SIZE	20
-		#define STRUCT_BNAME_SIZE		30
-    #define STRUCT_HOST_SIZE		24
-    #define STRUCT_FILE_SIZE		31
+    #define STRUCT_COMPDATE_SIZE		20
+		#define STRUCT_BNAME_SIZE				30
+    #define STRUCT_HOST_SIZE				24
+    #define STRUCT_FILE_SIZE				31
 	
     // constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
     #define MODE_BUTTON_SHORT_PRESS       500
