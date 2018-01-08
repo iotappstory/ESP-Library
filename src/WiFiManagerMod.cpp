@@ -508,7 +508,7 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	//DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
 	//DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
 	
-	if(system_get_free_heap_size() > 31300){
+	if(system_get_free_heap_size() > 31500){
 		url += F("https://"); // 										<<--  https We need to free up RAM first!
 	}else{
 		url += F("http://");
