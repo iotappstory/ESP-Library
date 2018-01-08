@@ -530,20 +530,17 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
 			DEBUG_PRINTLN("[httpUpdate] Server header:\n");
-			DEBUG_PRINTf("[httpUpdate]  - code: %d\n", code);
-			DEBUG_PRINTf("[httpUpdate]  - len: %d\n", len);
+			DEBUG_PRINTF_P("[httpUpdate]  - code: %d\n", code);
+			DEBUG_PRINTF_P("[httpUpdate]  - len: %d\n", len);
 
 			if(http.hasHeader("x-MD5")) {
-				DEBUG_PRINTf("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
+				DEBUG_PRINTF_P("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
 			}
 
 			DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
-			DEBUG_PRINTf("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
-			DEBUG_PRINTf("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
-
-			if(currentVersion && currentVersion[0] != 0x00) {
-				DEBUG_PRINTf("[httpUpdate]  - current version: %s\n", currentVersion.c_str() );
-			}
+			DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
+			DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
+			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", _firmware.c_str() );
 		#endif
 
 		ESPhttpUpdate.handleUpdate(http, len, spiffs);
