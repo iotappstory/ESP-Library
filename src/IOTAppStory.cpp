@@ -443,7 +443,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		DEBUG_PRINT(F(" updates"));
 	#endif
 
-	if(system_get_free_heap_size() > 31300){
+	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
 		url = F("https://");
 	}else{
 		url = F("http://");
@@ -457,7 +457,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		url += config.HOST1;
 		url += config.FILE1;
 	}else{
-		// location 1
+		// location 2
 		//DEBUG_PRINT(FPSTR(HOST2));
 		//DEBUG_PRINTLN(FPSTR(FILE2));
 
@@ -478,7 +478,6 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		http.begin(url);
 	}
 	
-	//ret = ESPhttpUpdate.update(http,_firmware,spiffs);		// type == 0 = sketch // type == 1 = spiffs
 	
     // use HTTP/1.0 the update handler does not support transfer encoding
     http.useHTTP10(true);
@@ -737,6 +736,10 @@ int IOTAppStory::dPinConv(String orgVal){
 }
 
 void IOTAppStory::loopWiFiManager() {
+	if (_configModeCallback){
+		_configModeCallback();
+	}
+	
 	WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
 	
 	for(unsigned int i = 0; i < _nrXF; i++){
@@ -790,9 +793,6 @@ void IOTAppStory::loopWiFiManager() {
 void IOTAppStory::espRestart(char mmode, const char* message) {
 	while (isModeButtonPressed()) yield();    // wait till GPIOo released
 	delay(500);
-	
-	if (_configModeCallback)
-		_configModeCallback();
 	
 	rtcMem.boardMode = mmode;
 	writeRTCmem();
