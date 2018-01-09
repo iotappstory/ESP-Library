@@ -1,5 +1,5 @@
 /*
- This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+  This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
 
   Copyright (c) [2016] [Andreas Spiess]
@@ -67,9 +67,9 @@ void displayUpdate() {
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.drawString(32, 15, F("Update"));
-  display.setFont(ArialMT_Plain_16);
-  display.drawString(32, 40, F("Sketch"));
+  display.drawString(32, 13, F("Update"));
+  display.drawString(52, 31, F("of"));
+  display.drawString(32, 49, F("Sketch"));
   display.display();
 }
 
@@ -91,13 +91,17 @@ void setup() {
   display.init();
   display.flipScreenVertically();
   display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(48, 35, F("Wait"));
+  display.display();
 
   String boardName = APPNAME"_" + WiFi.macAddress();
   IAS.preSetBoardname(boardName);         // preset Boardname
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
- 
+
   IAS.setCallHome(true);                  // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(60);            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
@@ -109,7 +113,7 @@ void setup() {
     displayStartup();
     ESP.reset();
   });
-  
+
   IAS.onConfigMode([]() {
     //Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
     //Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -123,7 +127,7 @@ void setup() {
   });
 
 
-   IAS.begin(true, 'F');                   // 1st parameter: true or false to view BOOT STATISTICS
+  IAS.begin(true, 'F');                   // 1st parameter: true or false to view BOOT STATISTICS
   // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
 
