@@ -126,11 +126,11 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 		readConfig();
 	}
 	
-	ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-	password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+	//ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
+	//password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 	_setPreSet = true;
-	//SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	//SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
 void IOTAppStory::preSetServer(String HOST1, String FILE1){
@@ -419,6 +419,11 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	String url = "";
+	bool httpSwitch = false;
+	
+	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+		httpSwitch = true;
+	}
 	
 	#if DEBUG_LVL == 1
 		DEBUG_PRINT(F(" Checking for "));
@@ -443,7 +448,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		DEBUG_PRINT(F(" updates"));
 	#endif
 
-	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+	if(httpSwitch == true){
 		url = F("https://");
 	}else{
 		url = F("http://");
@@ -451,16 +456,10 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 
 	if(loc == 0){
 		// location 1
-		//DEBUG_PRINT(config.HOST1);
-		//DEBUG_PRINTLN(config.FILE1);
-
 		url += config.HOST1;
 		url += config.FILE1;
 	}else{
 		// location 2
-		//DEBUG_PRINT(FPSTR(HOST2));
-		//DEBUG_PRINTLN(FPSTR(FILE2));
-
 		url += FPSTR(HOST2);
 		url += FPSTR(FILE2);
 	}
@@ -472,7 +471,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	#endif
 	
     HTTPClient http;
-	if(system_get_free_heap_size() > 31300){
+	if(httpSwitch == true){
 		http.begin(url, config.sha1); // 								<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
