@@ -85,6 +85,26 @@ setup () {
 ```
 </br>
 
+### `setCallHome(bool)`
+Set to 'true' to enable calling home frequently (disabled by default)</br></br>
+
+### `setCallHomeInterval(int)`
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+
+Example:
+
+```c
+...
+
+setup () {
+    ...
+    
+    IAS.setCallHome(true);
+    IAS.setCallHomeInterval(60);
+}
+```
+</br>
+
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
 reference to org variable | html field name | html field label | max nr of char
 
@@ -171,12 +191,6 @@ erased on first boot of the sketch/app.
 If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.</br></br>
 
-### `setCallHome(bool)`
-Set to 'true' to enable calling home frequently (disabled by default)</br></br>
-
-### `setCallHomeInterval(int)`
-Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
-
 Example:
 
 ```c
@@ -186,9 +200,6 @@ setup () {
     ...
     
     IAS.begin(true,'P');
-    
-    IAS.setCallHome(true);
-    IAS.setCallHomeInterval(60);
 }
 ```
 </br>
