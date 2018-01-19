@@ -161,7 +161,6 @@ In this example we use serial print to demonstrate the call backs. But you could
 
 setup () {
     ...
-    IAS.begin();
     
     IAS.onModeButtonShortPress([]() {
         Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
@@ -172,6 +171,8 @@ setup () {
         Serial.println(F(" If mode button is released, I will enter in configuration mode."));
         Serial.println(F("*-------------------------------------------------------------------------*"));
     });
+    
+    IAS.begin();
 }
 ```
 </br>
