@@ -113,43 +113,6 @@ setup () {
 ```
 </br>
 
-### `begin(bool bootstat, char eraseEeprom)`
-Set up IAS and start all dependent services. 
-
-If `bootstat` is true, the code will keep track of number of boots and print
-contents of RTC memory.
-
-If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
-
-If `eraseEeprom` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.
-
-If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
-erased on first boot of the sketch/app.</br></br>
-
-### `setCallHome(bool)`
-Set to 'true' to enable calling home frequently (disabled by default)</br></br>
-
-### `setCallHomeInterval(int)`
-Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
-
-Example:
-
-```c
-...
-
-setup () {
-    ...
-    
-    IAS.begin(true,'P');
-    
-    IAS.setCallHome(true);
-    IAS.setCallHomeInterval(60);
-}
-```
-</br>
-
 ### `callbacks...()`
 You can configure callback functions that can give feedback to the app user about the current state of the application.
 
@@ -189,6 +152,43 @@ setup () {
         Serial.println(F(" If mode button is released, I will enter in configuration mode."));
         Serial.println(F("*-------------------------------------------------------------------------*"));
     });
+}
+```
+</br>
+
+### `begin(bool bootstat, char eraseEeprom)`
+Set up IAS and start all dependent services. 
+
+If `bootstat` is true, the code will keep track of number of boots and print
+contents of RTC memory.
+
+If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.
+
+If `eraseEeprom` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.
+
+If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
+erased on first boot of the sketch/app.</br></br>
+
+### `setCallHome(bool)`
+Set to 'true' to enable calling home frequently (disabled by default)</br></br>
+
+### `setCallHomeInterval(int)`
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+
+Example:
+
+```c
+...
+
+setup () {
+    ...
+    
+    IAS.begin(true,'P');
+    
+    IAS.setCallHome(true);
+    IAS.setCallHomeInterval(60);
 }
 ```
 </br>
