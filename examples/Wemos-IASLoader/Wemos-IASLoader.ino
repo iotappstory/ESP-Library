@@ -115,14 +115,14 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    //Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
-    //Serial.println(F("*-------------------------------------------------------------------------*"));
+    Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
     displayConfigMode();
   });
 
   IAS.onFirmwareUpdate([]() {
-    //Serial.println(F(" Checking if there is a firmware update available."));
-    //Serial.println(F("*-------------------------------------------------------------------------*"));
+    Serial.println(F(" Checking if there is a firmware update available."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
     displayUpdate();
   });
 
