@@ -1,8 +1,10 @@
-/* This is an initial APPNAME to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
-  Your code can be filled wherever it is marked.
+/*
+  This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+  Your code can be added wherever it is marked. 
 
+  You will need the button & OLED shields!
 
-  Copyright (c) [2016] [Andreas Spiess]
+  Copyright (c) [2018] [Andreas Spiess]
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -25,49 +27,33 @@
 */
 
 #define APPNAME "WemosClock"
-#define VERSION "V1.1.0"
+#define VERSION "V2.1.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
 
-#define PIN_RESET 255       //
-#define DC_JUMPER 0         // I2C Addres: 0 - 0x3C, 1 - 0x3D
+#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
+#include <IOTAppStory.h>                                  // IotAppStory.com library
+#include <SNTPtime.h>                                     // 
 
-#include <IOTAppStory.h>
 
-#include <SNTPtime.h>
-#include <Wire.h>           // Include Wire if you're using I2C
-#include <SFE_MicroOLED.h>  // Include the SFE_MicroOLED library
-
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
-
-MicroOLED oled(PIN_RESET, DC_JUMPER); // Example I2C declaration
-SNTPtime NTPch("ch.pool.ntp.org");
-
+SNTPtime NTPch("ch.pool.ntp.org");                        // Initialize time
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
 strDateTime dateTime;
 
-// How fast do you want the clock to spin? Set this to 1 for fun.
-// Set this to 1000 to get _about_ 1 second timing.
-const int CLOCK_SPEED = 1000;
+int screenW = 64;
+int screenH = 48;
+int clockCenterX = screenW / 2;
+int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
+int clockRadius = 23;
+int x = 30, y = 10;
 
-// Global variables to help draw the clock face:
-const int MIDDLE_Y = oled.getLCDHeight() / 2;
-const int MIDDLE_X = oled.getLCDWidth() / 2;
-
-int CLOCK_RADIUS;
-int POS_12_X, POS_12_Y;
-int POS_3_X, POS_3_Y;
-int POS_6_X, POS_6_Y;
-int POS_9_X, POS_9_Y;
-int S_LENGTH;
-int M_LENGTH;
-int H_LENGTH;
-
-unsigned long lastDraw = 0;
 int lastSecond;
+unsigned long iotEntry = millis();
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
@@ -80,50 +66,74 @@ char* timeZone = "1.0";
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                              // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                     // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
+  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
+  
+  display.init();                                         // setup OLED and show "Wait"
+  display.flipScreenVertically();
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(48, 35, F("Wait"));
+  display.display();
 
 
-  oled.begin();                                       // Initialize the OLED
-  oled.clear(PAGE);                                   // Clear the display's internal memory
-  oled.clear(ALL);                                    // Clear the library's display buffer
-  oled.display();                                     // Display what's in the buffer (splashscreen)
+  String boardName = APPNAME"_" + WiFi.macAddress();
+  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://WemosClock_xx:xx:xx.local
 
 
-  IAS.preSetBoardname("wemos-clock");                 // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
-  IAS.preSetAutoUpdate(true);                         // automaticUpdate (true, false)
+  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
-  IAS.addField(timeZone, "timezone", "Timezone", 4);  // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-                                                      // reference to org variable | field name | field label value | max char return
-
-  IAS.begin(true,'P');                                // 1st parameter: true or false to view BOOT STATISTICS
-                                                      // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-
-  IAS.setCallHome(true);                              // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                        // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.addField(timeZone, "timezone", "Timezone", 4);      // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+                                                          // reference to org variable | field name | field label value | max char return
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
+  
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
+    dispTemplate_threeLineV2(F("Release"), F("for"), F("Updates"));
   });
 
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
+    dispTemplate_threeLineV2(F("Release"), F("for"), F("Config"));
   });
 
+  IAS.onConfigMode([]() {
+    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "x:x:" + WiFi.macAddress().substring(9, 99));
+  });
+
+  IAS.onFirmwareUpdateCheck([]() {
+    dispTemplate_threeLineV2(F("Checking"), F("for"), F("Updates"));
+  });
+
+  IAS.onFirmwareUpdateDownload([]() {
+    dispTemplate_threeLineV2(F("Download"), F("&"), F("Install App"));
+  });
+
+  IAS.onFirmwareUpdateError([]() {
+    dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
+  });
+  
+
+  IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
+                                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
   //-------- Your Setup starts from here ---------------
-  
-  while (!NTPch.setSNTPtime()) Serial.print(F("."));  // set internal clock
-  Serial.println();
-  Serial.println(F("Time set"));
 
-  initClockVariables();
+
+  while (!NTPch.setSNTPtime()) Serial.print(".");         // set internal clock
+  
+  Serial.print(F(" Time zone set to: "));                 // display timeZone
+  Serial.print(timeZone);
+  Serial.println(F(" You can change this in config."));
+  Serial.println(F("*-------------------------------------------------------------------------*\n\n"));
 
 }
 
@@ -131,98 +141,89 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();                                   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.buttonLoop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------
-
-  dateTime = NTPch.getTime(1.0, 1); // get time from internal clock
-  if (dateTime.second != lastSecond) {
+  
+  dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
+  if (dateTime.second != lastSecond && digitalRead(D3) == HIGH) {
     //NTPch.printDateTime(dateTime);
-    oled.clear(PAGE);  // Clear the buffer
     drawFace();
     drawArms(dateTime.hour, dateTime.minute, dateTime.second);
-    oled.display();
+    display.display();
     lastSecond = dateTime.second;
   }
+  
 }
 
 
-void initClockVariables() {
-  // Calculate constants for clock face component positions:
-  oled.setFontType(0);
-  if (MIDDLE_X > MIDDLE_Y) CLOCK_RADIUS = MIDDLE_Y;
-  else CLOCK_RADIUS = MIDDLE_X;
-  CLOCK_RADIUS = CLOCK_RADIUS - 1;
-  POS_12_X = MIDDLE_X - oled.getFontWidth();
-  POS_12_Y = MIDDLE_Y - CLOCK_RADIUS + 2;
-  POS_3_X  = MIDDLE_X + CLOCK_RADIUS - oled.getFontWidth() - 1;
-  POS_3_Y  = MIDDLE_Y - oled.getFontHeight() / 2;
-  POS_6_X  = MIDDLE_X - oled.getFontWidth() / 2;
-  POS_6_Y  = MIDDLE_Y + CLOCK_RADIUS - oled.getFontHeight() - 1;
-  POS_9_X  = MIDDLE_X - CLOCK_RADIUS + oled.getFontWidth() - 2;
-  POS_9_Y  = MIDDLE_Y - oled.getFontHeight() / 2;
 
-  // Calculate clock arm lengths
-  S_LENGTH = CLOCK_RADIUS - 2;
-  M_LENGTH = S_LENGTH * 0.7;
-  H_LENGTH = S_LENGTH * 0.5;
+// ================================================ Extra functions ======================================
+void dispTemplate_threeLineV1(String str1, String str2, String str3) {
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(32, 15, str1);
+  display.drawString(32, 30, str2);
+  display.drawString(32, 45, str3);
+  display.display();
+}
+
+void dispTemplate_threeLineV2(String str1, String str2, String str3) {
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(32, 13, str1);
+  display.setFont(ArialMT_Plain_24);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 24, str2);
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  display.drawString(96, 51, str3);
+  display.display();
+}
+
+// Draw an analog clock face
+void drawFace() {
+  display.clear();
+  display.drawCircle(clockCenterX + x, clockCenterY + y, 2);
+  //
+  //hour ticks
+  for ( int z = 0; z < 360; z = z + 30 ) {
+    //Begin at 0° and stop at 360°
+    float angle = z ;
+    angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+    int x2 = ( clockCenterX + ( sin(angle) * clockRadius ) );
+    int y2 = ( clockCenterY - ( cos(angle) * clockRadius ) );
+    int x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 8 ) ) ) );
+    int y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 8 ) ) ) );
+    display.drawLine( x2 + x , y2 + y , x3 + x , y3 + y);
+  }
 }
 
 // Draw the clock's three arms: seconds, minutes, hours.
 void drawArms(int h, int m, int s)
 {
-  double midHours;  // this will be used to slightly adjust the hour hand
-  static int hx, hy, mx, my, sx, sy;
-
-  // Adjust time to shift display 90 degrees ccw
-  // this will turn the clock the same direction as text:
-  h -= 3;
-  m -= 15;
-  s -= 15;
-  if (h <= 0)
-    h += 12;
-  if (m < 0)
-    m += 60;
-  if (s < 0)
-    s += 60;
-
-  // Calculate and draw new lines:
-  s = map(s, 0, 60, 0, 360);  // map the 0-60, to "360 degrees"
-  sx = S_LENGTH * cos(PI * ((float)s) / 180);  // woo trig!
-  sy = S_LENGTH * sin(PI * ((float)s) / 180);  // woo trig!
-  // draw the second hand:
-  oled.line(MIDDLE_X, MIDDLE_Y, MIDDLE_X + sx, MIDDLE_Y + sy);
-
-  m = map(m, 0, 60, 0, 360);  // map the 0-60, to "360 degrees"
-  mx = M_LENGTH * cos(PI * ((float)m) / 180);  // woo trig!
-  my = M_LENGTH * sin(PI * ((float)m) / 180);  // woo trig!
-  // draw the minute hand
-  oled.line(MIDDLE_X, MIDDLE_Y, MIDDLE_X + mx, MIDDLE_Y + my);
-
-  midHours = dateTime.minute / 12; // midHours is used to set the hours hand to middling levels between whole hours
-  h *= 5;  // Get hours and midhours to the same scale
-  h += midHours;  // add hours and midhours
-  h = map(h, 0, 60, 0, 360);  // map the 0-60, to "360 degrees"
-  hx = H_LENGTH * cos(PI * ((float)h) / 180);  // woo trig!
-  hy = H_LENGTH * sin(PI * ((float)h) / 180);  // woo trig!
-  // draw the hour hand:
-  oled.line(MIDDLE_X, MIDDLE_Y, MIDDLE_X + hx, MIDDLE_Y + hy);
+  // display second hand
+  float angle = s * 6 ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  int x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 5 ) ) ) );
+  int y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 5 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
+  //
+  // display minute hand
+  angle = m * 6 ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 4 ) ) ) );
+  y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 4 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
+  //
+  // display hour hand
+  angle = h * 30 + int( ( m / 12 ) * 6 )   ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
+  y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
 }
 
-// Draw an analog clock face
-void drawFace() {
-  // Draw the clock border
-  oled.circle(MIDDLE_X, MIDDLE_Y, CLOCK_RADIUS);
-
-  // Draw the clock numbers
-  oled.setFontType(0); // set font type 0, please see declaration in SFE_MicroOLED.cpp
-  oled.setCursor(POS_12_X, POS_12_Y); // points cursor to x=27 y=0
-  oled.print(12);
-  oled.setCursor(POS_6_X, POS_6_Y);
-  oled.print(6);
-  oled.setCursor(POS_9_X, POS_9_Y);
-  oled.print(9);
-  oled.setCursor(POS_3_X, POS_3_Y);
-  oled.print(3);
-}
