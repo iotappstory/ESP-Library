@@ -254,7 +254,13 @@
             void onModeButtonVeryLongPress(THandlerFunction fn);
     
             // called when the app is about to update the firmware
-            void onFirmwareUpdate(THandlerFunction fn);
+            void onFirmwareUpdateCheck(THandlerFunction fn);
+    
+            // called when the app is about to update the firmware
+            void onFirmwareUpdateDownload(THandlerFunction fn);
+    
+            // called when the app is about to update the firmware
+            void onFirmwareUpdateError(THandlerFunction fn);
     
             // called when the app is about to enter in configuration mode
             void onConfigMode(THandlerFunction fn);
@@ -283,7 +289,9 @@
             THandlerFunction _shortPressCallback;
             THandlerFunction _longPressCallback;
             THandlerFunction _veryLongPressCallback;
-            THandlerFunction _firmwareUpdateCallback;
+            THandlerFunction _firmwareUpdateCheckCallback;
+            THandlerFunction _firmwareUpdateDownloadCallback;
+            THandlerFunction _firmwareUpdateErrorCallback;
             THandlerFunction _configModeCallback;
 
             bool	_configReaded = false;
