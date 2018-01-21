@@ -108,8 +108,18 @@ void setup() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
-  IAS.onFirmwareUpdate([]() {
+  IAS.onFirmwareUpdateCheck([]() {
     Serial.println(F(" Checking if there is a firmware update available."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onFirmwareUpdateDownload([]() {
+    Serial.println(F(" Downloading and Installing firmware update."));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onFirmwareUpdateError([]() {
+    Serial.println(F(" Update failed...Check your logs"));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
