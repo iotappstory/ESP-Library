@@ -48,10 +48,7 @@ void setup() {
   boardName = APPNAME"_" + WiFi.macAddress();
   IAS.preSetBoardname(boardName);	        // preset Boardname
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
-  
 
-  IAS.begin(true,'F');                    // 1st parameter: true or false to view BOOT STATISTICS
-                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
   IAS.setCallHome(true);                  // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(60);            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
@@ -70,6 +67,12 @@ void setup() {
   });
   
 
+  IAS.begin(true,'F');                    // 1st parameter: true or false to view BOOT STATISTICS
+                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact  
+
+	//-------- Your Setup starts from here ---------------
+	
+	
   IAS.callHome(true);
 }
 
