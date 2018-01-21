@@ -27,7 +27,9 @@ onModeButtonShortPress	KEYWORD2
 onModeButtonLongPress	KEYWORD2
 onModeButtonVeryLongPress	KEYWORD2
 onFirstBoot	KEYWORD2
-onFirmwareUpdate	KEYWORD2
+onFirmwareUpdateCheck	KEYWORD2
+onFirmwareUpdateDownload	KEYWORD2
+onFirmwareUpdateError	KEYWORD2
 onConfigMode	KEYWORD2
 
 addField	KEYWORD2
