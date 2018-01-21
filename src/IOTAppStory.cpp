@@ -26,7 +26,9 @@ IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char
 , _shortPressCallback(NULL)
 , _longPressCallback(NULL)
 , _veryLongPressCallback(NULL)
-, _firmwareUpdateCallback(NULL)
+, _firmwareUpdateCheckCallback(NULL)
+, _firmwareUpdateDownloadCallback(NULL)
+, _firmwareUpdateErrorCallback(NULL)
 , _configModeCallback(NULL)
 {
 
@@ -383,8 +385,8 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 		DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s\n"), _firmware.c_str());
 	#endif
 
-	if (_firmwareUpdateCallback){
-		_firmwareUpdateCallback();
+	if (_firmwareUpdateCheckCallback){
+		_firmwareUpdateCheckCallback();
 	}
 	
 	// try to update from address 1
@@ -525,6 +527,10 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINT(F(" Downloading update..."));
 		#endif
+		
+		if (_firmwareUpdateDownloadCallback){
+			_firmwareUpdateDownloadCallback();
+		}
 
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
@@ -553,6 +559,9 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		if(code == HTTP_CODE_NOT_MODIFIED){
 			return true;
 		}else{
+			if (_firmwareUpdateErrorCallback){
+				_firmwareUpdateErrorCallback();
+			}
 			return false;
 		}
 
@@ -1073,8 +1082,14 @@ void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
 	_veryLongPressCallback = value;
 }
 
-void IOTAppStory::onFirmwareUpdate(THandlerFunction value) {
-	_firmwareUpdateCallback = value;
+void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
+	_firmwareUpdateCheckCallback = value;
+}
+void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
+	_firmwareUpdateDownloadCallback = value;
+}
+void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
+	_firmwareUpdateErrorCallback = value;
 }
 
 void IOTAppStory::onConfigMode(THandlerFunction value) {
