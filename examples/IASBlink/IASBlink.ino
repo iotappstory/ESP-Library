@@ -60,10 +60,7 @@ void setup() {
 
   IAS.addField(LEDpin, "ledpin", "ledPin", 2);              // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(blinkTime, "Blinktime(mS)", "blinkTime", 5); // reference to org variable | field name | field label value | max char return
-  
-	
-  IAS.begin(true,'P');                                      // 1st parameter: true or false to view BOOT STATISTICS
-                                                            // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
 
   IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
@@ -81,8 +78,13 @@ void setup() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
-
+  
+  IAS.begin(true,'P');                                      // 1st parameter: true or false to view BOOT STATISTICS
+                                                            // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+	
   //-------- Your Setup starts from here ---------------
+	
+	
   pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 }
 
@@ -95,6 +97,7 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
 
+	
   if (millis() - blinkEntry > atoi(blinkTime)) {
     digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
     blinkEntry = millis();
