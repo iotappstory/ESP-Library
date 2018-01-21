@@ -586,7 +586,7 @@ void WiFiManager::hdlIasCfgPages(const String args){
 	// save received activation code
 	if(server->arg("c") && line == "(Y)"){
 		server->arg("c").toCharArray(config->actCode,7);
-		hdlIasCfgPages(F("IOTAppStory.com config"));
+		hdlIasCfgPages();
 	}else{
 		hdlReturn(line);
 	}
