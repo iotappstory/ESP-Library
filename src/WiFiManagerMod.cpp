@@ -143,8 +143,8 @@ void WiFiManager::setupConfigPortal() {
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
   server->on(F("/"), std::bind(&WiFiManager::handleRoot, this));
-  server->on(F("/wifi"), std::bind(&WiFiManager::handleWifi, this));
-  server->on(F("/wifisave"), std::bind(&WiFiManager::handleWifiSave, this));
+  server->on(F("/conn"), std::bind(&WiFiManager::handleWifi, this));
+  server->on(F("/connsave"), std::bind(&WiFiManager::handleWifiSave, this));
   
   server->on(F("/app"), std::bind(&WiFiManager::handleApp, this));
   server->on(F("/appsave"), std::bind(&WiFiManager::handleAppSave, this));
@@ -676,11 +676,25 @@ void WiFiManager::handleWifi() {
 
     page += item;
 
-    page += "<br/>";
+    page += F("<br/>");
   }
+  
+  page += F("<h2>IotAppStory.com</h2>");
+  
+  page += FPSTR(HTTP_FORM_LABEL);
+  page.replace("{i}", F("f"));
+  page.replace("{p}", F("Fingerprint"));
+  
+  page += FPSTR(HTTP_FORM_PARAM);
+  page.replace("{i}", F("f"));
+  page.replace("{n}", F("f"));
+  page.replace("{l}", F("59"));
+  page.replace("{p}", "");
+  page.replace("{v}", config->sha1);
+  page += F("<br/><br/>");
 
   page += FPSTR(HTTP_FORM_SAVEBTN);
-  page.replace("{u}", F("/wifisave"));
+  page.replace("{u}", F("/connsave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
 
   hdlReturn(page);
@@ -695,7 +709,14 @@ void WiFiManager::handleWifiSave() {
   //SAVE/connect here
   server->arg("s").toCharArray(config->ssid, STRUCT_CHAR_ARRAY_SIZE);
   server->arg("p").toCharArray(config->password, STRUCT_CHAR_ARRAY_SIZE);
+  server->arg("f").toCharArray(config->sha1, 60);
 
+  DEBUG_WM(F("received fingerprint: "));
+  DEBUG_WM(server->arg("f"));
+
+  DEBUG_WM(F("saved fingerprint: "));
+  DEBUG_WM(config->sha1);
+  
   if (server->arg("ip") != "") {
     DEBUG_WM(F("static ip"));
     DEBUG_WM(server->arg("ip"));
@@ -774,11 +795,7 @@ void WiFiManager::handleApp() {
 
     page += pitem;
   }
-  if (_params[0] != NULL) {
-    page += "<br/>";
-  }
-
-
+  page += F("<br/><br/>");
 
   page += FPSTR(HTTP_FORM_SAVEBTN);
   page.replace("{u}", F("/appsave"));
