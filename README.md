@@ -52,7 +52,7 @@ setup () {
   IAS.serialdebug(true);
   //IAS.serialdebug(true,115200);
 
-    IAS.begin();
+  IAS.begin();
 }
 ```
 </br>
@@ -74,7 +74,8 @@ Set whether or not the device should go into config mode after after failing to 
 Set the WiFi credentials without going through the captive portal. For development only! Make sure to delete this preSet when you publish your App.
 
 
-Example:
+Example of using preSet's:
+
 ```c
 ...
 
@@ -86,10 +87,14 @@ setup () {
     IAS.preSetAutoConfig(true);
     IAS.preSetWifi("ssid","password");
 
+
+    // Now start it up
+
     IAS.begin();
 }
 ```
 </br>
+
 
 ### `setCallHome(bool)`
 Set to 'true' to enable calling home frequently (disabled by default)</br></br>
@@ -119,6 +124,7 @@ These fields are added to the config wifimanager and saved to eeprom. Updated va
 Currently only char arrays are supported.
 Use functions like atoi() and atof() to transform the char array to integers or floats
 Use dPinConv() to convert Dpin numbers(pin-name) to integers (D6 > 14)
+
 
 Example:
 
