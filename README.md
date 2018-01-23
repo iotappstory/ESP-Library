@@ -5,13 +5,19 @@ Download and update Infrastructure for IOT devices, currenlty the ESP8266. You w
 Wiki pages: https://iotappstory.com/wiki
 </br></br>
 
-## Latest release 1.1.0
+## Latest stable release 1.0.6
 https://github.com/iotappstory/ESP8266-Library/releases/latest
-</br></br>
 
 ## Arduino IDE librairy manager
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/develop/arduinoIDE_lib_manager.jpg"/>
 </br>
+
+## Develop branch
+If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
+
+## Upcoming release 1.1.0
+https://github.com/iotappstory/ESP8266-Library
+</br></br>
 
 ## API
 
