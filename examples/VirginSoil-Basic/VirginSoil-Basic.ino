@@ -29,27 +29,26 @@
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
-  
+
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+
+
 
 // ================================================ SETUP ================================================
 void setup() {
   IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
   //IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
   /* TIP! delete the above lines when not used */
-  
 
-  // 1st parameter: true or false to view BOOT STATISTICS
-	// 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.begin(true);
-	//IAS.begin();
-	//IAS.begin(true,'L');
 
+  IAS.begin(true,'P');                              // 1st parameter: true or false to view BOOT STATISTICS
+                                                    // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
   //-------- Your Setup starts from here ---------------
-  
+
 }
+
 
 
 // ================================================ LOOP =================================================

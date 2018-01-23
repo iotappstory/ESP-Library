@@ -16,10 +16,28 @@ IAS_Xtra_Func	KEYWORD1
 #######################################
 serialdebug	KEYWORD2
 preSetConfig	KEYWORD2
+
+preSetBoardname	KEYWORD2
+preSetAutoUpdate	KEYWORD2
+preSetAutoConfig	KEYWORD2
+preSetWifi	KEYWORD2
+
+onModeButtonNoPress	KEYWORD2
+onModeButtonShortPress	KEYWORD2
+onModeButtonLongPress	KEYWORD2
+onModeButtonVeryLongPress	KEYWORD2
+onFirstBoot	KEYWORD2
+onFirmwareUpdateCheck	KEYWORD2
+onFirmwareUpdateDownload	KEYWORD2
+onFirmwareUpdateError	KEYWORD2
+onConfigMode	KEYWORD2
+
 addField	KEYWORD2
 begin	KEYWORD2
 buttonLoop	KEYWORD2
 callHome	KEYWORD2
+setCallHome	KEYWORD2
+setCallHomeInterval	KEYWORD2
 dPinConv	KEYWORD2
 
 #######################################

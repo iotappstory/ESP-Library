@@ -143,8 +143,8 @@ void WiFiManager::setupConfigPortal() {
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
   server->on(F("/"), std::bind(&WiFiManager::handleRoot, this));
-  server->on(F("/wifi"), std::bind(&WiFiManager::handleWifi, this));
-  server->on(F("/wifisave"), std::bind(&WiFiManager::handleWifiSave, this));
+  server->on(F("/conn"), std::bind(&WiFiManager::handleWifi, this));
+  server->on(F("/connsave"), std::bind(&WiFiManager::handleWifiSave, this));
   
   server->on(F("/app"), std::bind(&WiFiManager::handleApp, this));
   server->on(F("/appsave"), std::bind(&WiFiManager::handleAppSave, this));
@@ -155,14 +155,14 @@ void WiFiManager::setupConfigPortal() {
   //server->on(F("/state"), std::bind(&WiFiManager::handleState, this));
   server->on(F("/scan"), std::bind(&WiFiManager::handleScan, this));
   
-  #if IASCNF == 1
+  #if IASCNF == true
 	  server->on(F("/ias"), std::bind(&WiFiManager::handleIAScfg, this));
   #endif
   
   server->onNotFound (std::bind(&WiFiManager::handleNotFound, this));
   server->begin(); // Web server start
   DEBUG_WM(F("HTTP server started"));
-  DEBUG_WM(system_get_free_heap_size());
+  //DEBUG_WM(system_get_free_heap_size());
 
 }
 
@@ -376,9 +376,11 @@ void WiFiManager::resetSettings() {
   delay(200);
   return;
 }
+/*
 void WiFiManager::setTimeout(unsigned long seconds) {
   setConfigPortalTimeout(seconds);
 }
+*/
 
 void WiFiManager::setConfigPortalTimeout(unsigned long seconds) {
   _configPortalTimeout = seconds * 1000;
@@ -497,17 +499,24 @@ void WiFiManager::handleIAScfg() {
 		args += server->argName(i) + "=" + server->arg(i);
 	}
 	
-	hdlIasCfgPages(F("IOTAppStory.com config"),args);
+	hdlIasCfgPages(args);
 }
 
-void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String args){
+void WiFiManager::hdlIasCfgPages(const String args){
 
 	String url = "";
-	DEBUG_WM(F("Start hdlIasCfgPages()"));// 							<-- remove on release
-	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	bool httpSwitch = false;
 	
-	if(system_get_free_heap_size() > 31300){
-		url += F("https://"); // 										<<--  https We need to free up RAM first!
+	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+		httpSwitch = true;
+	}
+	
+	
+	//DEBUG_WM(F("Start hdlIasCfgPages()"));							//<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size()); 							//<-- remove on release
+	
+	if(httpSwitch == true){
+		url += F("https://");  											//<<--  https We need to free up RAM first!
 	}else{
 		url += F("http://");
 	}
@@ -517,31 +526,31 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	url += args;
 	
 	// start HTTPClient
-	DEBUG_WM(F("Start HTTPClient"));// 									<-- remove on release
+	//DEBUG_WM(F("Start HTTPClient")); 									//<-- remove on release
     HTTPClient http;
 
 	// connect to server
-	DEBUG_WM(F("Connecting to: "));// 									<-- remove on release ?
-	DEBUG_WM(url);// 													<-- remove on release ?
-	DEBUG_WM(system_get_free_heap_size());// 							<-- remove on release
+	//DEBUG_WM(F("Connecting to: ")); 									//<-- remove on release ?
+	//DEBUG_WM(url); 													//<-- remove on release ?
+	//DEBUG_WM(system_get_free_heap_size()); 							//<-- remove on release
 	delay(100);
 	
-	if(system_get_free_heap_size() > 31300){
-		http.begin(url, config->sha1); // 								<<--  https We need to free up RAM first!
+	if(httpSwitch == true){
+		http.begin(url, config->sha1);  								//<<--  https We need to free up RAM first!
 	}else{
 		http.begin(url);
 	}
-	
-	DEBUG_WM(F("after http.begin"));// 									<-- remove on release
-	DEBUG_WM(system_get_free_heap_size());	// 							<-- remove on release
+	delay(100);
+	//DEBUG_WM(F("after http.begin")); 									//<-- remove on release
+	//DEBUG_WM(system_get_free_heap_size());	 						//<-- remove on release
 	
 	// add headers
     http.setUserAgent(F("ESP8266-http-Update"));
 	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
 	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
-    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipRealSize()));
+    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipId()));
     http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    http.addHeader(F("x-ESP8266-act-id"), String(config->devPass));
+    http.addHeader(F("x-ESP8266-act-id"), String(config->actCode));
 	
     const char * headerkeys[] = { "x-MD5" };
     size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
@@ -554,8 +563,9 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	
 	// httpCode will be negative on error
 	if(httpCode < 1) {
-		DEBUG_WM(F("[HTTP] GET... failed, error: "));
-		DEBUG_WM(http.errorToString(httpCode).c_str());
+		DEBUG_WM(F("[HTTP] GET... failed, try again"));
+		//DEBUG_WM(F("[HTTP] GET... failed, error: "));
+		//DEBUG_WM(http.errorToString(httpCode).c_str());
 		return;
 	}
 	
@@ -575,8 +585,8 @@ void WiFiManager::hdlIasCfgPages(const __FlashStringHelper *title, const String 
 	
 	// save received activation code
 	if(server->arg("c") && line == "(Y)"){
-		server->arg("c").toCharArray(config->devPass,7);
-		hdlIasCfgPages(F("IOTAppStory.com config"));
+		server->arg("c").toCharArray(config->actCode,7);
+		hdlIasCfgPages();
 	}else{
 		hdlReturn(line);
 	}
@@ -666,11 +676,25 @@ void WiFiManager::handleWifi() {
 
     page += item;
 
-    page += "<br/>";
+    page += F("<br/>");
   }
+  
+  page += F("<h2>IotAppStory.com</h2>");
+  
+  page += FPSTR(HTTP_FORM_LABEL);
+  page.replace("{i}", F("f"));
+  page.replace("{p}", F("Fingerprint"));
+  
+  page += FPSTR(HTTP_FORM_PARAM);
+  page.replace("{i}", F("f"));
+  page.replace("{n}", F("f"));
+  page.replace("{l}", F("59"));
+  page.replace("{p}", "");
+  page.replace("{v}", config->sha1);
+  page += F("<br/><br/>");
 
   page += FPSTR(HTTP_FORM_SAVEBTN);
-  page.replace("{u}", F("/wifisave"));
+  page.replace("{u}", F("/connsave"));
   page += FPSTR(HTTP_FORM_BACKBTN);
 
   hdlReturn(page);
@@ -685,7 +709,14 @@ void WiFiManager::handleWifiSave() {
   //SAVE/connect here
   server->arg("s").toCharArray(config->ssid, STRUCT_CHAR_ARRAY_SIZE);
   server->arg("p").toCharArray(config->password, STRUCT_CHAR_ARRAY_SIZE);
+  server->arg("f").toCharArray(config->sha1, 60);
 
+  DEBUG_WM(F("received fingerprint: "));
+  DEBUG_WM(server->arg("f"));
+
+  DEBUG_WM(F("saved fingerprint: "));
+  DEBUG_WM(config->sha1);
+  
   if (server->arg("ip") != "") {
     DEBUG_WM(F("static ip"));
     DEBUG_WM(server->arg("ip"));
@@ -764,11 +795,7 @@ void WiFiManager::handleApp() {
 
     page += pitem;
   }
-  if (_params[0] != NULL) {
-    page += "<br/>";
-  }
-
-
+  page += F("<br/><br/>");
 
   page += FPSTR(HTTP_FORM_SAVEBTN);
   page.replace("{u}", F("/appsave"));
