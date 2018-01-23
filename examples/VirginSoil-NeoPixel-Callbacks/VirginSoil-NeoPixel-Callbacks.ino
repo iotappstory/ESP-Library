@@ -5,9 +5,9 @@
   You will need a button & NeoPixel (ws2812 led)
 
   This sketch is based on:
-  VirginSoil sketch [Andreas Spiess]
-  Simple - Example [Adafruit_NeoPixel_Library]
-  Arduino Debounce [David A. Mellis]
+  IotAppStory Callbacks   [Ildefonso Zanette]
+  IotAppStory VirginSoil  [Andreas Spiess]
+  Simple - Example        [Adafruit_NeoPixel_Library]
 
   Copyright (c) [2018] [Onno Dirkzwager]
 
