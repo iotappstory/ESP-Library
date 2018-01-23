@@ -707,12 +707,51 @@ void IOTAppStory::processField(){
 	}
 }
 int IOTAppStory::dPinConv(String orgVal){
-	#ifdef ARDUINO_ESP8266_ESP01  // Generic ESP's 
+	#if defined ESP8266_OAK
 
-		//DEBUG_PRINTLN("- Generic ESP's -");
+		// DEBUG_PRINTLN("- Digistump OAK -");
+		if      (orgVal == "P1"  || orgVal == "5")    return P1;
+		else if (orgVal == "P2"  || orgVal == "0")    return P2;
+		else if (orgVal == "P3"  || orgVal == "3")    return P3;
+		else if (orgVal == "P4"  || orgVal == "1")    return P4;
+		else if (orgVal == "P5"  || orgVal == "4")    return P5;
+		else if (orgVal == "P6"  || orgVal == "15")   return P6;
+		else if (orgVal == "P7"  || orgVal == "13")   return P7;
+		else if (orgVal == "P8"  || orgVal == "12")   return P8;
+		else if (orgVal == "P9"  || orgVal == "14")   return P9;
+		else if (orgVal == "P10" || orgVal == "16")   return P10;
+		else if (orgVal == "P11" || orgVal == "17")   return P11;
+		else                                          return P1;
+
+	#elif defined ESP8266_WEMOS_D1MINI || defined ESP8266_WEMOS_D1MINILITE || defined ESP8266_WEMOS_D1MINIPRO || defined ESP8266_NODEMCU || defined WIFINFO
+
+		// DEBUG_PRINTLN("- Special ESP's -");
+		if      (orgVal == "D0"  || orgVal == "16")   return D0;
+		else if (orgVal == "D1"  || orgVal == "5")    return D1;
+		else if (orgVal == "D2"  || orgVal == "4")    return D2;
+		else if (orgVal == "D3"  || orgVal == "0")    return D3;
+		else if (orgVal == "D4"  || orgVal == "2")    return D4;
+		else if (orgVal == "D5"  || orgVal == "14")   return D5;
+		else if (orgVal == "D6"  || orgVal == "12")   return D6;
+		else if (orgVal == "D7"  || orgVal == "13")   return D7;
+		else if (orgVal == "D8"  || orgVal == "15")   return D8;
+		else if (orgVal == "D9"  || orgVal == "3")    return D9;
+		else if (orgVal == "D10" || orgVal == "1")    return D10;
+		else                                          return D0;
+		
+	#else
+
+		// DEBUG_PRINTLN("- Generic ESP's -");
+		
+		// There are NO constants for the generic eps's!
+		// But people makes mistakes when entering pin nr's in config
+		// And if you originally developed your code for "Special ESP's"
+		// this part makes makes it compatible when compiling for "Generic ESP's"
+		
 		if      (orgVal == "D0"  || orgVal == "16")   return 16;
 		else if (orgVal == "D1"  || orgVal == "5")    return 5;
 		else if (orgVal == "D2"  || orgVal == "4")    return 4;
+		else if (orgVal == "D3"  || orgVal == "0")    return 0;
 		else if (orgVal == "D4"  || orgVal == "2")    return 2;
 		else if (orgVal == "D5"  || orgVal == "14")   return 14;
 		else if (orgVal == "D6"  || orgVal == "12")   return 12;
@@ -721,21 +760,6 @@ int IOTAppStory::dPinConv(String orgVal){
 		else if (orgVal == "D9"  || orgVal == "3")    return 3;
 		else if (orgVal == "D10" || orgVal == "1")    return 1;
 		else                                          return 16;
-
-	#else
-
-		//DEBUG_PRINTLN("- Special ESP's -");
-		if      (orgVal == "D0"  || orgVal == "16")   return D0;
-		else if (orgVal == "D1"  || orgVal == "5")    return D1;
-		else if (orgVal == "D2"  || orgVal == "4")    return D2;
-		else if (orgVal == "D4"  || orgVal == "2")    return D4;
-		else if (orgVal == "D5"  || orgVal == "14")   return D5;
-		else if (orgVal == "D6"  || orgVal == "12")   return D6;
-		else if (orgVal == "D7"  || orgVal == "13")   return D7;
-		else if (orgVal == "D8"  || orgVal == "15")   return D7;
-		else if (orgVal == "D9"  || orgVal == "3")    return D7;
-		else if (orgVal == "D10" || orgVal == "1")    return D7;
-		else                                          return D0;
 
 	#endif
 }
