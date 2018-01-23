@@ -19,7 +19,7 @@ If you want to fork or contribute to the library. Please send your pull request 
 https://github.com/iotappstory/ESP8266-Library
 </br></br>
 
-## API
+## API 1.1.0
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
