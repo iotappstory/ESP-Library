@@ -9,7 +9,7 @@ Wiki pages: https://iotappstory.com/wiki
 https://github.com/iotappstory/ESP8266-Library/releases/latest
 
 ## Arduino IDE librairy manager
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/develop/arduinoIDE_lib_manager.jpg"/>
+<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
 </br>
 
 ## Develop branch
@@ -242,7 +242,16 @@ void loop() {
 </br>
 
 ### `dPinConv(...)`
-Use `dPinConv()` to convert Dpin numbers to integers (D6 > 14)</br></br>
+Use dPinConv() to convert Dpin & Ppin numbers to integers (D6 > 14)
+
+We advise to use the original Gpio numbers used by the ESP8266. However a lot of our users use boards like the “Wemos” & “NodeMCU”. They tend to use the silkscreen numbering like D6, D2 etc.
+
+Normally this would be handled by the defined ”const” in your boards [pins_arduino.h](https://github.com/esp8266/Arduino/tree/master/variants) file during compilation. However when entered after compilation, like with the added fields in the html config pages “addField(.. .. .. ..)”, these values get returned as ”String” instead of being translated to a “int”
+
+And if you originally developed your code for these “Special ESP’s”. This part makes makes it compatible when compiling for "Generic ESP's"
+
+<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/pin_mapping.jpg"/>
+</br></br>
 
 ## Contributions and thanks
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
