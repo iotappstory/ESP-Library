@@ -146,7 +146,7 @@ setup () {
 </br>
 
 ### `callbacks...()`
-Thanks to [izanette](https://github.com/izanette) you can now configure callback functions that do something or give feedback to the user about the current state of the application.
+Thanks to [izanette](https://github.com/izanette) you can now configure callback functions that do something or give feedback to the user about the current state of the application. We have added a few of our own and hope you like it!
 
 
 #### `onFirstBoot(THandlerFunction)`
