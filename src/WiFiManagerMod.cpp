@@ -710,12 +710,6 @@ void WiFiManager::handleWifiSave() {
   server->arg("s").toCharArray(config->ssid, STRUCT_CHAR_ARRAY_SIZE);
   server->arg("p").toCharArray(config->password, STRUCT_CHAR_ARRAY_SIZE);
   server->arg("f").toCharArray(config->sha1, 60);
-
-  DEBUG_WM(F("received fingerprint: "));
-  DEBUG_WM(server->arg("f"));
-
-  DEBUG_WM(F("saved fingerprint: "));
-  DEBUG_WM(config->sha1);
   
   if (server->arg("ip") != "") {
     DEBUG_WM(F("static ip"));
