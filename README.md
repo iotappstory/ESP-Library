@@ -146,8 +146,11 @@ setup () {
 </br>
 
 ### `callbacks...()`
-You can configure callback functions that can give feedback to the app user about the current state of the application.
+Thanks to [izanette](https://github.com/izanette) you can now configure callback functions that do something or give feedback to the user about the current state of the application.
 
+
+#### `onFirstBoot(THandlerFunction)`
+Called on the first boot of this app. Will only run once. After serial or ota upload.
 
 #### `onModeButtonNoPress(THandlerFunction)`
 Called when state is changed to idle. (mode button is not pressed)
@@ -161,11 +164,17 @@ Called when state is changed to long press.
 #### `onModeButtonVeryLongPress(THandlerFunction)`
 Called when state is changed to very long press.
 
-#### `onModeButtonFirmwareUpdate(THandlerFunction)`
-Called when the app is about to update the firmware.
+#### `onFirmwareUpdateCheck(THandlerFunction)`
+Called when the app is about to check for firmware updates.
 
-#### `onModeButtonConfigMode(THandlerFunction)`
-Called when the app is about to enter in configuration mode.
+#### `onFirmwareUpdateDownload(THandlerFunction)`
+Called when the app starts to download updates.
+
+#### `onFirmwareUpdateError(THandlerFunction)`
+Called when downloading firmware updates end in error.
+
+#### `onConfigMode(THandlerFunction)`
+Called when the app enters configuration mode.
 
 In this example we use serial print to demonstrate the call backs. But you could use leds etc:
 ```c
@@ -251,7 +260,7 @@ Normally this would be handled by the defined ”const” in your boards [pins_a
 And if you originally developed your code for these “Special ESP’s”. This part makes makes it compatible when compiling for "Generic ESP's"
 
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/pin_mapping.jpg"/>
-</br></br>
+</br>
 
 ## Contributions and thanks
 For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
