@@ -55,11 +55,7 @@ char* ledPin      = "2";
 // ================================================ SETUP ================================================
 void setup() {
   /* TIP! delete lines below when not used */
-  IAS.serialdebug(true);                              // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                     // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-
-
-  IAS.preSetBoardname("virginSoil-full");             // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
+  IAS.preSetDeviceName("virginSoil-full");            // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
   //IAS.preSetAutoUpdate(false);                      // automaticUpdate (true, false)
   //IAS.preSetAutoConfig(false);                      // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                // preset Wifi
@@ -70,11 +66,11 @@ void setup() {
   IAS.setCallHomeInterval(60);										    // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 	
 
-  IAS.addField(lbl1, "label1", "Label 1", 16);        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(lbl2, "label2", "Label 2", 16);        // reference to org variable | field name | field label value | max char return
-  IAS.addField(exampleURL, "url", "Example url", 80);
-  IAS.addField(timeZone, "timezone", "Timezone", 4);
-  IAS.addField(ledPin, "ledpin", "ledPin", 2);
+  IAS.addField(lbl1, "Label 1", 16);                  // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(lbl2, "Label 2", 16);                  // reference to org variable | field label value | max char return
+  IAS.addField(exampleURL, "Example url", 80, 'T');
+  IAS.addField(timeZone, "Timezone", 4, 'Z');
+  IAS.addField(ledPin, "ledPin", 2, 'N');
   /* TIP! delete the lines above when not used */
 
 
@@ -132,7 +128,7 @@ void setup() {
 	
   //IAS.begin();
 	//IAS.begin(true);                                  // 1st parameter: true or false to view BOOT STATISTICS
-  IAS.begin(true,'P');                                // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin(true,'L');                                // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
 
   //-------- Your Setup starts from here ---------------
@@ -152,10 +148,10 @@ void loop() {
 
     Serial.println(F(" LABEL\t\t| VAR\t\t| VALUE"));
 
-    Serial.print(F(" Label 1\t\t| lbl1\t\t| "));
+    Serial.print(F(" Label 1\t| lbl1\t\t| "));
     Serial.println(lbl1);
 
-    Serial.print(F(" Label 2\t\t| lbl2\t\t| "));
+    Serial.print(F(" Label 2\t| lbl2\t\t| "));
     Serial.println(lbl2);
 
     Serial.print(F(" Example url\t| exampleURL\t| "));
@@ -164,7 +160,7 @@ void loop() {
     Serial.print(F(" Timezone\t| timeZone\t| "));
     Serial.println(atof(timeZone));
 
-    Serial.print(F(" Led pin\t\t| ledPin\t| "));
+    Serial.print(F(" Led pin\t| ledPin\t| "));
     Serial.println(atoi(ledPin));
     
     Serial.println(F("*-------------------------------------------------------------------------*"));
