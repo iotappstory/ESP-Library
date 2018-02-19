@@ -260,8 +260,8 @@
             
 						// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
             void preSetDeviceName(String deviceName);
-						//void preSetAutoUpdate(bool automaticUpdate);
-						//void preSetAutoConfig(bool automaticConfig);
+						void preSetAutoUpdate(bool automaticUpdate);
+						void preSetAutoConfig(bool automaticConfig);
 						void preSetWifi(String ssid, String password);
 						//void preSetServer(String HOST1, String FILE1);
             
