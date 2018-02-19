@@ -284,7 +284,7 @@
 						bool iotUpdater(bool spiffs, bool loc = false);
 						void addField(char* &defaultVal,const char *fieldLabel, int length, char type = 'L');
 						void runConfigServer();
-						
+						int dPinConv(String orgVal);
             
             void onFirstBoot(THandlerFunction fn);												// called at the end of firstBoot
             //void onWifiConnected(THandlerFunction fn);									// called on succesfull Wifi connection SYSTEM_EVENT_STA_GOT_IP
@@ -394,8 +394,6 @@
 						void servHdlAppSave(AsyncWebServerRequest *request);
 						
 						void servHdlDevSave(AsyncWebServerRequest *request);
-						
-						void servHdlSave(AsyncWebServerRequest *request);
 						
 						void hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type = "text/html");
 
