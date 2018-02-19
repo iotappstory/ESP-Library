@@ -25,7 +25,7 @@
 */
 
 #define APPNAME "virginSoilFull"
-#define VERSION "V2.2.1"
+#define VERSION "V2.2.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
@@ -55,7 +55,7 @@ char* ledPin      = "2";
 // ================================================ SETUP ================================================
 void setup() {
   /* TIP! delete lines below when not used */
-  IAS.preSetDeviceName("virginSoil-full");            // preset Boardname this is also your MDNS responder: http://virginSoil-full.local
+  IAS.preSetDeviceName("virginsoil");                 // preset Boardname this is also your MDNS responder: http://virginsoil.local
   //IAS.preSetAutoUpdate(false);                      // automaticUpdate (true, false)
   //IAS.preSetAutoConfig(false);                      // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                // preset Wifi
