@@ -1,6 +1,6 @@
 /**
  *
- * @file ESP8266HTTPUpdateIasMod.cpp
+ * @file ESPHTTPUpdateIasMod.cpp
  * @date 01.01.2018
  * @author Onno Dirkzwager
  *
@@ -26,7 +26,7 @@
  *
  */
 
-#include "ESP8266httpUpdateIasMod.h"
+#include "ESPhttpUpdateIasMod.h"
 #include <StreamString.h>
 
 extern "C" uint32_t _SPIFFS_start;
@@ -51,6 +51,8 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 
 		int freeSpace;
 		bool error = false;
+		
+		#if defined ESP8266
 		if(spiffs){
 			// current spiffs space
 			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
@@ -58,6 +60,7 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 			// current FreeSketchSpace
 			freeSpace = ESP.getFreeSketchSpace();
 		}
+		
 	
 		if(len > freeSpace){
 			#if DEBUG_LVL >= 2
@@ -69,11 +72,18 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 			// if the Received Content-Length is larger than the free space exit update proces and return error
 			//return String(printf_P(PSTR("Not enough space (%d) update size: %d"), freeSpace, len));
 		}else{
-
+		#endif
+		
 			WiFiClient * tcp = http.getStreamPtr();
+			
+			#if defined ESP8266
+				WiFiUDP::stopAll();
+				WiFiClient::stopAllExcept(tcp);
+			#elif defined ESP32
 
-			WiFiUDP::stopAll();
-			WiFiClient::stopAllExcept(tcp);
+			#endif
+			
+
 			delay(100);
 
 			int command;
@@ -86,28 +96,34 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 				
 				command = U_FLASH;
 				//DEBUG_PRINTLN("[httpUpdate] runUpdate flash...\n");
+
 				
-				// Analise received bin file
-				uint8_t buf[4];
-				if(tcp->peekBytes(&buf[0], 4) != 4) {
-					#if DEBUG_LVL >= 2
-						DEBUG_PRINTLN(F(" Error: Failed to verify the bin header"));
-					#endif
-					error = true;
-				}
-				if(buf[0] != 0xE9) {
-					#if DEBUG_LVL >= 2
-						DEBUG_PRINTLN(F(" Error: Header did not start with magic byte 0xE9"));
-					#endif
-					error = true;
-				}
-				uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
-				if(bin_flash_size > ESP.getFlashChipRealSize()) {
-					#if DEBUG_LVL >= 2
-						DEBUG_PRINTLN(F(" Error: Received file to large for flash"));
-					#endif
-					error = true;
-				}
+				#if defined ESP8266
+					// Analise received bin file
+					uint8_t buf[4];
+					if(tcp->peekBytes(&buf[0], 4) != 4) {
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN(F(" Error: Failed to verify the bin header"));
+						#endif
+						error = true;
+					}
+					if(buf[0] != 0xE9) {
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN(F(" Error: Header did not start with magic byte 0xE9"));
+						#endif
+						error = true;
+					}
+					uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
+					if(bin_flash_size > ESP.getFlashChipRealSize()) {
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN(F(" Error: Received file to large for flash"));
+						#endif
+						error = true;
+					}
+				#elif defined ESP32
+
+				#endif
+
 				
 			}
 			
@@ -133,8 +149,10 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 				DEBUG_PRINTLN(F(" Error: File error"));
 			}
 			#endif
-			
+		
+#if defined ESP8266		
 		}
+#endif
 	}
 }
 
