@@ -1,3 +1,4 @@
+/*
 #include <ESP8266WiFi.h>
 #include "ESP8266httpUpdateIasMod.h"
 #include <DNSServer.h>
@@ -7,70 +8,103 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include "IOTAppStory.h"
-#include "WiFiManagerMod.h"
+#include "INC_CONFIGagerMod.h"
 
 #ifdef REMOTEDEBUGGING
 	#include <WiFiUDP.h>
 #endif
+*/
 
-// used by the RTC memory read/write functions
-extern "C" {
-	#include "user_interface.h"
-}
+#include "IOTAppStory.h"
+
+#ifdef ESP32
+	#include <WiFi.h>
+	#include <ESPmDNS.h>
+	#include <Preferences.h>
+	#include <WiFiMulti.h>
+	#include <AsyncTCP.h>           // https://github.com/me-no-dev/AsyncTCP
+	#include <HTTPClient.h>
+#else
+	#include <ESP8266WiFi.h>
+	#include <StreamString.h>
+	#include <ESP8266mDNS.h>
+	extern "C" {
+		#include "user_interface.h"		// used by the RTC memory read/write functions
+	}
+	#include <ESP8266WiFiMulti.h>
+	#include <ESPAsyncTCP.h>        // https://github.com/me-no-dev/ESPAsyncTCP
+	#include <ESP8266HTTPClient.h>
+#endif
+
+#include "ESP8266httpUpdateIasMod.h"
+#include <DNSServer.h> 
+#include <FS.h>
+#include <EEPROM.h>
+#include <ESPAsyncWebServer.h>    // https://github.com/me-no-dev/ESPAsyncWebServer
+
+
+
+
+
 
 IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton)
-: _modeButton(modeButton)
+: _appName(appName)
+, _appVersion(appVersion)
 , _compDate(compDate)
-, _firstBootCallback(NULL)
-, _noPressCallback(NULL)
-, _shortPressCallback(NULL)
-, _longPressCallback(NULL)
-, _veryLongPressCallback(NULL)
-, _firmwareUpdateCheckCallback(NULL)
-, _firmwareUpdateDownloadCallback(NULL)
-, _firmwareUpdateErrorCallback(NULL)
-, _configModeCallback(NULL)
+, _modeButton(modeButton)
 {
-
-	config.appName = &appName;
-	config.appVersion = &appVersion;
-
-	_firmware = appName;
-	_firmware += " ";
-	_firmware += appVersion;
-	
+	#if DEBUG_LVL >= 1
+		Serial.begin(SERIAL_SPEED);
+		while (!Serial){
+			delay(10);
+		}
+		DEBUG_PRINT(F("\n\n\n\n\n"));
+	#endif
 }
 
-void IOTAppStory::firstBoot(char ea){
-	//DEBUG_PRINT(FPSTR(SER_DEV));
-	//DEBUG_PRINTLN(_firmware.c_str());
 
-	// THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS) <-----------------------------------------------------------------------------------------------------------------
-	
-	// get json config......
-	
+/**
+	THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS)
+*/
+void IOTAppStory::firstBoot(char ea){
+
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
+		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(F(" Full erase of EEPROM"));
 		#endif
-		WiFi.disconnect(true); 							// Wipe out WiFi credentials.
+		
+		// Wipe out WiFi credentials.
+		WiFi.disconnect();
 		delay(200);
-		eraseFlash(0,EEPROM_SIZE);						// erase full eeprom
 		
+		// erase full eeprom
+		eraseFlash(0,EEPROM_SIZE);
 		
+
 		String emty = F("000000");
 		emty.toCharArray(config.actCode, 7);
 		emty = "";
-		emty.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-		emty.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		config.automaticConfig = true;	// temp fix
+		emty.toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
 
 	}else if(ea == 'P'){
-		#if DEBUG_LVL >= 1
+		
+		#if DEBUG_LVL == 1
+			DEBUG_PRINTLN(F(" Partial erase of EEPROM"));
+		#endif
+		
+		#if DEBUG_LVL >= 2
 			DEBUG_PRINTLN(F(" Partial erase of EEPROM but leaving config settings"));
 		#endif
-		eraseFlash((sizeof(config)+2),EEPROM_SIZE);		// erase eeprom but leave the config settings
+		
+		// erase eeprom but leave the config settings
+		eraseFlash((sizeof(config)+2),EEPROM_SIZE);
 	}
 	#if DEBUG_LVL >= 1
 	else{
@@ -78,13 +112,20 @@ void IOTAppStory::firstBoot(char ea){
 	#endif
 	}
 	
+	boardMode = 'N';
+	bootTimes = 0;
+	writePref();
+	
 	// update first boot config flag (date)
 	strcpy(config.compDate, _compDate);
 	writeConfig();
 
-	DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
 	
 	if (_firstBootCallback){
+		
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(F(" Run first boot callback"));
 		#endif
@@ -92,23 +133,16 @@ void IOTAppStory::firstBoot(char ea){
 	}
 }
 
-void IOTAppStory::serialdebug(bool onoff,int speed){
-	_serialDebug = onoff;
-	if(_serialDebug == true){
-		Serial.begin(speed);
-		DEBUG_PRINT(F("\n\n\n\n\n"));
-	}
-}
 
 
-void IOTAppStory::preSetBoardname(String boardName){
+void IOTAppStory::preSetDeviceName(String deviceName){
 	if (!_configReaded) {
 		readConfig();
 	}
-	_setBoardName = true;
-	SetConfigValueCharArray(config.boardName, boardName, STRUCT_BNAME_SIZE, _setPreSet);
+	_setDeviceName = true;
+	SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, _setPreSet);
 }
-
+/*
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate){
 	if (!_configReaded) {
 		readConfig();
@@ -122,7 +156,7 @@ void IOTAppStory::preSetAutoConfig(bool automaticConfig){
 	}
 	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
 }
-
+*/
 void IOTAppStory::preSetWifi(String ssid, String password){
 	if (!_configReaded) {
 		readConfig();
@@ -131,10 +165,11 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	//ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
 	//password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
 	_setPreSet = true;
-	SetConfigValueCharArray(config.ssid, ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.password, password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.ssid[0], ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.password[0], password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
 
+/*
 void IOTAppStory::preSetServer(String HOST1, String FILE1){
 	if (!_configReaded) {
 		readConfig();
@@ -142,117 +177,109 @@ void IOTAppStory::preSetServer(String HOST1, String FILE1){
 	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 }
+*/
 
 
-// for backwards comp | depreciated
-void IOTAppStory::preSetConfig(String boardName){
-	preSetBoardname(boardName);
-}
-// for backwards comp | depreciated
-void IOTAppStory::preSetConfig(String boardName, bool automaticUpdate){
-	preSetBoardname(boardName);
-}
-// for backwards comp | depreciated
-void IOTAppStory::preSetConfig(String ssid, String password){
-	preSetWifi(ssid, password);
-}
-// for backwards comp | depreciated
-void IOTAppStory::preSetConfig(String ssid, String password, String boardName){
-	preSetWifi(ssid, password);
-	preSetBoardname(boardName);
+void IOTAppStory::setCallHome(bool callHome) {
+   _callHome = callHome;
 }
 
-
-void IOTAppStory::begin(bool bootstats /*= true*/){
-	begin(bootstats, 'P');
-}
-
-void IOTAppStory::begin(bool bootstats, bool ea){
-	//#error "begin(bool bootstats, bool ea) is depreciated. Use: begin(bool bootstats, char ea) instead. See VirginSoil examples for more info."
-	if(ea == true){
-		begin(bootstats, 'F');
-	}else{
-		begin(bootstats, 'P');
-	}
+void IOTAppStory::setCallHomeInterval(unsigned long interval) {
+   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
 void IOTAppStory::begin(bool bootstats, char ea){
-	// if boardName is not set, set it to the appName
-	if(_setBoardName == false){
-		preSetBoardname("yourESP");
-	}
 	
-	DEBUG_PRINTLN(F("\n"));
+	// if deviceName is not set, set it to the appName
+	if(_setDeviceName == false){
+		preSetDeviceName("yourESP");
+	}
 	
 	// read config if needed
 	if (!_configReaded) {
 		readConfig();
 	}
-
+	
+	
 	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
+		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(F("Saving config presets...\n"));
 		#endif
 	}
+
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
-		DEBUG_PRINTF_P(PSTR(" Start %s\n"), _firmware.c_str());
+		
+		DEBUG_PRINT(F(" Start "));
+		DEBUG_PRINT(_appName);
+		DEBUG_PRINT(F(" "));
+		DEBUG_PRINTLN(_appVersion);
+		/*
+		String firmware = _appName;
+		firmware += " ";
+		firmware += _appVersion;
+		DEBUG_PRINTF_P(PSTR(" Start %s\n"), firmware);
+		*/
 	#endif
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
-		DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
-		DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.boardName);
-		DEBUG_PRINTF_P(PSTR(" Automatic update: %d\n"), config.automaticUpdate);
+		DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n Boardname: %s\n Update on boot: %d\n"), _modeButton, config.deviceName, _updateOnBoot);
+		//DEBUG_PRINTF_P(PSTR(" Mode select button: GPIO%d\n"), _modeButton);
+		//DEBUG_PRINTF_P(PSTR(" Boardname: %s\n"), config.deviceName);
+		//DEBUG_PRINTF_P(PSTR(" Automatic update: %d\n"), _updateOnBoot);
 	#endif
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
-
-	// ----------- PINS ----------------
-	pinMode(_modeButton, INPUT_PULLUP);     		// MODEBUTTON as input for Config mode selection
-
-	// Read the "bootTime" & "boardMode" flag RTC memory
-	readRTCmem();
 	
-	// --------- BOOT STATISTICS ------------------------
-	// read and increase boot statistics (optional)
-	if(bootstats == true){
-		rtcMem.bootTimes++;
-		writeRTCmem();
-		if(_serialDebug == true){
-			printRTCmem();
-		}
-	}
+	// set the input pin for Config/Update mode selection
+	pinMode(_modeButton, INPUT_PULLUP);
 
+	// Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
+	readPref();
+	
 	// on first boot of the app run the firstBoot() function
 	if(strcmp(config.compDate,_compDate) != 0){
 		firstBoot(ea);
+	}
+	
+	// BOOT STATISTICS read and increase boot statistics (optional)
+	if(bootstats == true){
+		bootTimes++;
+		writePref();
+		
+		#if DEBUG_LVL >= 1
+			printPref();
+		#endif
 	}
 
 	// process added fields
 	processField();
 	
 	
+	// --------- START WIFI --------------------------
+	connectNetwork();
+	
 	//---------- SELECT BOARD MODE -----------------------------
-	#if WIFIMAN == true
-		if (rtcMem.boardMode == 'C') configESP();
+	#if INC_CONFIG == true
+		if(boardMode == 'C'){runConfigServer();}
 	#endif
 	
 	// --------- READ FULL CONFIG --------------------------
 	//readConfig();
 	
 
-	// --------- START WIFI --------------------------
-	connectNetwork();
+
 
 
 	// --------- if automaticUpdate Update --------------------------
-	if(config.automaticUpdate == true){
-		callHome();
+	if(_updateOnBoot == true){
+		//callHome();
 	}
-	
+
 	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 	_appState = AppStateNoPress;
 
@@ -260,129 +287,296 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINT(F("\n\n\n\n\n"));
 	#endif
+/*	*/
 }
 
 
-//---------- RTC MEMORY FUNCTIONS ----------
-bool IOTAppStory::readRTCmem() {
-	bool ret = true;
-	system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-	if (rtcMem.markerFlag != MAGICBYTE) {
+/** read / get the stored preferences */
+void IOTAppStory::readPref() {
+	#ifdef ESP32
+		Preferences preferences;
+		
+		// Open Preferences
+		preferences.begin("pref", false);
+		
+		// Get the bootTimes value, if the key does not exist, return a default value of 0
+		bootTimes	= preferences.getUInt("bootTimes", 0);
+		
+		// Get the boardMode value, if the key does not exist, return a default value of 'N'
+		boardMode	= preferences.getUInt("boardMode", 'N');
+		
+		// Close the Preferences
+		preferences.end();
+		
+	#else
+		
+		system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+		if (rtcMem.markerFlag != MAGICBYTE) {
+			rtcMem.markerFlag = MAGICBYTE;
+			rtcMem.bootTimes = 0;
+			rtcMem.boardMode = 'N';
+			system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+		}
+		boardMode = rtcMem.boardMode;
+		bootTimes = rtcMem.bootTimes;
+	#endif
+}
+
+
+/** store preferences */
+void IOTAppStory::writePref(){
+	#ifdef ESP32
+		Preferences preferences;
+		
+		// Open Preferences
+		preferences.begin("pref", false);
+		
+		// Store the bootTimes value
+		preferences.putUInt("bootTimes", bootTimes);
+		
+		// Store the boardMode value
+		preferences.putUInt("boardMode", boardMode);
+		
+		// Close the Preferences
+		preferences.end();
+		
+	#else
+		rtcMem.boardMode = boardMode;
+		rtcMem.bootTimes = bootTimes;
+		
 		rtcMem.markerFlag = MAGICBYTE;
-		rtcMem.bootTimes = 0;
-		rtcMem.boardMode = 'N';
 		system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-		ret = false;
-	}
-	return ret;
+	#endif
 }
 
-void IOTAppStory::writeRTCmem() {
-	rtcMem.markerFlag = MAGICBYTE;
-	system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-}
 
-void IOTAppStory::printRTCmem() {
-	DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n"), rtcMem.markerFlag);
-	DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: "));
-	DEBUG_PRINT(rtcMem.bootTimes);
-	DEBUG_PRINTF_P(PSTR("\n boardMode: %c\n"), rtcMem.boardMode);
+/** print preferences */
+void IOTAppStory::printPref(){
+	#ifdef ESP32
+		DEBUG_PRINTF_P(PSTR(" bootTimes since last update: %d\n boardMode: %c\n"), bootTimes, boardMode);
+	#else
+		DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n bootTimes since powerup: %e\n boardMode: %f\n"), rtcMem.markerFlag, rtcMem.bootTimes, rtcMem.boardMode);
+		//DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n"), rtcMem.markerFlag);
+		//DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: "));
+		//DEBUG_PRINT(rtcMem.bootTimes);
+		//DEBUG_PRINTF_P(PSTR("\n boardMode: %c\n"), rtcMem.boardMode);
+	#endif
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 
-void IOTAppStory::configESP() {
-	readConfig();
-	//connectNetwork();
+
+/** config server */
+void IOTAppStory::runConfigServer() {
 	
-	DEBUG_PRINT(F("\n\n\n\nC O N F I G U R A T I O N   M O D E\n"));
-	//DEBUG_PRINTLN(system_get_free_heap_size());
-
-	initWiFiManager();
-
-	//--------------- buttonbuttonLoop ----------------------------------
-	while (1) {
-		//if ((*buttonChanged) && (*buttonTime) > 4000) espRestart('N', "Back to normal mode");  // long button press > 4sec
-		yield();
-		loopWiFiManager();
+	bool exitConfig = false;
+	
+	if (_configModeCallback){
+		_configModeCallback();
 	}
-} 
+	
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINT(F("\n\n\n\n C O N F I G U R A T I O N   M O D E\n"));
+	#endif
+	
+	if(WiFi.status() != WL_CONNECTED){
+		IPAddress apIP(192, 168, 4, 1);
+		dnsServer.reset(new DNSServer());
+		server.reset(new AsyncWebServer(80));
 
-
-void IOTAppStory::connectNetwork() {
-	DEBUG_PRINTLN(F(" Connecting to WiFi AP"));
-
-	WiFi.mode(WIFI_STA);
-	if (!isNetworkConnected()) {
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINTLN(F("\n No Connection. Try to connect with saved PW"));
+		WiFi.mode(WIFI_AP);
+		#if SMARTCONFIG == true
+			WiFi.beginSmartConfig();
 		#endif
-			WiFi.begin(config.ssid, config.password);  // if password forgotten by firmwware try again with stored PW
-		#if WIFIMAN == true
-			if (!isNetworkConnected()){  // still no success
-				if(config.automaticConfig || (digitalRead(_modeButton) == LOW)) espRestart('C', " No Connection. Going into Configuration Mode");
+		WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+		WiFi.softAP(config.deviceName);
+		
+		dnsServer->start(DNS_PORT, "*", apIP);
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTF_P(PSTR(" AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"), config.deviceName);
+		#endif
+	}else{
+		
+		server.reset(new AsyncWebServer(80));
+		WiFi.mode(WIFI_STA);
+		
+		#if DEBUG_LVL >= 2
+			//DEBUG_PRINTF_P(PSTR("\n STA mode. Open %s in your browser\n"), WiFi.localIP().toString());
+			
+			DEBUG_PRINT(F(" STA mode. Open "));
+			DEBUG_PRINTLN(WiFi.localIP());
+		#endif
+		
+	}
+
+	
+	
+  server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlRoot(request); });
+	
+  server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlDevInfo(request); });
+	
+  server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlWifiScan(request); });
+  server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlWifiSave(request); });
+	
+  server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlAppInfo(request); });
+  server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlAppSave(request); });
+  
+	server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlDevSave(request); });
+	server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
+
+	//server->rewrite("/", "/index-ap").setFilter(ON_AP_FILTER);
+	
+  server->begin();
+
+  while(exitConfig == false){
+		yield();
+		if(WiFi.status() != WL_CONNECTED){
+			
+			//DNS
+			dnsServer->processNextRequest();
+			
+			// smartconfig default false / off
+			#if SMARTCONFIG == true
+			if(WiFi.smartConfigDone()){
+				WiFi.mode(WIFI_AP_STA);
+				isNetworkConnected();
+			}
+			#endif
+		}
+		
+  }
+	
+	// Return to Normal Operation
+	espRestart('N');
+}
+
+
+/** Connect to Wifi AP */
+void IOTAppStory::connectNetwork() {
+	
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN(F(" Connecting to WiFi AP"));
+	#endif
+	
+	//WiFi.mode(WIFI_STA);
+	
+	#if WIFI_MULTI == true
+    wifiMulti.addAP(config.ssid[0], config.password[0]);
+    wifiMulti.addAP(config.ssid[1], config.password[1]);
+    wifiMulti.addAP(config.ssid[2], config.password[2]);
+		wifiMulti.run();
+	#else
+		WiFi.begin(config.ssid[0], config.password[0]);
+	#endif
+	
+
+	
+	//if(WiFi.status() != WL_CONNECTED) {
+	if(!isNetworkConnected()) {
+		
+
+			if(_automaticConfig || boardMode == 'C'){
+				
+				if(boardMode == 'N'){
+					boardMode = 'C';
+					writePref();
+				}
+				
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINT(F("\n No Connection. Going into Configuration Mode\n"));
+				#endif				
+				
+			}else{
+				
+				#if DEBUG_LVL >= 1
+					// this point is only reached if _automaticConfig = false
+					DEBUG_PRINT(F("\n WiFi NOT connected. Continuing anyway\n"));
+				#endif				
+			}
+		
+	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F("\n WiFi connected\n"));
+		#endif
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F(" Device MAC: "));
+			DEBUG_PRINTLN(WiFi.macAddress());
+		#endif
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F(" Device IP Address: "));
+			DEBUG_PRINTLN(WiFi.localIP());
+		#endif
+		
+		#if USEMDNS == true
+			// Register host name in WiFi and mDNS
+			String hostNameWifi = config.deviceName;
+			hostNameWifi += ".local";
+			
+			// wifi_station_set_hostname(config.deviceName);
+			// WiFi.hostname(hostNameWifi);
+			
+			if(MDNS.begin(config.deviceName)){
+				
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINT(F(" MDNS responder started: http://"));
+					DEBUG_PRINT(hostNameWifi);
+				#endif
+				
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTLN(F("\n\n To use mDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"));
+				#else
+					DEBUG_PRINTLN(F(""));
+				#endif
+				
+			}else{
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINTLN(F(" MDNS responder failed to start"));
+				#endif
 			}
 		#endif
 	}
-	#if DEBUG_LVL >= 1
-		if (!isNetworkConnected()) {
-			// this point is only reached if config.automaticConfig = false
-			DEBUG_PRINT(F("\n WiFi NOT connected\n Continuing anyway"));
-		}else{
-			#if DEBUG_LVL >= 2
-				DEBUG_PRINT(F("\n WiFi connected\n Device MAC: "));
-				DEBUG_PRINTLN(WiFi.macAddress());
-			#else
-				DEBUG_PRINTLN("");
-			#endif
-			DEBUG_PRINT(F(" Device IP Address: "));
-			DEBUG_PRINTLN(WiFi.localIP());
-		}
-	#endif
-
-	#if USEMDNS == true
-		// Register host name in WiFi and mDNS
-		String hostNameWifi = config.boardName;   // boardName is device name
-		hostNameWifi.concat(".local");
-		wifi_station_set_hostname(config.boardName);
-		//   WiFi.hostname(hostNameWifi);
-		if (MDNS.begin(config.boardName)) {
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(F(" MDNS responder started: http://"));
-			DEBUG_PRINT(hostNameWifi);
-		#endif
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINTLN(F("\n\n To use MDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"));
-		#endif
-		} else {
-			espRestart('N', "MDNS not started");
-		}
-	#endif
+	
 
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
 }
 
-// Wait until network is connected. Returns false if not connected after MAX_WIFI_RETRIES retries
+
+/**
+	Wait until network is connected. 
+	Returns false if not connected after MAX_WIFI_RETRIES retries 
+*/
 bool IOTAppStory::isNetworkConnected() {
 	int retries = MAX_WIFI_RETRIES;
 	DEBUG_PRINT(" ");
 	while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
 		delay(500);
-		DEBUG_PRINT(".");
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F("."));
+		#endif
 	}
 	
 	return (retries > 0);
 }
 
 
-//---------- IOTappStory FUNCTIONS ----------
-bool IOTAppStory::callHome(bool spiffs /*= true*/) {
+/** 
+	call home and check for updates
+*/
+void IOTAppStory::callHome(bool spiffs /*= true*/) {
+	/**/
 	// update from IOTappStory.com
 	bool updateHappened = false;
 	
 	#if DEBUG_LVL >= 2
-		DEBUG_PRINTF_P(PSTR(" Calling Home\n Current App: %s\n"), _firmware.c_str());
+		DEBUG_PRINTLN(F(" Calling Home"));
+		//DEBUG_PRINT(PSTR(" Calling Home\n Current App: "));
+		//DEBUG_PRINT(_appName);
+		//DEBUG_PRINT(F(" "));
+		//DEBUG_PRINTLN(_appVersion);
 	#endif
 
 	if (_firmwareUpdateCheckCallback){
@@ -398,27 +592,36 @@ bool IOTAppStory::callHome(bool spiffs /*= true*/) {
 	}
 	
 
-
-	if (spiffs) {
-		
-		// try to update spiffs from address 1
-		updateHappened = iotUpdater(1,0);
-		
-		// if address 1 was unsuccesfull try address 2
-		if (updateHappened == false) {
-			updateHappened = iotUpdater(1,1);
+	#if defined ESP8266
+		if (spiffs) {
+			
+			// try to update spiffs from address 1
+			updateHappened = iotUpdater(1,0);
+			
+			// if address 1 was unsuccesfull try address 2
+			if (updateHappened == false) {
+				updateHappened = iotUpdater(1,1);
+			}
 		}
-	}
+	#elif defined ESP32
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F("\n No OTA SPIFFS support for ESP32 yet!"));
+		#endif
+	#endif
+
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F("\n Returning from IOTAppStory.com"));
 	#endif
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
-
-	return updateHappened;
+	
 }
 
+
+/** 
+	IOT updater
+*/
 bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	String url = "";
 	bool httpSwitch = false;
@@ -426,6 +629,12 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
 		httpSwitch = true;
 	}
+	#if defined ESP32 && HTTPS == true
+		httpSwitch = false;	// Overide. For HTTPS 443. As of today, HTTPS doesn't work for ota updates on the esp32.
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("\n No HTTPS OTA support for ESP32 yet!"));
+		#endif
+	#endif
 	
 	#if DEBUG_LVL == 1
 		DEBUG_PRINT(F(" Checking for "));
@@ -458,8 +667,8 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 
 	if(loc == 0){
 		// location 1
-		url += config.HOST1;
-		url += config.FILE1;
+		url += _updateHost;
+		url += _updateFile;
 	}else{
 		// location 2
 		url += FPSTR(HOST2);
@@ -472,54 +681,19 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		DEBUG_PRINTLN("");		
 	#endif
 	
-    HTTPClient http;
-	if(httpSwitch == true){
-		http.begin(url, config.sha1); // 								<<--  https We need to free up RAM first!
-	}else{
-		http.begin(url);
-	}
-	
-	
-    // use HTTP/1.0 the update handler does not support transfer encoding
-    http.useHTTP10(true);
-    http.setTimeout(8000);
-    http.setUserAgent(F("ESP8266-http-Update"));
 
+	HTTPClient http;
+	httpClientSetup(http, httpSwitch, url, spiffs);
 
-    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    http.addHeader(F("x-ESP8266-act-id"), String(config.actCode));
+	// track these headers for later use
+	const char * headerkeys[] = { "x-MD5", "x-name" };
+	size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+	http.collectHeaders(headerkeys, headerkeyssize);
 
-	
-    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
-    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
-    http.addHeader(F("x-ESP8266-sketch-md5"), String(ESP.getSketchMD5()));
+	int code = http.GET();
+	int len = http.getSize();
 
-	
-	http.addHeader(F("x-ESP8266-flashchip-size"), String(ESP.getFlashChipRealSize()));
-    http.addHeader(F("x-ESP8266-flashchip-id"), String(ESP.getFlashChipId()));
-	http.addHeader(F("x-ESP8266-chip-id"), String(ESP.getChipId()));
-	
-    http.addHeader(F("x-ESP8266-core-version"), ESP.getCoreVersion());
-	http.addHeader(F("x-ESP8266-version"), _firmware);
-    if(spiffs) {
-        http.addHeader(F("x-ESP8266-mode"), F("spiffs"));
-    } else {
-        http.addHeader(F("x-ESP8266-mode"), F("sketch"));
-    }
-
-    
-
-
-    // track these headers for later use
-    const char * headerkeys[] = { "x-MD5", "x-name" };
-    size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
-    http.collectHeaders(headerkeys, headerkeyssize);
-
-
-    int code = http.GET();
-    int len = http.getSize();
-
-    if(code == HTTP_CODE_OK){
+	if(code == HTTP_CODE_OK){
 		
 		ESP8266HTTPUpdate ESPhttpUpdate;
 		ESPhttpUpdate.rebootOnUpdate(true);
@@ -541,11 +715,16 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 			if(http.hasHeader("x-MD5")) {
 				DEBUG_PRINTF_P("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
 			}
-
+			
 			DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
-			DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
-			DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
+			#if defined ESP32
+
+			#elif defined ESP8266
+				DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
+				DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
+			#endif
 			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", _firmware.c_str() );
+			
 		#endif
 
 		ESPhttpUpdate.handleUpdate(http, len, spiffs);
@@ -555,59 +734,52 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(http.getString());
 		#endif
-
-		if(code == HTTP_CODE_NOT_MODIFIED){
-			return true;
-		}else{
-			if (_firmwareUpdateErrorCallback){
-				_firmwareUpdateErrorCallback();
+		
+		#if defined ESP32
+			if(code == 399){
+				return true;
+			}else{
+				if (_firmwareUpdateErrorCallback){
+					_firmwareUpdateErrorCallback();
+				}
+				return false;
 			}
-			return false;
-		}
 
+		#elif defined ESP8266
+			if(code == HTTP_CODE_NOT_MODIFIED){
+				return true;
+			}else{
+				if (_firmwareUpdateErrorCallback){
+					_firmwareUpdateErrorCallback();
+				}
+				return false;
+			}
+		#endif
+		
 	}
-
 	http.end();
 }
 
 
-//---------- WIFIMANAGER COMMON FUNCTIONS
-void IOTAppStory::initWiFiManager() {
-	//if(_serialDebug == true){WiFi.printDiag(Serial);} //Remove this line if you do not want to see WiFi password printed
-
-	if (WiFi.SSID() == "") {
-		DEBUG_PRINTLN(F("We haven't got any access point credentials, so get them now"));
-	}else{
-		WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
-		unsigned long startedAt = millis();
-		int connRes = WiFi.waitForConnectResult();
-		float waited = (millis() - startedAt);
-
-		DEBUG_PRINTF_P(PSTR("After waiting %d secs in setup(), the connection result is %d\n"), waited / 1000, connRes);
-	}
-
-	if (WiFi.status() != WL_CONNECTED) {
-		DEBUG_PRINTLN(F("Failed to connect"));
-	}else{
-		DEBUG_PRINT(F("Local ip: "));
-		DEBUG_PRINTLN(WiFi.localIP());
-	}
-	
-}
-
-
-// add char array field to the wifi configuration page and add value to eeprom
-void IOTAppStory::addField(char* &defaultVal,const char *fieldIdName,const char *fieldLabel, int length){
+/** 
+	Add fields to the fieldStruct
+*/
+void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length, char type){
 	_nrXF++;
 	
 	// add values to the fieldstruct
-	fieldStruct[_nrXF-1].fieldIdName = fieldIdName;
 	fieldStruct[_nrXF-1].fieldLabel = fieldLabel;
 	fieldStruct[_nrXF-1].varPointer = &defaultVal;
 	fieldStruct[_nrXF-1].length = length+1;
+	fieldStruct[_nrXF-1].type = type;
 }
 
-// add char array field to the wifi configuration page and add value to eeprom
+
+/** 
+	Process the added fields
+	- save to eeprom
+	- load stored values
+*/
 void IOTAppStory::processField(){
 
 	// to prevent longer then default values overwriting each other
@@ -635,7 +807,13 @@ void IOTAppStory::processField(){
 	}
 		
 	if(_nrXF > 0){
-		DEBUG_PRINTLN(F(" Processing added fields\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"));
+		#if DEBUG_LVL == 1
+			DEBUG_PRINTLN(F(" Processing added fields"));
+		#endif
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F(" Processing added fields\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"));
+		#endif
+		
 		EEPROM.begin(EEPROM_SIZE);
 		
 		for (unsigned int nr = 1; nr <= _nrXF; nr++){
@@ -651,8 +829,10 @@ void IOTAppStory::processField(){
 			const int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
 			const int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
 
-			DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), nr, fieldStruct[nr-1].fieldLabel, fieldStruct[nr-1].length-1, eeBeg, eeEnd, (*fieldStruct[nr-1].varPointer));
-
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), nr, fieldStruct[nr-1].fieldLabel, fieldStruct[nr-1].length-1, eeBeg, eeEnd, (*fieldStruct[nr-1].varPointer));
+			#endif
+			
 			char* eepVal = new char[fieldStruct[nr-1].length + 1];
 			char* tmpVal = new char[fieldStruct[nr-1].length + 1];
 			for (int i = 0; i < fieldStruct[nr-1].length; i++) {
@@ -675,16 +855,21 @@ void IOTAppStory::processField(){
 				
 				// if eeprom value is different update the ret value
 				if(strcmp(eepVal, (*fieldStruct[nr-1].varPointer)) != 0){
-				//if(String(eepVal) != String((*fieldStruct[nr-1].varPointer))){
-					DEBUG_PRINTF_P(PSTR("%-30s | OVERWRITTEN"), eepVal);
-
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTF_P(PSTR("%-30s | OVERWRITTEN"), eepVal);
+					#endif
+					
 					(*fieldStruct[nr-1].varPointer) = eepVal;
 				}else{
-					DEBUG_PRINTF_P(PSTR("%-30s | DEFAULT"), (*fieldStruct[nr-1].varPointer));
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTF_P(PSTR("%-30s | DEFAULT"), (*fieldStruct[nr-1].varPointer));
+					#endif
 				}
 
 			}else{
-				DEBUG_PRINTF_P(PSTR("%-30s | WRITTING TO EEPROM"), (*fieldStruct[nr-1].varPointer));
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTF_P(PSTR("%-30s | WRITTING TO EEPROM"), (*fieldStruct[nr-1].varPointer));
+				#endif
 
 				// add MAGICEEP to value and write to eeprom
 				for (unsigned int t = eeBeg; t <= eeEnd; t++){
@@ -698,14 +883,21 @@ void IOTAppStory::processField(){
 				}
 			}
 		
-			// add values to the fieldstruct
-			//fieldStruct[_nrXF-1].varPointer = (*fieldStruct[nr-1].varPointer);
-			DEBUG_PRINTLN("");
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN();
+			#endif
 		}
 		EEPROM.end();
-		DEBUG_PRINTLN(FPSTR(SER_DEV));
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(FPSTR(SER_DEV));
+		#endif
 	}
 }
+
+
+/** 
+	convert dpins to int
+*/
 int IOTAppStory::dPinConv(String orgVal){
 	#if defined ESP8266_OAK
 
@@ -764,104 +956,46 @@ int IOTAppStory::dPinConv(String orgVal){
 	#endif
 }
 
-void IOTAppStory::loopWiFiManager() {
-	if (_configModeCallback){
-		_configModeCallback();
-	}
-	
-	WiFiManagerParameter parArray[MAXNUMEXTRAFIELDS];
-	
-	for(unsigned int i = 0; i < _nrXF; i++){
-		// add the WiFiManagerParameter to parArray so it can be referenced to later
-		parArray[i] = WiFiManagerParameter(fieldStruct[i].fieldIdName, fieldStruct[i].fieldLabel, (*fieldStruct[i].varPointer), fieldStruct[i].length);
-	}
 
-	// Initialize WiFIManager
-	WiFiManager wifiManager;
-	wifiManager.config = &config;
-	//wifiManager.addParameter(&p_hint);
-
-	//add all parameters here
-	for(unsigned int i = 0; i < _nrXF; i++){
-		wifiManager.addParameter(&parArray[i]);
-	}
-
-	// Sets timeout in seconds until configuration portal gets turned off.
-	// If not specified device will remain in configuration mode until
-	// switched off via webserver or device is restarted.
-	wifiManager.setConfigPortalTimeout(420);
-
-	// It starts an access point
-	// and goes into a blocking loop awaiting configuration.
-	// Once the user leaves the portal with the exit button
-	// processing will continue
-	if (!wifiManager.startConfigPortal()) {
-		DEBUG_PRINTLN(F(" Not connected to WiFi but continuing anyway."));
-	}else{
-		// If you get here you have connected to the WiFi
-		DEBUG_PRINTLN(F(" Connected... :-)"));
-	}
-	// Getting posted form values and overriding local variables parameters
-	// Config file is written
-
-	//DEBUG_PRINTLN(" ---------------------------");
-
-	//add all parameters here
-	for(unsigned int i = 0; i < _nrXF; i++){
-		strcpy((*fieldStruct[i].varPointer), parArray[i].getValue());
-	}
-	//wifiManager.actCode.toCharArray(config.actCode,7);
-	//DEBUG_PRINTLN(wifiManager.actCode);
-	
-	writeConfig(true);
-	readConfig();  // read back to fill all variables
-	espRestart('N', "Configuration finished"); //Normal Operation
-}
-
-//---------- MISC FUNCTIONS ----------
-void IOTAppStory::espRestart(char mmode, const char* message) {
-	while (isModeButtonPressed()) yield();    // wait till GPIOo released
+/** 
+	Set mode and reboot
+*/
+void IOTAppStory::espRestart(char mmode) {
+	//while (isModeButtonPressed()) yield();    // wait till GPIOo released
 	delay(500);
 	
-	rtcMem.boardMode = mmode;
-	writeRTCmem();
-	//system_rtc_mem_write(RTCMEMBEGIN + 100, &mmode, 1);
-	//system_rtc_mem_read(RTCMEMBEGIN + 100, &boardMode, 1);
-
-	DEBUG_PRINTLN("");
-	DEBUG_PRINTLN(message);
+	boardMode = mmode;
+	writePref();
 
 	ESP.restart();
 }
 
-void IOTAppStory::eraseFlash(unsigned int eepFrom, unsigned int eepTo) {
-	DEBUG_PRINTF_P(PSTR(" Erasing Flash...\n From %4d to %4d\n"), eepFrom, eepTo);
 
+
+/** 
+	Erase flash from till
+*/
+void IOTAppStory::eraseFlash(int eepFrom, int eepTo) {
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTF_P(PSTR(" Erasing Flash...\n From %4d to %4d\n"), eepFrom, eepTo);
+	#endif
+	
 	EEPROM.begin(EEPROM_SIZE);
-	for (unsigned int t = eepFrom; t < eepTo; t++) EEPROM.write(t, 0);
+	for (int t = eepFrom; t < eepTo; t++) EEPROM.write(t, 0);
 	EEPROM.end();
 }
 
-//---------- CONFIGURATION PARAMETERS ----------
-void IOTAppStory::writeConfig(bool wifiSave) {
-	//DEBUG_PRINTLN(" ------------------ Writing Config --------------------------------");
-	if (WiFi.psk() != "") {
-		WiFi.SSID().toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-		WiFi.psk().toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
-		#if DEBUG_EEPROM_CONFIG
-			DEBUG_PRINT_P(PSTR("Stored %s\n %s\n"), config.ssid, config.password);   // actCode
-		#endif		
-	}
-	
+
+
+/** 
+	Write the config struct to EEPROM
+	If saveXF == true also write the added fields. If their are any.
+*/
+void IOTAppStory::writeConfig(bool saveXF) {
 	EEPROM.begin(EEPROM_SIZE);
-	/*
-	config.magicBytes[0] = MAGICBYTES[0];
-	config.magicBytes[1] = MAGICBYTES[1];
-	config.magicBytes[2] = MAGICBYTES[2];
-	*/
 	
 	// WRITE CONFIG TO EEPROM
-	for (unsigned int t = 0; t < sizeof(config); t++) {
+	for (int t = 0; t < sizeof(config); t++) {
 		EEPROM.write(t, *((char*)&config + t));
 		
 		#if DEBUG_EEPROM_CONFIG
@@ -871,16 +1005,18 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 		
 	}
 	EEPROM.commit();
+	
 	#if DEBUG_EEPROM_CONFIG
 		DEBUG_PRINTLN();
 	#endif
 	
-	if(wifiSave == true && _nrXF > 0){
+	
+	if(saveXF == true && _nrXF > 0){
 		// LOOP THROUGH ALL THE ADDED FIELDS, CHECK VALUES AND IF NECESSARY WRITE TO EEPROM
-		for (unsigned int nr = 1; nr <= _nrXF; nr++){
+		for (int nr = 1; nr <= _nrXF; nr++){
 			
 			int prevTotLength = 0;
-			for(unsigned int i = 0; i < (nr-1); i++){
+			for(int i = 0; i < (nr-1); i++){
 				prevTotLength += fieldStruct[i].length;
 			}
 			const int sizeOfVal = fieldStruct[nr-1].length;
@@ -888,16 +1024,15 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 			const int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
 			const int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
 			
-			/*
-			DEBUG_PRINT(" EEPROM space: ");
-			DEBUG_PRINT(eeBeg);
-			DEBUG_PRINT("  to ");
-			DEBUG_PRINTLN(eeEnd);
-			DEBUG_PRINTLN(" ");
-			DEBUG_PRINT(" Size: ");
-			DEBUG_PRINTLN(sizeOfVal);
-			DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
-			*/
+			#if DEBUG_EEPROM_CONFIG
+				DEBUG_PRINT(F(" EEPROM space: "));
+				DEBUG_PRINT(eeBeg);
+				DEBUG_PRINT(F("  to "));
+				DEBUG_PRINTLN(eeEnd);
+				DEBUG_PRINT(F("  Size: "));
+				DEBUG_PRINTLN(sizeOfVal);
+				DEBUG_PRINTLN((*fieldStruct[nr-1].varPointer));
+			#endif
 			
 			char* tmpVal = new char[sizeOfVal + 1];
 			for (int i = 0; i <= sizeOfVal; i++) {
@@ -906,15 +1041,11 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 			if ((*fieldStruct[nr-1].varPointer) != NULL) {
 				strncpy(tmpVal, (*fieldStruct[nr-1].varPointer), fieldStruct[nr-1].length);
 			}
-
-			//DEBUG_PRINTLN("^^");
-			//DEBUG_PRINTLN(tmpVal);
-			//DEBUG_PRINTLN(" ");
 			
 			// check for MAGICEEP
 			if(EEPROM.read(eeBeg) == MAGICEEP[0] && EEPROM.read(eeEnd) == '^'){
 				// add MAGICEEP to value and write to eeprom
-				for (unsigned int t = eeBeg; t <= eeEnd; t++){
+				for (int t = eeBeg; t <= eeEnd; t++){
 					char valueTowrite;
 					
 					if(t == eeBeg){
@@ -940,16 +1071,25 @@ void IOTAppStory::writeConfig(bool wifiSave) {
 	EEPROM.end();
 }
 
-bool IOTAppStory::readConfig() {
-	//DEBUG_PRINTLN(" ------------------ Reading Config --------------------------------");
 
-	boolean ret = false;
+
+/** 
+	Read the config struct to EEPROM
+	If saveXF == true also write the added fields. If their are any.
+*/
+void IOTAppStory::readConfig() {
+
 	EEPROM.begin(EEPROM_SIZE);
-	long magicBytesBegin = sizeof(config) - 4; 								// Magic bytes at the end of the structure
-
-	if (EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
-		DEBUG_PRINTLN(F(" EEPROM Configuration found"));
-		for (unsigned int t = 0; t < sizeof(config); t++) {
+	// Magic bytes at the end of the structure
+	int magicBytesBegin = sizeof(config) - 4;
+	
+	if(EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
+			
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(" EEPROM Configuration found"));
+		#endif
+		
+		for(int t = 0; t < sizeof(config); t++){
 			char valueReaded = EEPROM.read(t);
 			*((char*)&config + t) = valueReaded;
 			
@@ -959,21 +1099,23 @@ bool IOTAppStory::readConfig() {
 			#endif
 		}
 		EEPROM.end();
+		
 		#if DEBUG_EEPROM_CONFIG
 			DEBUG_PRINTLN();
 		#endif
-		ret = true;
 
-	} else {
-		DEBUG_PRINTLN(F(" EEPROM Configuration NOT FOUND!!!!"));
+	}else{
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(" EEPROM Configuration NOT FOUND!!!!"));
+		#endif
+		
 		writeConfig();
-		ret = false;
 	}
 	
 	_configReaded = true;
-	
-	return ret;
 }
+
 
 void IOTAppStory::updateLoop() {
    if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
@@ -982,18 +1124,17 @@ void IOTAppStory::updateLoop() {
    }
 }
 
+
 ModeButtonState IOTAppStory::buttonLoop() {
    this->updateLoop();
    return getModeButtonState();
 }
 
-void IOTAppStory::saveConfigCallback () {
-	writeConfig();
-}
 
 bool IOTAppStory::isModeButtonPressed() {
 	return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
 }
+
 
 ModeButtonState IOTAppStory::getModeButtonState() {
 	
@@ -1042,7 +1183,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 					_veryLongPressCallback();
 				continue;
 			}
-#if WIFIMAN == true
+#if INC_CONFIG == true
 			if (!isModeButtonPressed()) {
 				_appState = AppStateConfigMode;
 				continue;
@@ -1064,11 +1205,11 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 			//DEBUG_PRINTLN("Calling Home");
 			callHome();
 			continue;
-#if WIFIMAN == true	
+#if INC_CONFIG == true	
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
 			DEBUG_PRINTLN(F(" Entering in Configuration Mode"));
-			espRestart('C', "Going into Configuration Mode");
+			espRestart('C');
 			continue;
 #endif
 		}
@@ -1077,15 +1218,10 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 }
 
 
-void IOTAppStory::setCallHome(bool callHome) {
-   _callHome = callHome;
-}
 
-void IOTAppStory::setCallHomeInterval(unsigned long interval) {
-   _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
-}
-
-
+/** 
+	callBacks
+*/
 void IOTAppStory::onFirstBoot(THandlerFunction value) {
 	_firstBootCallback = value;
 }
@@ -1093,15 +1229,12 @@ void IOTAppStory::onFirstBoot(THandlerFunction value) {
 void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
 	_noPressCallback = value;
 }
-
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
 	_shortPressCallback = value;
 }
-
 void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
 	_longPressCallback = value;
 }
-
 void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
 	_veryLongPressCallback = value;
 }
@@ -1120,3 +1253,352 @@ void IOTAppStory::onConfigMode(THandlerFunction value) {
 	_configModeCallback = value;
 }
 
+
+/** Handle root */
+void IOTAppStory::servHdlRoot(AsyncWebServerRequest *request) {
+    
+    String retHtml;
+		retHtml += FPSTR(HTTP_TEMP_START);
+		
+		if (WiFi.status() == WL_CONNECTED) {	
+		
+				retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
+
+		}else{
+			
+				retHtml.replace("{h}", FPSTR(HTTP_AP_CSS));
+				
+				
+				retHtml += F("<h2>Wifi connection</h2>");
+				retHtml += FPSTR(HTTP_WIFI_FORM);
+				
+				retHtml += FPSTR(HTTP_AP_JS);
+				
+		}
+		
+		retHtml += FPSTR(HTTP_TEMP_END);
+		
+    hdlReturn(request, retHtml);
+}
+
+
+
+/** Handle device information */
+void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" Serving device info"));
+		#endif
+		
+    String retHtml;
+		retHtml += FPSTR(HTTP_DEV_INFO);
+		retHtml.replace("{s1}", config.ssid[0]);
+		retHtml.replace("{s2}", config.ssid[1]);
+		retHtml.replace("{s3}", config.ssid[2]);
+		retHtml.replace("{fs}", String(ESP.getFlashChipSize()));
+		retHtml.replace("{ab}", ARDUINO_BOARD);
+		retHtml.replace("{mc}", WiFi.macAddress());
+		retHtml.replace("{xf}", String(_nrXF));
+		
+		if(String(config.actCode) == "000000" || String(config.actCode) == ""){
+			retHtml.replace("{ac}", "0");	
+		}else{
+			retHtml.replace("{ac}", "1");	
+		}
+		
+		
+    hdlReturn(request, retHtml, F("application/json"));
+}
+
+
+
+/** Handle wifi scan */
+void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" Serving results of Wifiscan"));
+		#endif
+    // WiFi.scanNetworks will return the number of networks found
+    int n = WiFi.scanNetworks();
+    
+    String retHtml = F("[");
+    
+		for (int i = 0; i < n; ++i) {
+				
+				// return html results from the wifi scan
+				if(i > 0){
+					retHtml += F(",");
+				}
+				retHtml += FPSTR(HTTP_WIFI_SCAN);
+				
+				retHtml.replace("{s}", WiFi.SSID(i));
+				retHtml.replace("{q}", String(WiFi.RSSI(i)));
+				retHtml.replace("{e}", String(WiFi.encryptionType(i)));             
+				delay(10);
+		}
+		retHtml += F("]");
+    
+    //request->send(200, "text/html", retHtml);
+    hdlReturn(request, retHtml, F("application/json"));
+}
+
+
+
+/** Handle save wifi credentials */
+void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
+
+		String retHtml = F("0");
+		bool changeMode = false;
+		
+		// are both ssid & password sent
+		if(request->hasParam("s", true) && request->hasParam("p", true)){
+			
+			if(!request->hasParam("i", true)){
+					//Saved from first screen. When in Wifi AP mode
+			
+					#if DEBUG_LVL == 2
+						DEBUG_PRINTLN(F("\n Connect with received credentials"));
+					#endif
+					
+					#if DEBUG_LVL == 3
+						DEBUG_PRINTF_P(PSTR(" \n Connect with received credentials: %s - %s\n"), request->getParam("s", true)->value(), request->getParam("p", true)->value());
+					#endif
+					
+					WiFi.mode(WIFI_AP_STA);
+					WiFi.begin(request->getParam("s", true)->value().c_str(), request->getParam("p", true)->value().c_str());
+
+
+					if(isNetworkConnected()){
+						changeMode = true;
+						#if WIFI_MULTI == true
+							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[1]).toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
+							
+							String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[0]).toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
+						#endif
+						
+						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
+						writeConfig();
+						
+						retHtml = F("1:");
+						retHtml += WiFi.localIP().toString();
+						delay(100);
+					}
+			
+			}else{
+					// Saved from config. When in Wifi STA mode
+
+					int apNr = atoi(request->getParam("i", true)->value().c_str());
+					#if DEBUG_LVL == 3
+						DEBUG_PRINTF_P(PSTR("\n Added wifi credentials for AP%d\n"),apNr);
+					#endif
+					
+					request->getParam("s", true)->value().toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
+					request->getParam("p", true)->value().toCharArray(config.password[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
+					writeConfig();
+					retHtml = F("1");
+			}
+
+		}else{
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINT(F("SSID or Password is missing"));
+			#endif
+		}
+
+		
+	hdlReturn(request, retHtml);
+	
+	if(changeMode){
+		delay(1000);
+		WiFi.mode(WIFI_STA);
+		delay(100);
+
+		#if DEBUG_LVL >= 2
+			//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
+			
+			DEBUG_PRINT(F("\n Changed to STA mode. Open "));
+			DEBUG_PRINTLN(WiFi.localIP());
+			DEBUG_PRINTLN();
+		#endif
+	}
+}
+
+
+/** Handle app / firmware information */
+void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" Serving App Settings"));
+		#endif
+		
+    String retHtml = F("[");
+    
+		for (int i = 0; i < _nrXF; ++i) {
+				
+				// return html results from the wifi scan
+				if(i > 0){
+					retHtml += F(",");
+				}
+				retHtml += FPSTR(HTTP_APP_INFO);
+				
+				retHtml.replace("{l}", String(fieldStruct[i].fieldLabel));
+				retHtml.replace("{v}", String((*fieldStruct[i].varPointer)));
+				retHtml.replace("{n}", String(i));
+				retHtml.replace("{m}", String(fieldStruct[i].length));
+				retHtml.replace("{t}", String(fieldStruct[i].type));
+				delay(10);
+		}
+		retHtml += F("]");
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(retHtml);
+		#endif
+    hdlReturn(request, retHtml, F("application/json"));
+}
+
+
+/** Save App Settings */
+void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(F(" Saving App Settings"));
+	#endif
+	
+	String retHtml = F("0");
+	
+	if(_nrXF){
+		for(unsigned int i = 0; i < _nrXF; i++){
+			if(request->hasParam(String(i), true)){
+				strcpy((*fieldStruct[i].varPointer), request->getParam(String(i), true)->value().c_str());
+			}
+		}
+		retHtml = F("1");
+		writeConfig(true);
+	}
+	hdlReturn(request,  retHtml);
+}
+
+
+/** Handle confirm & save registration code */
+void IOTAppStory::servHdlDevSave(AsyncWebServerRequest *request) {
+		/**/
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F("\n Received activation code from browser"));
+		#endif
+		
+		String retHtml;
+		
+		if(request->hasParam("ac", true)){
+			
+			request->getParam("ac", true)->value().toCharArray(config.actCode, 7); //???
+			
+				/***********************************************************************************************/
+					String url = "";
+					bool httpSwitch = false;
+					
+					if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+						httpSwitch = true;
+					}
+
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT(F("\n Checking for device confirmation at IAS"));
+					#endif
+
+					if(httpSwitch == true){
+						url = F("https://");
+					}else{
+						url = F("http://");
+					}
+
+					// location 1
+					url += _updateHost;
+					url += F("/ota/cfg-esp/confirm.php");
+					
+
+					HTTPClient http;
+					httpClientSetup(http, httpSwitch, url);
+					int code = http.GET();
+
+					if(code == HTTP_CODE_OK){
+						
+						if(http.getString() == "1"){
+							// Succes, device activation confirmed. Save activation code to eeprom
+							writeConfig();
+							retHtml = F("1");
+							
+							#if DEBUG_LVL >= 3
+								DEBUG_PRINT(F("\n Succes, saved code"));
+							#endif
+						}else{
+							// Error, could not confirm device activation
+							String("000000").toCharArray(config.actCode, 7);
+							retHtml = F("2");
+							
+							#if DEBUG_LVL >= 3
+								DEBUG_PRINT(F("\n Error: could not confirm"));
+							#endif
+						}
+
+					}else{
+						
+						// Error, could not connect to IAS server
+						retHtml = F("3");
+						
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTLN(code);
+							DEBUG_PRINTLN(http.getString());
+						#endif
+					}
+
+					http.end();
+				
+				/***********************************************************************************************/
+
+		}else{
+				// Error, activation code missing 
+				retHtml = F("4");
+		}
+		
+		hdlReturn(request, retHtml);
+};
+
+
+/** default httpclient */
+void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs) {
+	if(httpSwitch == true){
+		http.begin(url, ROOT_CA); // 								<<--  https We need to free up RAM first!
+	}else{
+		http.begin(url);
+	}
+	
+	// use HTTP/1.0 the update handler does not support transfer encoding
+	http.useHTTP10(true);
+	http.setTimeout(8000);
+	http.setUserAgent(F("ESP-http-Update"));
+
+	http.addHeader(F("x-ESP-STA-MAC"), WiFi.macAddress());
+	http.addHeader(F("x-ESP-ACT-ID"), String(config.actCode));
+	
+	#if defined ESP32
+		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getSdkVersion()));
+	#elif defined ESP8266
+		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getCoreVersion()));
+	#endif
+	
+	if(spiffs) {
+			http.addHeader(F("x-ESP-MODE"), F("spiffs"));
+	} else {
+			http.addHeader(F("x-ESP-MODE"), F("sketch"));
+	}
+
+	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
+	http.addHeader(F("x-ESP-VERSION"), String(_appName) + " " + String(_appVersion));
+}
+
+
+/** return page handler */
+void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type) {
+	
+	AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
+	response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+	response->addHeader("Pragma", "no-cache");
+	response->addHeader("Expires", "-1");
+	request->send(response);
+}
