@@ -25,7 +25,7 @@
 */
 
 #define APPNAME "virginSoilBasic"
-#define VERSION "V2.1.1"
+#define VERSION "V2.1.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
@@ -37,11 +37,6 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);														// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-  //IAS.serialdebug(true,115200);										// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  /* TIP! delete the above lines when not used */
-
-
   IAS.begin(true,'P');                              // 1st parameter: true or false to view BOOT STATISTICS
                                                     // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
