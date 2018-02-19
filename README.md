@@ -15,11 +15,11 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 ## Develop branch
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
 
-## Upcoming release 1.1.0
+## Upcoming release 2.0.0
 https://github.com/iotappstory/ESP8266-Library
 </br></br>
 
-## API 1.1.0
+## API 2.0.0
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
@@ -38,22 +38,6 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 setup () { ... }
 loop () { ... }
-```
-</br>
-
-### `serialdebug(bool enabled, int speed=115200)`
-Set enabled to true to send debuging feedback over serial. You can set the port speed as the second parameter. The default speed id 115200. Use this during development only! And remove these lines for published apps.
-
-Example:
-```c
-...
-
-setup () {
-  IAS.serialdebug(true);
-  //IAS.serialdebug(true,115200);
-
-  IAS.begin();
-}
 ```
 </br>
 

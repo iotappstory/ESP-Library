@@ -25,13 +25,18 @@
 */
 
 #define APPNAME "INITLoader"
-#define VERSION "V1.1.0"
+#define VERSION "V1.2.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0                     // Button pin on the esp8266 for selecting modes. D3 for the Wemos!
 
 
-#include <ESP8266WiFi.h>
-#include <IOTAppStory.h>
+
+#include <IOTAppStory.h>                 // IotAppStory.com library
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>               // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                      // esp32 core wifi library
+#endif
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 unsigned long printEntry;
@@ -41,12 +46,8 @@ String boardName;
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
- 
-  
   boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);	        // preset Boardname
+  IAS.preSetDeviceName(boardName);	      // preset Boardname
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 

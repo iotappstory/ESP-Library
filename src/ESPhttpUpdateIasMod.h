@@ -1,6 +1,6 @@
 /**
  *
- * @file ESP8266HTTPUpdateIasMod.cpp
+ * @file ESPhttpUpdateIasMod.cpp
  * @date 01.01.2018
  * @author Onno Dirkzwager
  *
@@ -26,16 +26,30 @@
  *
  */
 
-#ifndef ESP8266HTTPUPDATEIASMOD_H_
-	#define ESP8266HTTPUPDATEIASMOD_H_
+#ifndef ESPHTTPUPDATEIASMOD_H_
+	#define ESPHTTPUPDATEIASMOD_H_
 
 	#include <Arduino.h>
-	#include <ESP8266WiFi.h>
+
+
+	
+	
+	#ifdef ESP32
+		#include <WiFi.h>
+		#include <HTTPClient.h>
+		#include <Update.h>
+	#else
+		#include <ESP8266WiFi.h>
+		#include <ESP8266HTTPClient.h>
+	#endif
+
+
 	#include <WiFiClient.h>
 	#include <WiFiUdp.h>
-	#include <ESP8266HTTPClient.h>
-
-    #ifndef DEBUG_LVL
+	
+	
+	
+  #ifndef DEBUG_LVL
 		#define DEBUG_LVL 2	// 1, 2 or 3
 		#if DEBUG_LVL >= 1
 			#define         DEBUG_PRINT(x)    { Serial.print(x);  }
