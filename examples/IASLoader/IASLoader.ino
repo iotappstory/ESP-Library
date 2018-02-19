@@ -25,12 +25,17 @@
 */
 
 #define APPNAME "INITLoader"
-#define VERSION "V1.1.0"
+#define VERSION "V1.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
 
-#include <ESP8266WiFi.h>
+
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>
+#elif defined ESP32
+  #include <WiFi.h>
+#endif
 #include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
@@ -41,12 +46,8 @@ String boardName;
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
- 
-  
   boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);	        // preset Boardname
+  IAS.preSetDeviceName(boardName);	      // preset Boardname
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
