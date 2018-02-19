@@ -36,7 +36,7 @@
 	#include <ESP8266HTTPClient.h>
 #endif
 
-#include "ESP8266httpUpdateIasMod.h"
+#include "ESPhttpUpdateIasMod.h"
 #include <DNSServer.h> 
 #include <FS.h>
 #include <EEPROM.h>
