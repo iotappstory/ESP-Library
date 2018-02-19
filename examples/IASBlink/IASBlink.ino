@@ -24,7 +24,7 @@
 */
 
 #define APPNAME "IASBlink"
-#define VERSION "V1.0.1"
+#define VERSION "V1.0.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0
 
@@ -50,16 +50,11 @@ char* blinkTime = "1000";
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);														        // 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-  //IAS.serialdebug(true,115200);										        // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  /* TIP! delete the above lines when not used */
+  IAS.preSetDeviceName("iasblink");                         // preset Boardname this is also your MDNS responder: http://iasblink.local
 
 
-  IAS.preSetBoardname("iasblink");                          // preset Boardname this is also your MDNS responder: http://iasblink.local
-
-
-  IAS.addField(LEDpin, "ledpin", "ledPin", 2);              // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(blinkTime, "Blinktime(mS)", "blinkTime", 5); // reference to org variable | field name | field label value | max char return
+  IAS.addField(LEDpin, "ledpin", 2);                        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field name | field label value | max char return
 
 
   IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
