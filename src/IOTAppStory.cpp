@@ -142,21 +142,15 @@ void IOTAppStory::preSetDeviceName(String deviceName){
 	_setDeviceName = true;
 	SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, _setPreSet);
 }
-/*
+
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate){
-	if (!_configReaded) {
-		readConfig();
-	}
-	SetConfigValue(config.automaticUpdate, automaticUpdate, _setPreSet);
+	_updateOnBoot = automaticUpdate;
 }
 
 void IOTAppStory::preSetAutoConfig(bool automaticConfig){
-	if (!_configReaded) {
-		readConfig();
-	}
-	SetConfigValue(config.automaticConfig, automaticConfig, _setPreSet);
+	_automaticConfig = automaticConfig;
 }
-*/
+
 void IOTAppStory::preSetWifi(String ssid, String password){
 	if (!_configReaded) {
 		readConfig();
@@ -277,7 +271,7 @@ void IOTAppStory::begin(bool bootstats, char ea){
 
 	// --------- if automaticUpdate Update --------------------------
 	if(_updateOnBoot == true){
-		//callHome();
+		callHome();
 	}
 
 	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
