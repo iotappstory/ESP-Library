@@ -27,16 +27,16 @@
 #define APPNAME "INITLoader"
 #define VERSION "V1.2.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0                     // Button pin on the esp8266 for selecting modes. D3 for the Wemos!
 
 
 
+#include <IOTAppStory.h>                 // IotAppStory.com library
 #if defined  ESP8266
-  #include <ESP8266WiFi.h>
+  #include <ESP8266WiFi.h>               // esp8266 core wifi library
 #elif defined ESP32
-  #include <WiFi.h>
+  #include <WiFi.h>                      // esp32 core wifi library
 #endif
-#include <IOTAppStory.h>
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 unsigned long printEntry;
