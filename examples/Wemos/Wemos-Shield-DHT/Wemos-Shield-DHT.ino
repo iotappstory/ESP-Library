@@ -27,7 +27,7 @@
 */
 
 #define APPNAME "TempSensor"
-#define VERSION "V1.3.0"
+#define VERSION "V1.3.1"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
@@ -35,7 +35,13 @@
 #include <SSD1306.h>              // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>          // IotAppStory.com library
 #include <DHT.h>                  // Adafruit DHT Arduino library
-#include <ESP8266WiFi.h>          // esp core wifi library
+
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>        // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>               // esp32 core wifi library
+#endif
+
 #include <PubSubClient.h>         // Arduino Client for MQTT by knolleary/pubsubclient
 
 
@@ -45,9 +51,9 @@
 
 
 // Uncomment whatever type you're using!
-#define DHTTYPE DHT11                                     // DHT 11
+//#define DHTTYPE DHT11                                     // DHT 11
 //#define DHTTYPE DHT21                                   // DHT 21 (AM2301)
-//#define DHTTYPE DHT22                                   // DHT 22  (AM2302)
+#define DHTTYPE DHT22                                   // DHT 22  (AM2302)
 
 
 WiFiClient espClient;
@@ -78,9 +84,6 @@ char* apikey = "";                                        // ThingSpeak Write AP
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  
   display.init();                                         // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
@@ -91,15 +94,15 @@ void setup() {
 
 
   String boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://TempSensor_xx:xx:xx.local
+  IAS.preSetDeviceName(boardName);                        // preset Boardname this is also your MDNS responder: http://TempSensor_xx:xx:xx.local
 
 
   IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
-  IAS.addField(scale, "scale", "Celc Fahr (0,1)", 1);     // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(apikey, "key", "TS Write API Key", 16);    // reference to org variable | field name | field label value | max char return
+  IAS.addField(scale, "Celc Fahr (0,1)", 1, 'S');         // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(apikey, "TS Write API Key", 16, 'T');      // reference to org variable | field name | field label value | max char return
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -348,4 +351,3 @@ void publishToThingspeak() {
   delay(1);
   thingspeak.publish(outTopic, msg);
 }
-
