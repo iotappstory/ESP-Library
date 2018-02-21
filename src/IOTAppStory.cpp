@@ -259,7 +259,9 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	
 	//---------- SELECT BOARD MODE -----------------------------
 	#if INC_CONFIG == true
-		if(boardMode == 'C'){runConfigServer();}
+		if(boardMode == 'C'){
+			runConfigServer();
+		}
 	#endif
 	
 	// --------- READ FULL CONFIG --------------------------
@@ -349,7 +351,7 @@ void IOTAppStory::printPref(){
 	#ifdef ESP32
 		DEBUG_PRINTF_P(PSTR(" bootTimes since last update: %d\n boardMode: %c\n"), bootTimes, boardMode);
 	#else
-		DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n bootTimes since powerup: %e\n boardMode: %f\n"), rtcMem.markerFlag, rtcMem.bootTimes, rtcMem.boardMode);
+		DEBUG_PRINTF_P(PSTR(" rtcMem\n bootTimes since powerup: %d\n boardMode: %c\n"), rtcMem.bootTimes, rtcMem.boardMode);
 		//DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n"), rtcMem.markerFlag);
 		//DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: "));
 		//DEBUG_PRINT(rtcMem.bootTimes);
@@ -363,7 +365,8 @@ void IOTAppStory::printPref(){
 void IOTAppStory::runConfigServer() {
 	
 	bool exitConfig = false;
-	
+
+	// callback entered config mode
 	if (_configModeCallback){
 		_configModeCallback();
 	}
@@ -373,6 +376,8 @@ void IOTAppStory::runConfigServer() {
 	#endif
 	
 	if(WiFi.status() != WL_CONNECTED){
+		
+		// when there is no wifi setup server in AP mode
 		IPAddress apIP(192, 168, 4, 1);
 		dnsServer.reset(new DNSServer());
 		server.reset(new AsyncWebServer(80));
@@ -389,14 +394,14 @@ void IOTAppStory::runConfigServer() {
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINTF_P(PSTR(" AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"), config.deviceName);
 		#endif
+		
 	}else{
 		
+		// when there is wifi setup server in STA mode
 		server.reset(new AsyncWebServer(80));
 		WiFi.mode(WIFI_STA);
 		
 		#if DEBUG_LVL >= 2
-			//DEBUG_PRINTF_P(PSTR("\n STA mode. Open %s in your browser\n"), WiFi.localIP().toString());
-			
 			DEBUG_PRINT(F(" STA mode. Open "));
 			DEBUG_PRINTLN(WiFi.localIP());
 		#endif
@@ -415,15 +420,37 @@ void IOTAppStory::runConfigServer() {
   server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlAppInfo(request); });
   server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlAppSave(request); });
   
-	server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlDevSave(request); });
+	server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F("\n Received activation code from browser"));
+		#endif
+		
+		String retHtml = F("0");
+		
+		if(request->hasParam("ac", true)){
+			
+			request->getParam("ac", true)->value().toCharArray(config.actCode, 7); //???
+			
+			if(!_confirmed && !_tryToConf){
+				_tryToConf = true;
+				retHtml = F("1");
+			}
+		}
+		
+		hdlReturn(request, retHtml);
+	});
 	server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
 
 	//server->rewrite("/", "/index-ap").setFilter(ON_AP_FILTER);
 	
+	// start the server
   server->begin();
 
+	// config server loop
   while(exitConfig == false){
+		
 		yield();
+		
 		if(WiFi.status() != WL_CONNECTED){
 			
 			//DNS
@@ -431,14 +458,73 @@ void IOTAppStory::runConfigServer() {
 			
 			// smartconfig default false / off
 			#if SMARTCONFIG == true
-			if(WiFi.smartConfigDone()){
-				WiFi.mode(WIFI_AP_STA);
-				isNetworkConnected();
-			}
+				if(WiFi.smartConfigDone()){
+					WiFi.mode(WIFI_AP_STA);
+					isNetworkConnected();
+				}
 			#endif
+			
+			// wifi connect when asked
+			if(_tryToConn == true){
+				///WiFi.mode(WIFI_AP_STA);
+				
+				#if WIFI_MULTI == true
+					wifiMulti.addAP(config.ssid[0], config.password[0]);
+					///wifiMulti.run();
+				#else
+					WiFi.begin(config.ssid[0], config.password[0]);
+				#endif
+					
+				_connected = isNetworkConnected();
+				yield();
+				
+				if(_connected){
+					
+					// Saving config to eeprom
+					writeConfig();
+					
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT(F(" Connected. Saving config to eeprom"));
+					#endif
+				}else{
+					DEBUG_PRINTLN(F("\n Failed, try again!!!"));					// <---------- temp...remove...
+				}
+				
+				_tryToConn = false;
+			}
+			
+		}else{
+			
+			// write actCode to EEPROM
+			if(!_confirmed && _tryToConf){
+				writeConfig();
+				_confirmed = true;
+				yield();
+				_tryToConf = false;
+			}
+			
+			// when succesfully added wifi cred in AP mode change to STA mode
+			if(_changeMode){
+				delay(1000);
+				WiFi.mode(WIFI_STA);
+				delay(100);
+				_changeMode = false;
+
+				#if DEBUG_LVL >= 2
+					//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
+					
+					DEBUG_PRINT(F("\n Changed to STA mode. Open "));
+					DEBUG_PRINTLN(WiFi.localIP());
+					DEBUG_PRINTLN();
+				#endif
+			}
+			
 		}
-		
   }
+	
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(F(" Exit config"));
+	#endif
 	
 	// Return to Normal Operation
 	espRestart('N');
@@ -452,13 +538,11 @@ void IOTAppStory::connectNetwork() {
 		DEBUG_PRINTLN(F(" Connecting to WiFi AP"));
 	#endif
 	
-	//WiFi.mode(WIFI_STA);
-	
 	#if WIFI_MULTI == true
     wifiMulti.addAP(config.ssid[0], config.password[0]);
     wifiMulti.addAP(config.ssid[1], config.password[1]);
     wifiMulti.addAP(config.ssid[2], config.password[2]);
-		wifiMulti.run();
+		//wifiMulti.run();
 	#else
 		WiFi.begin(config.ssid[0], config.password[0]);
 	#endif
@@ -546,14 +630,24 @@ void IOTAppStory::connectNetwork() {
 bool IOTAppStory::isNetworkConnected() {
 	int retries = MAX_WIFI_RETRIES;
 	DEBUG_PRINT(" ");
+	
+#if WIFI_MULTI == true
+	while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
+#else
 	while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
+#endif
+		
 		delay(500);
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINT(F("."));
 		#endif
 	}
 	
-	return (retries > 0);
+	if(retries > 0){
+		return true;
+	}else{
+		return false;
+	}
 }
 
 
@@ -674,7 +768,6 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	#else
 		DEBUG_PRINTLN("");		
 	#endif
-	
 
 	HTTPClient http;
 	httpClientSetup(http, httpSwitch, url, spiffs);
@@ -686,7 +779,14 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 
 	int code = http.GET();
 	int len = http.getSize();
-
+	
+	/*
+	DEBUG_PRINTLN("CHECK--------------------------");
+	DEBUG_PRINTLN(code);
+	DEBUG_PRINTLN(http.getString());
+	DEBUG_PRINTLN("CHECK--------------------------");
+	*/
+	
 	if(code == HTTP_CODE_OK){
 		
 		ESP8266HTTPUpdate ESPhttpUpdate;
@@ -717,7 +817,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 				DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
 				DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
 			#endif
-			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", _firmware.c_str() );
+			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", _appVersion);
 			
 		#endif
 
@@ -1288,6 +1388,15 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 		retHtml.replace("{s1}", config.ssid[0]);
 		retHtml.replace("{s2}", config.ssid[1]);
 		retHtml.replace("{s3}", config.ssid[2]);
+
+		#if defined  ESP8266
+			retHtml.replace(F("{cid}"), String(ESP.getChipId()));
+			retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
+		#elif defined ESP32
+			retHtml.replace(F("{cid}"), "");				// not available yet
+			retHtml.replace(F("{fid}"), "");				// not available yet
+		#endif
+		
 		retHtml.replace("{fs}", String(ESP.getFlashChipSize()));
 		retHtml.replace("{ab}", ARDUINO_BOARD);
 		retHtml.replace("{mc}", WiFi.macAddress());
@@ -1300,7 +1409,7 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 		}
 		
 		
-    hdlReturn(request, retHtml, F("application/json"));
+    hdlReturn(request, retHtml, F("text/json"));
 }
 
 
@@ -1310,28 +1419,39 @@ void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(F(" Serving results of Wifiscan"));
 		#endif
-    // WiFi.scanNetworks will return the number of networks found
-    int n = WiFi.scanNetworks();
-    
-    String retHtml = F("[");
-    
-		for (int i = 0; i < n; ++i) {
-				
-				// return html results from the wifi scan
-				if(i > 0){
-					retHtml += F(",");
-				}
-				retHtml += FPSTR(HTTP_WIFI_SCAN);
-				
-				retHtml.replace("{s}", WiFi.SSID(i));
-				retHtml.replace("{q}", String(WiFi.RSSI(i)));
-				retHtml.replace("{e}", String(WiFi.encryptionType(i)));             
-				delay(10);
+		
+    // WiFi.scanNetworks will return the number of networks found	
+		String retJson = F("[");
+		int n = WiFi.scanComplete();
+		if(n == -2){
+			
+			WiFi.scanNetworks(true);
+			
+		}else if(n){
+			
+			for (int i = 0; i < n; ++i) {
+					
+					// return html results from the wifi scan
+					if(i > 0){
+						retJson += F(",");
+					}
+					retJson += FPSTR(HTTP_WIFI_SCAN);
+					
+					retJson.replace("{s}", WiFi.SSID(i));
+					retJson.replace("{q}", String(WiFi.RSSI(i)));
+					retJson.replace("{e}", String(WiFi.encryptionType(i)));             
+					delay(10);
+			}
+			
+			WiFi.scanDelete();
+			if(WiFi.scanComplete() == -2){
+				WiFi.scanNetworks(true);
+			}
 		}
-		retHtml += F("]");
-    
-    //request->send(200, "text/html", retHtml);
-    hdlReturn(request, retHtml, F("application/json"));
+		retJson += F("]");
+
+    hdlReturn(request, retJson, F("text/json"));
+		retJson = String();
 }
 
 
@@ -1340,28 +1460,38 @@ void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
 void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 
 		String retHtml = F("0");
-		bool changeMode = false;
 		
 		// are both ssid & password sent
 		if(request->hasParam("s", true) && request->hasParam("p", true)){
 			
 			if(!request->hasParam("i", true)){
 					//Saved from first screen. When in Wifi AP mode
-			
-					#if DEBUG_LVL == 2
-						DEBUG_PRINTLN(F("\n Connect with received credentials"));
-					#endif
-					
-					#if DEBUG_LVL == 3
-						DEBUG_PRINTF_P(PSTR(" \n Connect with received credentials: %s - %s\n"), request->getParam("s", true)->value(), request->getParam("p", true)->value());
-					#endif
-					
-					WiFi.mode(WIFI_AP_STA);
-					WiFi.begin(request->getParam("s", true)->value().c_str(), request->getParam("p", true)->value().c_str());
-
-
-					if(isNetworkConnected()){
-						changeMode = true;
+					if(!_connected && !_tryToConn){
+						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
+							
+						#if DEBUG_LVL == 2
+							DEBUG_PRINTLN(F("\n Connect with received credentials"));
+						#endif
+						
+						#if DEBUG_LVL == 3
+							DEBUG_PRINTF_P(PSTR(" \n Connect with received credentials: %s - %s\n"), request->getParam("s", true)->value().c_str(), request->getParam("p", true)->value().c_str());
+						#endif
+						
+						_tryToConn = true;
+						retHtml = F("2");		// busy
+						
+					}else if(!_connected && _tryToConn){
+						
+						retHtml = F("2");		// busy
+						
+					}else if(_connected && !_tryToConn){
+						_changeMode = true;
+						
+						#if DEBUG_LVL == 3
+							DEBUG_PRINTLN(F("\n Processing received credentials"));
+						#endif
+						
 						#if WIFI_MULTI == true
 							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
 							String(config.password[1]).toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
@@ -1370,17 +1500,17 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 							String(config.password[0]).toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
 						#endif
 						
-						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
-						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
-						writeConfig();
+						#if DEBUG_LVL == 3
+							DEBUG_PRINTLN(F("\n Connected and saved received credentials"));
+						#endif
 						
-						retHtml = F("1:");
+						retHtml = F("1:");	// ok:ip
 						retHtml += WiFi.localIP().toString();
 						delay(100);
 					}
 			
 			}else{
-					// Saved from config. When in Wifi STA mode
+					// Saved / added from config. When in Wifi STA mode
 
 					int apNr = atoi(request->getParam("i", true)->value().c_str());
 					#if DEBUG_LVL == 3
@@ -1389,32 +1519,17 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 					
 					request->getParam("s", true)->value().toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
 					request->getParam("p", true)->value().toCharArray(config.password[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
-					writeConfig();
-					retHtml = F("1");
+					retHtml = F("1");		// ok
 			}
 
 		}else{
 			#if DEBUG_LVL >= 2
 				DEBUG_PRINT(F("SSID or Password is missing"));
 			#endif
+			// failed
 		}
 
-		
 	hdlReturn(request, retHtml);
-	
-	if(changeMode){
-		delay(1000);
-		WiFi.mode(WIFI_STA);
-		delay(100);
-
-		#if DEBUG_LVL >= 2
-			//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
-			
-			DEBUG_PRINT(F("\n Changed to STA mode. Open "));
-			DEBUG_PRINTLN(WiFi.localIP());
-			DEBUG_PRINTLN();
-		#endif
-	}
 }
 
 
@@ -1470,94 +1585,39 @@ void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 }
 
 
-/** Handle confirm & save registration code */
+/** Handle confirm & save registration code 
 void IOTAppStory::servHdlDevSave(AsyncWebServerRequest *request) {
-		/**/
+
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINT(F("\n Received activation code from browser"));
 		#endif
 		
-		String retHtml;
+		String retHtml = F("0");
 		
 		if(request->hasParam("ac", true)){
 			
 			request->getParam("ac", true)->value().toCharArray(config.actCode, 7); //???
 			
-				/***********************************************************************************************/
-					String url = "";
-					bool httpSwitch = false;
-					
-					if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
-						httpSwitch = true;
-					}
-
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINT(F("\n Checking for device confirmation at IAS"));
-					#endif
-
-					if(httpSwitch == true){
-						url = F("https://");
-					}else{
-						url = F("http://");
-					}
-
-					// location 1
-					url += _updateHost;
-					url += F("/ota/cfg-esp/confirm.php");
-					
-
-					HTTPClient http;
-					httpClientSetup(http, httpSwitch, url);
-					int code = http.GET();
-
-					if(code == HTTP_CODE_OK){
-						
-						if(http.getString() == "1"){
-							// Succes, device activation confirmed. Save activation code to eeprom
-							writeConfig();
-							retHtml = F("1");
-							
-							#if DEBUG_LVL >= 3
-								DEBUG_PRINT(F("\n Succes, saved code"));
-							#endif
-						}else{
-							// Error, could not confirm device activation
-							String("000000").toCharArray(config.actCode, 7);
-							retHtml = F("2");
-							
-							#if DEBUG_LVL >= 3
-								DEBUG_PRINT(F("\n Error: could not confirm"));
-							#endif
-						}
-
-					}else{
-						
-						// Error, could not connect to IAS server
-						retHtml = F("3");
-						
-						#if DEBUG_LVL >= 3
-							DEBUG_PRINTLN(code);
-							DEBUG_PRINTLN(http.getString());
-						#endif
-					}
-
-					http.end();
-				
-				/***********************************************************************************************/
-
-		}else{
-				// Error, activation code missing 
-				retHtml = F("4");
+			if(!_confirmed && !_tryToConf){
+				_tryToConf = true;
+				retHtml = F("1");
+			}
 		}
 		
 		hdlReturn(request, retHtml);
 };
-
+*/
 
 /** default httpclient */
 void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs) {
 	if(httpSwitch == true){
-		http.begin(url, ROOT_CA); // 								<<--  https We need to free up RAM first!
+	
+	#if defined  ESP8266
+		http.begin(url, config.sha1);
+	#elif defined ESP32
+		http.begin(url, ROOT_CA);
+	#endif
+		
 	}else{
 		http.begin(url);
 	}
@@ -1573,17 +1633,22 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 	#if defined ESP32
 		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getSdkVersion()));
 	#elif defined ESP8266
+		http.addHeader(F("x-ESP-FREE-SPACE"), String(ESP.getFreeSketchSpace()));
+		http.addHeader(F("x-ESP-SKETCH-SIZE"), String(ESP.getSketchSize()));
+		http.addHeader(F("x-ESP-SKETCH-MD5"), String(ESP.getSketchMD5()));
+		http.addHeader(F("x-ESP-FLASHCHIP-ID"), String(ESP.getFlashChipId()));
+		http.addHeader(F("x-ESP-CHIP-ID"), String(ESP.getChipId()));
 		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getCoreVersion()));
 	#endif
+
+	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
+	http.addHeader(F("x-ESP-VERSION"), String(_appName) + " " + String(_appVersion));
 	
 	if(spiffs) {
 			http.addHeader(F("x-ESP-MODE"), F("spiffs"));
 	} else {
 			http.addHeader(F("x-ESP-MODE"), F("sketch"));
 	}
-
-	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
-	http.addHeader(F("x-ESP-VERSION"), String(_appName) + " " + String(_appVersion));
 }
 
 
@@ -1596,3 +1661,73 @@ void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, Str
 	response->addHeader("Expires", "-1");
 	request->send(response);
 }
+
+
+/** get device registration confirmation from IAS 
+int IOTAppStory::getDevConf() {
+
+		String url = "";
+		bool httpSwitch = false;
+		int retInt = 0;
+		
+		if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
+			httpSwitch = true;
+		}
+
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F("\n Checking for device confirmation at IAS"));
+		#endif
+
+		if(httpSwitch == true){
+			url = F("https://");
+		}else{
+			url = F("http://");
+		}
+
+		// location 1
+		url += _updateHost;
+		url += F("/ota/cfg-esp/confirm.php");
+		
+		DEBUG_PRINTLN(url);
+		DEBUG_PRINTLN(system_get_free_heap_size());
+		
+		
+		HTTPClient http;
+		httpClientSetup(http, httpSwitch, url);
+		int code = http.GET();
+
+		if(code == HTTP_CODE_OK){
+			
+			if(http.getString() == "1"){
+				// Succes, device activation confirmed. Save activation code to eeprom
+				writeConfig();
+				retInt = 1;
+				
+				#if DEBUG_LVL >= 3
+					DEBUG_PRINT(F("\n Succes, saved code"));
+				#endif
+			}else{
+				// Error, could not confirm device activation
+				String("000000").toCharArray(config.actCode, 7);
+				retInt = 2;
+				
+				#if DEBUG_LVL >= 3
+					DEBUG_PRINT(F("\n Error: could not confirm"));
+				#endif
+			}
+
+		}else{
+			
+			// Error, could not connect to IAS server
+			retInt = 3;
+			
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(code);
+				DEBUG_PRINTLN(http.getString());
+			#endif
+		}
+
+		http.end();
+		return retInt;
+}
+*/
