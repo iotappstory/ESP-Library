@@ -77,8 +77,9 @@ char msg[50]            = "field1=22.5&field2=65.7&status=MQTTPUBLISH";
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* scale = "0";                                        // 0 = Celsius, 1 = Fahrenheit
-char* apikey = "";                                        // ThingSpeak Write API Key
+char* updInt      = "60";
+char* scale       = "0";                                  // 0 = Celsius, 1 = Fahrenheit
+char* apikey      = "";                                   // ThingSpeak Write API Key
 
 
 
@@ -93,16 +94,14 @@ void setup() {
   display.display();
 
 
-  String boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetDeviceName(boardName);                        // preset Boardname this is also your MDNS responder: http://TempSensor_xx:xx:xx.local
+  String deviceName = APPNAME"_" + WiFi.macAddress();
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.addField(updInt, "Update interval", 8, 'D');        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(scale, "Scale:Celc,Fahr", 1, 'S');         // reference to org variable | field name | field label value | max char return | Optional "special field" char
+  IAS.addField(apikey, "TS Write API Key", 16, 'T');
 
-
-  IAS.addField(scale, "Celc Fahr (0,1)", 1, 'S');         // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(apikey, "TS Write API Key", 16, 'T');      // reference to org variable | field name | field label value | max char return
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -139,6 +138,9 @@ void setup() {
 
   IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
                                                           // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+
 
   //-------- Your Setup starts from here ---------------
 
