@@ -58,16 +58,17 @@ int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
 int clockRadius = 23;
 int x = 30, y = 10;
 
-int lastSecond;
-unsigned long iotEntry = millis();
+unsigned long loopEntry;
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
+char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* updInt      = "60";                                 // every x sec
 char* timeZone    = "1.0";
-char* updInt      = "60";
+
 
 
 // ================================================ SETUP ================================================
@@ -85,8 +86,9 @@ void setup() {
   IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
-  IAS.addField(updInt, "Update interval", 8, 'D');        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(timeZone, "Timezone", 4, 'Z');             // reference to org variable | field name | field label value | max char return | Optional "special field" char
+  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update every", 8, 'D');           // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(timeZone, "Timezone", 4, 'Z');
                                                           
 
 
@@ -149,14 +151,15 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
   
-  dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
-  if (dateTime.second != lastSecond && digitalRead(D3) == HIGH) {
-    //NTPch.printDateTime(dateTime);
+  if (millis() > loopEntry + 1000) {
+    dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
     drawFace();
     drawArms(dateTime.hour, dateTime.minute, dateTime.second);
     display.display();
-    lastSecond = dateTime.second;
+    loopEntry = millis();
   }
+
+  
   
 }
 

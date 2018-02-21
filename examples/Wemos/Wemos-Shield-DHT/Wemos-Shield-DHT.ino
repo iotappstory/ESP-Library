@@ -77,7 +77,8 @@ char msg[50]            = "field1=22.5&field2=65.7&status=MQTTPUBLISH";
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* updInt      = "60";
+char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* updInt      = "60";                                 // every x sec
 char* scale       = "0";                                  // 0 = Celsius, 1 = Fahrenheit
 char* apikey      = "";                                   // ThingSpeak Write API Key
 
@@ -85,7 +86,7 @@ char* apikey      = "";                                   // ThingSpeak Write AP
 
 // ================================================ SETUP ================================================
 void setup() {
-  display.init();                                         // setup OLED and show "Wait"
+  display.init();                                                 // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -95,11 +96,12 @@ void setup() {
 
 
   String deviceName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
+  IAS.preSetDeviceName(deviceName);                               // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
-  IAS.addField(updInt, "Update interval", 8, 'D');        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(scale, "Scale:Celc,Fahr", 1, 'S');         // reference to org variable | field name | field label value | max char return | Optional "special field" char
+  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C');         // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update every", 8, 'D');                   // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(scale, "Temp. scale:Celsius,Fahrenheit", 1, 'S');  
   IAS.addField(apikey, "TS Write API Key", 16, 'T');
 
 
@@ -138,7 +140,7 @@ void setup() {
 
   IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
                                                           // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHome(atoi(updTimer));                        // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
