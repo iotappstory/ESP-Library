@@ -136,7 +136,9 @@
 		char deviceName[STRUCT_BNAME_SIZE];
     char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
     char actCode[7];													// saved IotAppStory activation code
-    
+		#if defined  ESP8266
+			char sha1[60];
+		#endif
     char magicBytes[4];
   } strConfig;
   
@@ -160,60 +162,67 @@
   const char SER_DEV[] PROGMEM          = "*-------------------------------------------------------------------------*";
    
   const char HOST2[] PROGMEM            = "iotappstory.com";
-  const char FILE2[] PROGMEM            = "/ota/esp32-v1.php";
+  
+	#if defined  ESP8266
+		const char FILE2[] PROGMEM          = "/ota/esp8266-v2.0.1.php";	// loc2, file at host that handles 8266 updates
+	#elif defined ESP32
+		const char FILE2[] PROGMEM          = "/ota/esp32-v1.php";				// loc2, file at host that handles 32 updates
+	#endif
 	
 	const char HTTP_200[] PROGMEM         = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 	const char HTTP_TEMP_START[] PROGMEM	= "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><meta name=\"theme-color\" content=\"#000\" />{h}<title>Config</title></head><body>";
 	const char HTTP_TEMP_END[] PROGMEM		= "</body></html>";
 	
-	const char HTTP_STA_JS[] PROGMEM    	= "<script type=\"text/javascript\" src=\"https://iotappstory.com/ota/cfg-esp/cfg.js\"></script>";
+	const char HTTP_STA_JS[] PROGMEM    	= "<script src=\"https://iotappstory.com/ota/cfg-esp/cfg.js\"></script>";
+	const char HTTP_AP_JS[] PROGMEM     	= "<script>var d=document;var p=d.getElementById(\"po\");var b=d.getElementById(\"b\");var m=d.getElementById(\"m\");function c(l){d.getElementById('s').value=l.innerText||l.textContent;d.getElementById('p').focus()}function ld(u){var f=\"\";var c=false;var x=new XMLHttpRequest();x.open(\"POST\",u,true);x.setRequestHeader(\"Content-type\",\"application/x-www-form-urlencoded\");p.classList.add('fi');var g=d.querySelectorAll(\"input,select\");for(i=0;i<g.length;i++){if(f!=\"\"){f+=\"&\"}f+=g[i].name+\"=\"+g[i].value}x.onreadystatechange=function(){if(this.readyState==4&&this.status==200){var d=this.responseText;if(d.includes(\"1:\")){var a=d.split(\":\");var e=\"http://\"+a[1];m.innerHTML='Connected!<br>Changed to STA mode.<br>You will be redirected to<br>'+e+'<br>in <b id=\"cd\">22</b>s';cd(22);setTimeout(function(){window.location.href=e},22000)}else if(d==\"2\"){setTimeout(function(){ld('\wsa')},8500);if(!c){m.innerHTML=\"Connecting...\"}else{m.innerHTML+=\"...\"}}else{m.innerHTML+=\"<br>Failed to connect. Try again\";b.style.display='block'}m.classList.add('fi')}};x.send(f)}function cd(s){setTimeout(function(){s--;d.getElementById(\"cd\").innerHTML=s;cd(s)},1000)}function ep(){p.classList.remove('fi');m.classList.remove('fi');t.innerHTML=\"\"}</script>";
+	const char HTTP_AP_CSS[] PROGMEM    	= "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}.btn,.q{float:right}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:16px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;color:#000;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}h1{font-size:3em}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc;font-size:14px}input:focus{border-color:#fcbc12}input:invalid{border-color:red}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;background:#fcbc12;border-radius:4px;border:0;font-size:1.2em;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px;display:none}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}.q{width:64px;text-align:right}.l{background:url('data:image/png; base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNrsV89rE0EUfm83odVaFKmWhlIPWlAUxFZb8SSieJEWeirqUXrxqH+C99JDjz3k4MGDYPVUCoInUWpOokJVEIRiaSldE8Qks89vNhPdbjbZ3XRLD2bIx87uzLz3zfs1ExYR2s+WafwEQuUNPN2otTbQCzDgAKpBjtUNDUcSEqhukaxcJylvQnQmbM0tYBoYAfrMN824ADwBXnhfVJH4+CTxuYWEBOASqWwDW0ECw8A8cCNEzjHgDHAHWAbug8AqqZJnnmQEsILZrin/R+Ai8BwYiOFWTfAV1k4wWSvJY0C8H/lCcxBYDFGuzf7F9E/63EG1ubJIVnYc+/neioAVY0dzQM73/gt4CJwFLhvo/gMzZiR35aj4aU6+PiIqfWgqnBvSsLJJ7usxBOGGdoEOtHe+0d/AJLDURN5NY60u+BGJVEFGOaPWhccFHrjdlgWmAu+zLZSTGZutB7MXQ5nsFHG2bReM+hMUyMdwWd7MDZORmMBRXx95SWsxCKyZuWEyEhPwj6udydG0SaAqWrshkMZBIbshoAKCnBgKnZ1KRbF9MEkl1FXQOoXetUD+9/hynVvs9oCZ+7ceyPqzGS6vv6Tc3c/BjGisA6WPJ9y3V9+IW+6PV6cimq4H1Z+6vP+wrhTGqef0t9YuKL4fw0GUjvJ6PbAP4VHth+xLkTEgnnWZ0m+s/cNxgnAvr0jSzmG0p61DoEOgQ2DfCYT881B2vR6mW4HEyI4gwN1Dq7poinJSNJBbK/CQHW2B3vMFHrw3TdVtXEjtbDoEVIUzh59q2dHX8v8tCP8IMADfe61URz1LDwAAAABJRU5ErkJggg==') left center no-repeat;background-size:1em}.table{width:100%}.table td{padding:.5em;text-align:left}.table tbody>:nth-child(2n-1){background:#364048}</style>";
 
-	const char HTTP_AP_JS[] PROGMEM     	= "<script>var d=document;var p=d.getElementById(\"pop\");var l=d.getElementById(\"load\");var m=d.getElementById(\"mes\");var t=d.getElementById(\"text\");function c(l){d.getElementById('s').value=l.innerText||l.textContent;d.getElementById('p').focus()}function ld(u){var b=\"\";var x=new XMLHttpRequest();x.open(\"POST\",u,true);x.setRequestHeader(\"Content-type\",\"application/x-www-form-urlencoded\");p.classList.add('fade_in');l.classList.add('fade_in');var c=d.querySelectorAll(\"input,select\");for(i=0;i<c.length;i++){if(b!=\"\"){b+=\"&\"}b+=c[i].name+\"=\"+c[i].value}x.onreadystatechange=function(){if(this.readyState==4&&this.status==200){l.classList.remove('fade_in');if(this.responseText.includes(\"1:\")){var p=this.responseText.split(\":\");var a=\"http://\"+p[1];t.innerHTML+='Connected! Changed to STA mode. You will be redirected to '+a+' in <b id=\"cd\">22</b>s';cd(22);setTimeout(function(){window.location.href=a},22000)}else{t.innerHTML+=\"Failed to connect. Try again\"}m.classList.add('fade_in')}};x.send(b)}function cd(s){setTimeout(function(){s--;d.getElementById(\"cd\").innerHTML=s;cd(s)},1000)}function ep(){p.classList.remove('fade_in');m.classList.remove('fade_in');t.innerHTML=\"\"}</script>";
-	const char HTTP_AP_CSS[] PROGMEM    	= "<style>#pop,body,html{height:100%;width:100%}#load,#mes,#pop,.fade_in{opacity:0}#cnt,body{position:relative}#pop,body,html,input{width:100%}body,body a,input{color:#FFF}#pop,.btn{text-align:center}.btn,body a:hover{text-decoration:none}.btn,.q{float:right}@keyframes fadeIn{to{z-index:10;opacity:1}}.fade_in{z-index:10;animation:fadeIn .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:16px sans-serif}#pop{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8)}#mes{width:200px;padding:10px;display:inline-block;background:#FFF;color:#000}#load{position:absolute;left:0;right:0;margin-left:auto;margin-right:auto;width:64px;height:64px}#load:after{content:" ";display:block;width:46px;height:46px;margin:1px;border-radius:50%;border:5px solid #fff;border-color:#fcbc12 transparent;animation:lds-dual-ring 1.2s linear infinite}@keyframes lds-dual-ring{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}h1{font-size:3em}h2{font-size:2em}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border-radius:0;border:1px solid #ccc;font-size:14px}input:focus{border-color:#fcbc12}input:invalid{border-color:red}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;background:#fcbc12;border-radius:4px;border:0;font-size:1.2em;color:#fff}.btn.sm{font-size:15px;padding:3px 14px 4px}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}.msg{background:#364048;margin:10px 0;padding:1.5em;border-radius:4px}.q{width:64px;text-align:right}.l{background:url('data:image/png; base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNrsV89rE0EUfm83odVaFKmWhlIPWlAUxFZb8SSieJEWeirqUXrxqH+C99JDjz3k4MGDYPVUCoInUWpOokJVEIRiaSldE8Qks89vNhPdbjbZ3XRLD2bIx87uzLz3zfs1ExYR2s+WafwEQuUNPN2otTbQCzDgAKpBjtUNDUcSEqhukaxcJylvQnQmbM0tYBoYAfrMN824ADwBXnhfVJH4+CTxuYWEBOASqWwDW0ECw8A8cCNEzjHgDHAHWAbug8AqqZJnnmQEsILZrin/R+Ai8BwYiOFWTfAV1k4wWSvJY0C8H/lCcxBYDFGuzf7F9E/63EG1ubJIVnYc+/neioAVY0dzQM73/gt4CJwFLhvo/gMzZiR35aj4aU6+PiIqfWgqnBvSsLJJ7usxBOGGdoEOtHe+0d/AJLDURN5NY60u+BGJVEFGOaPWhccFHrjdlgWmAu+zLZSTGZutB7MXQ5nsFHG2bReM+hMUyMdwWd7MDZORmMBRXx95SWsxCKyZuWEyEhPwj6udydG0SaAqWrshkMZBIbshoAKCnBgKnZ1KRbF9MEkl1FXQOoXetUD+9/hynVvs9oCZ+7ceyPqzGS6vv6Tc3c/BjGisA6WPJ9y3V9+IW+6PV6cimq4H1Z+6vP+wrhTGqef0t9YuKL4fw0GUjvJ6PbAP4VHth+xLkTEgnnWZ0m+s/cNxgnAvr0jSzmG0p61DoEOgQ2DfCYT881B2vR6mW4HEyI4gwN1Dq7poinJSNJBbK/CQHW2B3vMFHrw3TdVtXEjtbDoEVIUzh59q2dHX8v8tCP8IMADfe61URz1LDwAAAABJRU5ErkJggg==') left center no-repeat;background-size:1em}.table{width:100%}.table td{padding:.5em;text-align:left}.table tbody>:nth-child(2n-1){background:#364048}</style>";
-	
 	const char HTTP_APP_INFO[] PROGMEM		= "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
 	
 	const char HTTP_WIFI_SCAN[] PROGMEM		= "{\"s\":\"{s}\", \"q\":\"{q}\", \"e\":\"{e}\"}";
-	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"pop\"><div id=\"mes\"><div id=\"text\"></div><button class=\"btn sm\" onclick=\"ep()\">Ok</button></div><div id=\"load\"></div></div><div id=\"cnt\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
+	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"po\"><div id=\"m\"><button class=\"btn sm\" id=\"b\" onclick=\"ep()\">Ok</button></div></div><div id=\"cnt\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
 
-	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+	
+	#if defined  ESP32
+			const char ROOT_CA[] PROGMEM = \
+			"-----BEGIN CERTIFICATE-----\n" \
+			"MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n" \
+			"hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n" \
+			"A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNV\n" \
+			"BAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTAwMTE5\n" \
+			"MDAwMDAwWhcNMzgwMTE4MjM1OTU5WjCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgT\n" \
+			"EkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMR\n" \
+			"Q09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNh\n" \
+			"dGlvbiBBdXRob3JpdHkwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCR\n" \
+			"6FSS0gpWsawNJN3Fz0RndJkrN6N9I3AAcbxT38T6KhKPS38QVr2fcHK3YX/JSw8X\n" \
+			"pz3jsARh7v8Rl8f0hj4K+j5c+ZPmNHrZFGvnnLOFoIJ6dq9xkNfs/Q36nGz637CC\n" \
+			"9BR++b7Epi9Pf5l/tfxnQ3K9DADWietrLNPtj5gcFKt+5eNu/Nio5JIk2kNrYrhV\n" \
+			"/erBvGy2i/MOjZrkm2xpmfh4SDBF1a3hDTxFYPwyllEnvGfDyi62a+pGx8cgoLEf\n" \
+			"Zd5ICLqkTqnyg0Y3hOvozIFIQ2dOciqbXL1MGyiKXCJ7tKuY2e7gUYPDCUZObT6Z\n" \
+			"+pUX2nwzV0E8jVHtC7ZcryxjGt9XyD+86V3Em69FmeKjWiS0uqlWPc9vqv9JWL7w\n" \
+			"qP/0uK3pN/u6uPQLOvnoQ0IeidiEyxPx2bvhiWC4jChWrBQdnArncevPDt09qZah\n" \
+			"SL0896+1DSJMwBGB7FY79tOi4lu3sgQiUpWAk2nojkxl8ZEDLXB0AuqLZxUpaVIC\n" \
+			"u9ffUGpVRr+goyhhf3DQw6KqLCGqR84onAZFdr+CGCe01a60y1Dma/RMhnEw6abf\n" \
+			"Fobg2P9A3fvQQoh/ozM6LlweQRGBY84YcWsr7KaKtzFcOmpH4MN5WdYgGq/yapiq\n" \
+			"crxXStJLnbsQ/LBMQeXtHT1eKJ2czL+zUdqnR+WEUwIDAQABo0IwQDAdBgNVHQ4E\n" \
+			"FgQUu69+Aj36pvE8hI6t7jiY7NkyMtQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB\n" \
+			"/wQFMAMBAf8wDQYJKoZIhvcNAQEMBQADggIBAArx1UaEt65Ru2yyTUEUAJNMnMvl\n" \
+			"wFTPoCWOAvn9sKIN9SCYPBMtrFaisNZ+EZLpLrqeLppysb0ZRGxhNaKatBYSaVqM\n" \
+			"4dc+pBroLwP0rmEdEBsqpIt6xf4FpuHA1sj+nq6PK7o9mfjYcwlYRm6mnPTXJ9OV\n" \
+			"2jeDchzTc+CiR5kDOF3VSXkAKRzH7JsgHAckaVd4sjn8OoSgtZx8jb8uk2Intzna\n" \
+			"FxiuvTwJaP+EmzzV1gsD41eeFPfR60/IvYcjt7ZJQ3mFXLrrkguhxuhoqEwWsRqZ\n" \
+			"CuhTLJK7oQkYdQxlqHvLI7cawiiFwxv/0Cti76R7CZGYZ4wUAc1oBmpjIXUDgIiK\n" \
+			"boHGhfKppC3n9KUkEEeDys30jXlYsQab5xoq2Z0B15R97QNKyvDb6KkBPvVWmcke\n" \
+			"jkk9u+UJueBPSZI9FoJAzMxZxuY67RIuaTxslbH9qh17f4a+Hg4yRvv7E491f0yL\n" \
+			"S0Zj/gA0QHDBw7mh3aZw4gSzQbzpgJHqZJx64SIDqZxubw5lT2yHh17zbqD5daWb\n" \
+			"QOhTsiedSrnAdyGN/4fy3ryM7xfft0kL0fJuMAsaDk527RH89elWsn2/x20Kk4yl\n" \
+			"0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB\n" \
+			"NVOFBkpdn627G190\n" \
+			"-----END CERTIFICATE-----\n";
+	#endif
 	
 	
-	const char ROOT_CA[] PROGMEM = \
-	"-----BEGIN CERTIFICATE-----\n" \
-	"MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n" \
-	"hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n" \
-	"A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNV\n" \
-	"BAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTAwMTE5\n" \
-	"MDAwMDAwWhcNMzgwMTE4MjM1OTU5WjCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgT\n" \
-	"EkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMR\n" \
-	"Q09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNh\n" \
-	"dGlvbiBBdXRob3JpdHkwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCR\n" \
-	"6FSS0gpWsawNJN3Fz0RndJkrN6N9I3AAcbxT38T6KhKPS38QVr2fcHK3YX/JSw8X\n" \
-	"pz3jsARh7v8Rl8f0hj4K+j5c+ZPmNHrZFGvnnLOFoIJ6dq9xkNfs/Q36nGz637CC\n" \
-	"9BR++b7Epi9Pf5l/tfxnQ3K9DADWietrLNPtj5gcFKt+5eNu/Nio5JIk2kNrYrhV\n" \
-	"/erBvGy2i/MOjZrkm2xpmfh4SDBF1a3hDTxFYPwyllEnvGfDyi62a+pGx8cgoLEf\n" \
-	"Zd5ICLqkTqnyg0Y3hOvozIFIQ2dOciqbXL1MGyiKXCJ7tKuY2e7gUYPDCUZObT6Z\n" \
-	"+pUX2nwzV0E8jVHtC7ZcryxjGt9XyD+86V3Em69FmeKjWiS0uqlWPc9vqv9JWL7w\n" \
-	"qP/0uK3pN/u6uPQLOvnoQ0IeidiEyxPx2bvhiWC4jChWrBQdnArncevPDt09qZah\n" \
-	"SL0896+1DSJMwBGB7FY79tOi4lu3sgQiUpWAk2nojkxl8ZEDLXB0AuqLZxUpaVIC\n" \
-	"u9ffUGpVRr+goyhhf3DQw6KqLCGqR84onAZFdr+CGCe01a60y1Dma/RMhnEw6abf\n" \
-	"Fobg2P9A3fvQQoh/ozM6LlweQRGBY84YcWsr7KaKtzFcOmpH4MN5WdYgGq/yapiq\n" \
-	"crxXStJLnbsQ/LBMQeXtHT1eKJ2czL+zUdqnR+WEUwIDAQABo0IwQDAdBgNVHQ4E\n" \
-	"FgQUu69+Aj36pvE8hI6t7jiY7NkyMtQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB\n" \
-	"/wQFMAMBAf8wDQYJKoZIhvcNAQEMBQADggIBAArx1UaEt65Ru2yyTUEUAJNMnMvl\n" \
-	"wFTPoCWOAvn9sKIN9SCYPBMtrFaisNZ+EZLpLrqeLppysb0ZRGxhNaKatBYSaVqM\n" \
-	"4dc+pBroLwP0rmEdEBsqpIt6xf4FpuHA1sj+nq6PK7o9mfjYcwlYRm6mnPTXJ9OV\n" \
-	"2jeDchzTc+CiR5kDOF3VSXkAKRzH7JsgHAckaVd4sjn8OoSgtZx8jb8uk2Intzna\n" \
-	"FxiuvTwJaP+EmzzV1gsD41eeFPfR60/IvYcjt7ZJQ3mFXLrrkguhxuhoqEwWsRqZ\n" \
-	"CuhTLJK7oQkYdQxlqHvLI7cawiiFwxv/0Cti76R7CZGYZ4wUAc1oBmpjIXUDgIiK\n" \
-	"boHGhfKppC3n9KUkEEeDys30jXlYsQab5xoq2Z0B15R97QNKyvDb6KkBPvVWmcke\n" \
-	"jkk9u+UJueBPSZI9FoJAzMxZxuY67RIuaTxslbH9qh17f4a+Hg4yRvv7E491f0yL\n" \
-	"S0Zj/gA0QHDBw7mh3aZw4gSzQbzpgJHqZJx64SIDqZxubw5lT2yHh17zbqD5daWb\n" \
-	"QOhTsiedSrnAdyGN/4fy3ryM7xfft0kL0fJuMAsaDk527RH89elWsn2/x20Kk4yl\n" \
-	"0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB\n" \
-	"NVOFBkpdn627G190\n" \
-	"-----END CERTIFICATE-----\n";
 	
     class IOTAppStory {
     
@@ -236,6 +245,9 @@
                 "yourESP",
                 "",
                 "",
+								#if defined  ESP8266
+									"76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",
+								#endif
                 "CFG"  // Magic Bytes
             };
 						
@@ -327,9 +339,9 @@
 						
 						const char* _updateHost							= "iotappstory.com";			// ota update host
 						#if defined  ESP8266
-							char* _updateFile									= "/ota/esp8266-v2.php";	// file at host that handles 8266 updates
+							char* _updateFile									= "/ota/esp8266-v2.0.1.php";	// loc1, file at host that handles 8266 updates
 						#elif defined ESP32
-							char* _updateFile									= "/ota/esp32-v1.php";		// file at host that handles 32 updates
+							char* _updateFile									= "/ota/esp32-v1.php";		// loc1, file at host that handles 32 updates
 						#endif
 						
 						
@@ -341,6 +353,12 @@
             bool _configReaded 									= false;									// has the config already been read?
             const static bool _boolDefaulValue 	= false;
 						bool _callHome 											= false;
+						
+						bool _tryToConn											= false;									// try to connect to wifi bool
+						bool _connected											=	false;									// wifi connection status bool
+						bool _tryToConf											=	false;									// try to confirm device registration bool
+						int  _confirmed											=	false;									// confirmed status bool
+						bool _changeMode 										= false;
 						
             unsigned long _lastCallHomeTime			= 0; 											//Time when we last called home
             unsigned long _callHomeInterval 		= 7200000;  							//Interval we want to call home at in milliseconds, default start at 2hrs
@@ -393,10 +411,10 @@
 						void servHdlAppInfo(AsyncWebServerRequest *request);
 						void servHdlAppSave(AsyncWebServerRequest *request);
 						
-						void servHdlDevSave(AsyncWebServerRequest *request);
+						//void servHdlDevSave(AsyncWebServerRequest *request);
 						
 						void hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type = "text/html");
-
+						//int  getDevConf();
 						
             void updateLoop();
             bool isModeButtonPressed();
