@@ -31,8 +31,11 @@
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
-
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 
@@ -48,9 +51,6 @@ unsigned long printEntry;
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-
   display.init();
   display.flipScreenVertically();
   display.clear();
@@ -59,13 +59,9 @@ void setup() {
   display.drawString(48, 35, F("Wait"));
   display.display();
 
-  String boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname
+  String deviceName = APPNAME"_" + WiFi.macAddress();
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname
   IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
-
-
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
   IAS.onModeButtonShortPress([]() {
@@ -81,7 +77,7 @@ void setup() {
   });
   
   IAS.onFirstBoot([]() {
-    Serial.println(F(" Hardware reset necessary after Serial upload. Reset to continu!"));
+    Serial.println(F(" Manual reset necessary after serial upload!"));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     dispTemplate_threeLineV1(F("Press"), F("Reset"), F("Button"));
     ESP.reset();
@@ -106,6 +102,8 @@ void setup() {
 
   IAS.begin(true, 'F');                                     // 1st parameter: true or false to view BOOT STATISTICS
                                                             // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
   
   //-------- Your Setup starts from here ---------------
 
@@ -165,5 +163,4 @@ void dispTemplate_fourLineV1(String str1, String str2, String str3, String str4)
   display.drawString(32, 51, str4);
   display.display();
 }
-
 

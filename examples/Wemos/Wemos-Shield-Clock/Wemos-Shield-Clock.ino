@@ -26,32 +26,53 @@
 
 */
 
-#define APPNAME "Wemos-OLED-VirginSoil"
-#define VERSION "V1.0.0"
+#define APPNAME "WemosClock"
+#define VERSION "V2.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
 
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#include <SNTPtime.h>                                     // 
 
-SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 
+
+SNTPtime NTPch("ch.pool.ntp.org");                        // Initialize time
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
-
+SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
-unsigned long printEntry;
+strDateTime dateTime;
+
+int screenW = 64;
+int screenH = 48;
+int clockCenterX = screenW / 2;
+int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
+int clockRadius = 23;
+int x = 30, y = 10;
+
+unsigned long loopEntry;
+
+// We want to be able to edit these example variables below from the wifi config manager
+// Currently only char arrays are supported.
+// Use functions like atoi() and atof() to transform the char array to integers or floats
+// Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
+
+char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* updInt      = "60";                                 // every x sec
+char* timeZone    = "1.0";
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  
   display.init();                                         // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
@@ -61,12 +82,14 @@ void setup() {
   display.display();
 
 
-  String boardName = "woled-vs-" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://woled-vs.local
+  String deviceName = APPNAME"_" + WiFi.macAddress();
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update every", 8, 'D');           // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(timeZone, "Timezone", 4, 'Z');
+                                                          
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -103,8 +126,19 @@ void setup() {
 
   IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
                                                           // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
+  
   //-------- Your Setup starts from here ---------------
+
+
+  while (!NTPch.setSNTPtime()) Serial.print(".");         // set internal clock
+  
+  Serial.print(F(" Time zone set to: "));                 // display timeZone
+  Serial.print(timeZone);
+  Serial.println(F(" You can change this in config."));
+  Serial.println(F("*-------------------------------------------------------------------------*\n\n"));
 
 }
 
@@ -116,11 +150,17 @@ void loop() {
 
 
   //-------- Your Sketch starts from here ---------------
-
-  if (millis() - printEntry > 5000 && digitalRead(D3) == HIGH) {
-    printEntry = millis();
-    dispTemplate_threeLineV1(F("Loop"), F("Running"), F("Do Stuff..."));
+  
+  if (millis() > loopEntry + 1000) {
+    dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
+    drawFace();
+    drawArms(dateTime.hour, dateTime.minute, dateTime.second);
+    display.display();
+    loopEntry = millis();
   }
+
+  
+  
 }
 
 
@@ -150,13 +190,45 @@ void dispTemplate_threeLineV2(String str1, String str2, String str3) {
   display.display();
 }
 
-void dispTemplate_fourLineV1(String str1, String str2, String str3, String str4) {
+// Draw an analog clock face
+void drawFace() {
   display.clear();
-  display.setFont(ArialMT_Plain_10);
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.drawString(32, 15, str1);
-  display.drawString(32, 27, str2);
-  display.drawString(32, 39, str3);
-  display.drawString(32, 51, str4);
-  display.display();
+  display.drawCircle(clockCenterX + x, clockCenterY + y, 2);
+  //
+  //hour ticks
+  for ( int z = 0; z < 360; z = z + 30 ) {
+    //Begin at 0° and stop at 360°
+    float angle = z ;
+    angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+    int x2 = ( clockCenterX + ( sin(angle) * clockRadius ) );
+    int y2 = ( clockCenterY - ( cos(angle) * clockRadius ) );
+    int x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 8 ) ) ) );
+    int y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 8 ) ) ) );
+    display.drawLine( x2 + x , y2 + y , x3 + x , y3 + y);
+  }
+}
+
+// Draw the clock's three arms: seconds, minutes, hours.
+void drawArms(int h, int m, int s)
+{
+  // display second hand
+  float angle = s * 6 ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  int x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 5 ) ) ) );
+  int y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 5 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
+  //
+  // display minute hand
+  angle = m * 6 ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 4 ) ) ) );
+  y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 4 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
+  //
+  // display hour hand
+  angle = h * 30 + int( ( m / 12 ) * 6 )   ;
+  angle = ( angle / 57.29577951 ) ; //Convert degrees to radians
+  x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
+  y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
+  display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
 }

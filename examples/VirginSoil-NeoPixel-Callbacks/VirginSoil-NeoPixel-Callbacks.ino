@@ -39,7 +39,11 @@
 #define FEEDBACKLED 4                                     // Pin on the esp8266 connected to the NeoPixel you want to use for feedback. D2 for the Wemos!
 
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 #include <Adafruit_NeoPixel.h>                            // Adafruit_NeoPixel_Library (https://github.com/adafruit/Adafruit_NeoPixel)
 
 
@@ -69,10 +73,6 @@ uint32_t green  = pixels.Color(0, 128, 0);                // loop / running
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-
-  
   pixels.begin();                                         // This initializes the NeoPixel library.
   pixels.setBrightness(1);                                // set pixel brightness (1-255)
 
@@ -82,7 +82,7 @@ void setup() {
   
 
   String boardName = "ws2812b-vs-" + WiFi.macAddress().substring(9, 99);
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://woled-vs.local
+  IAS.preSetDeviceName(boardName);                        // preset Boardname this is also your MDNS responder: http://woled-vs.local
 
 
   IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
