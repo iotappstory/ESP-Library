@@ -34,7 +34,11 @@
 
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
@@ -49,9 +53,6 @@ unsigned long printEntry;
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  
   display.init();                                         // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
@@ -61,12 +62,9 @@ void setup() {
   display.display();
 
 
-  String boardName = "woled-vs-" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://woled-vs.local
-
-
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  String deviceName = "woled-vs-" + WiFi.macAddress();
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://woled-vs.local
+  
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -103,6 +101,8 @@ void setup() {
 
   IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
                                                           // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
   //-------- Your Setup starts from here ---------------
 
