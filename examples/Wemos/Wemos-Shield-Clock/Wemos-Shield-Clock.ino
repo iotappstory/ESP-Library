@@ -58,8 +58,7 @@ int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
 int clockRadius = 23;
 int x = 30, y = 10;
 
-int lastSecond;
-unsigned long iotEntry = millis();
+unsigned long loopEntry;
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
@@ -152,14 +151,15 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
   
-  dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
-  if (dateTime.second != lastSecond && digitalRead(D3) == HIGH) {
-    //NTPch.printDateTime(dateTime);
+  if (millis() > loopEntry + 1000) {
+    dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
     drawFace();
     drawArms(dateTime.hour, dateTime.minute, dateTime.second);
     display.display();
-    lastSecond = dateTime.second;
+    loopEntry = millis();
   }
+
+  
   
 }
 
