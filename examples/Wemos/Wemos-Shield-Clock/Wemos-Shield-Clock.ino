@@ -27,7 +27,7 @@
 */
 
 #define APPNAME "WemosClock"
-#define VERSION "V2.1.0"
+#define VERSION "V2.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 
@@ -35,6 +35,12 @@
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <SNTPtime.h>                                     // 
+
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 
 
 SNTPtime NTPch("ch.pool.ntp.org");                        // Initialize time
@@ -60,15 +66,13 @@ unsigned long iotEntry = millis();
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* timeZone = "1.0";
-
+char* timeZone    = "1.0";
+char* deviceName  = APPNAME;
+char* updInt      = "60";
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  
   display.init();                                         // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
@@ -78,16 +82,17 @@ void setup() {
   display.display();
 
 
-  String boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://WemosClock_xx:xx:xx.local
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
   IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
-  IAS.addField(timeZone, "timezone", "Timezone", 4);      // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-                                                          // reference to org variable | field name | field label value | max char return
+  IAS.addField(deviceName, "Device name", 16);            // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update interval", 8, 'D');        // reference to org variable | field name | field label value | max char return | Optional "special field" char
+  IAS.addField(timeZone, "Timezone", 4, 'Z');             
+                                                          
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -226,4 +231,3 @@ void drawArms(int h, int m, int s)
   y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
   display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
 }
-
