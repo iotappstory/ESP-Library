@@ -66,8 +66,10 @@ unsigned long iotEntry = millis();
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
+char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* updInt      = "60";                                 // every x sec
 char* timeZone    = "1.0";
-char* updInt      = "60";
+
 
 
 // ================================================ SETUP ================================================
@@ -85,8 +87,9 @@ void setup() {
   IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
-  IAS.addField(updInt, "Update interval", 8, 'D');        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(timeZone, "Timezone", 4, 'Z');             // reference to org variable | field name | field label value | max char return | Optional "special field" char
+  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update every", 8, 'D');           // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(timeZone, "Timezone", 4, 'Z');
                                                           
 
 
