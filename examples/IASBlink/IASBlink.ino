@@ -53,8 +53,8 @@ void setup() {
   IAS.preSetDeviceName("iasblink");                         // preset Boardname this is also your MDNS responder: http://iasblink.local
 
 
-  IAS.addField(LEDpin, "ledpin", 2);                        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field name | field label value | max char return
+  IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field label value | max char return
 
 
   IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
