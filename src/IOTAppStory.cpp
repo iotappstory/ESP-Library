@@ -182,7 +182,7 @@ void IOTAppStory::setCallHomeInterval(unsigned long interval) {
    _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
-void IOTAppStory::begin(bool bootstats, char ea){
+void IOTAppStory::begin(char ea){
 	
 	// if deviceName is not set, set it to the appName
 	if(_setDeviceName == false){
@@ -241,14 +241,14 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	}
 	
 	// BOOT STATISTICS read and increase boot statistics (optional)
-	if(bootstats == true){
+	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
 		writePref();
 		
 		#if DEBUG_LVL >= 1
 			printPref();
 		#endif
-	}
+	#endif
 
 	// process added fields
 	processField();
@@ -628,7 +628,12 @@ void IOTAppStory::connectNetwork() {
 	Returns false if not connected after MAX_WIFI_RETRIES retries 
 */
 bool IOTAppStory::isNetworkConnected() {
-	int retries = MAX_WIFI_RETRIES;
+	#if defined  ESP8266
+		int retries = MAX_WIFI_RETRIES;
+	#elif defined ESP32
+		int retries = (MAX_WIFI_RETRIES/2);
+	#endif
+	
 	DEBUG_PRINT(" ");
 	
 #if WIFI_MULTI == true
