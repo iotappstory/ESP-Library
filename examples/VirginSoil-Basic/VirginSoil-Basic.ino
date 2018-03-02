@@ -37,8 +37,8 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.begin(true,'P');                              // 1st parameter: true or false to view BOOT STATISTICS
-                                                    // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+	
 
   //-------- Your Setup starts from here ---------------
 
