@@ -29,7 +29,7 @@
 #define APPNAME "TempSensor"
 #define VERSION "V1.3.1"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON D3
+#define MODEBUTTON D3             // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
 #include <SSD1306.h>              // OLED library by Daniel Eichhorn
