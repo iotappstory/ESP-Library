@@ -43,7 +43,7 @@ unsigned long blinkEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "D4";																        // The value given here is the default value and can be overwritten by values saved in configuration mode
+char* LEDpin = "2";																          // The value given here is the default value and can be overwritten by values saved in configuration mode
 char* blinkTime = "1000";
 
 
