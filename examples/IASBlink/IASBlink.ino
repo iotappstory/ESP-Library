@@ -97,10 +97,10 @@ void loop() {
     blinkEntry = millis();
 
     // Serial feedback
-    Serial.println("");
-    Serial.print(F("blinkEntry: "));
+    Serial.print(F("\nblinkEntry: "));
     Serial.println(blinkEntry);
     Serial.print(F("LEDpin: "));
     Serial.println(LEDpin);
+    Serial.println(F("You can change blink settings in config mode"));
   }
 }
