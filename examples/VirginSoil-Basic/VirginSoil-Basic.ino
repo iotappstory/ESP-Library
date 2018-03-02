@@ -27,10 +27,10 @@
 #define APPNAME "virginSoilBasic"
 #define VERSION "V2.1.2"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0			// Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
-#include <IOTAppStory.h>
+#include <IOTAppStory.h>	// IotAppStory.com library
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
@@ -48,7 +48,7 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();																   // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.buttonLoop();				// this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
   //-------- Your Sketch starts from here ---------------
 
