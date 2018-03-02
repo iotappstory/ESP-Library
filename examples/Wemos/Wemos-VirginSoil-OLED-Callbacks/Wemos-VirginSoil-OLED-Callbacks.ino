@@ -29,7 +29,7 @@
 #define APPNAME "Wemos-OLED-VirginSoil"
 #define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON D3
+#define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
@@ -99,8 +99,8 @@ void setup() {
   });
   
 
-  IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
-                                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
   IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
