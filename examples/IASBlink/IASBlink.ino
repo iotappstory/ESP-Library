@@ -57,10 +57,6 @@ void setup() {
   IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field label value | max char return
 
 
-  IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
-
-
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
   IAS.onModeButtonShortPress([]() {
@@ -74,8 +70,11 @@ void setup() {
   });
 
   
-  IAS.begin(true,'P');                                      // 1st parameter: true or false to view BOOT STATISTICS
-                                                            // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                     // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+  IAS.setCallHome(true);                              // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                        // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  
 	
   //-------- Your Setup starts from here ---------------
 	
