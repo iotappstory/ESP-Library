@@ -1,6 +1,6 @@
 /*
-	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
-  Your code can be filled wherever it is marked.
+	This is an initial sketch to get your device registered at IOTappstory.com
+	You will need an account at IOTAppStory.com
 
   Copyright (c) [2016] [Andreas Spiess]
 
