@@ -87,7 +87,7 @@ void setup() {
 
 
   IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(updInt, "Update every", 8, 'D');           // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(updInt, "Update every", 8, 'I');           // reference to org variable | field label value | max char return | Optional "special field" char
   IAS.addField(timeZone, "Timezone", 4, 'Z');
                                                           
 
@@ -151,7 +151,7 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
   
-  if (millis() > loopEntry + 1000) {
+  if (millis() > loopEntry + 1000 && digitalRead(MODEBUTTON) == HIGH) {
     dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
     drawFace();
     drawArms(dateTime.hour, dateTime.minute, dateTime.second);
