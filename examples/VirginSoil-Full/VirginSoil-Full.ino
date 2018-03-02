@@ -27,10 +27,10 @@
 #define APPNAME "virginSoilFull"
 #define VERSION "V2.2.2"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
-#include <IOTAppStory.h>
+#include <IOTAppStory.h>                                    // IotAppStory.com library
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
