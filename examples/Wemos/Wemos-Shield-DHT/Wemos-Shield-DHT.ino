@@ -100,7 +100,7 @@ void setup() {
 
 
   IAS.addField(updTimer, "Update timer:Turn on", 1, 'C');         // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(updInt, "Update every", 8, 'D');                   // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(updInt, "Update every", 8, 'I');                   // reference to org variable | field label value | max char return | Optional "special field" char
   IAS.addField(scale, "Temp. scale:Celsius,Fahrenheit", 1, 'S');  
   IAS.addField(apikey, "TS Write API Key", 16, 'T');
 
@@ -138,8 +138,8 @@ void setup() {
   });
   
 
-  IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
-                                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
   IAS.setCallHome(atoi(updTimer));                        // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
