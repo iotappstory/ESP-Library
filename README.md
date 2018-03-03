@@ -1,6 +1,6 @@
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/readme.jpg"/>
 
-Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. You will need an account at IOTAppStory.com
+Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. ESP8266's need at least 1MB flash. You will need a free account at IOTAppStory.com
 
 Wiki pages: https://iotappstory.com/wiki
 </br></br>
@@ -77,14 +77,18 @@ setup () {
 ```
 </br>
 
-### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
-reference to org variable | html field name | html field label | max nr of char
+### `addField(char* var, string fieldName, string fieldVar, uint maxLen, char type = 'L')`
+reference to org variable | html field name | html field label | max nr of char | Optional "special field" char
 
-These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable. You can find the example below in the "VirginSoil-Full" example.
+<img src="https://github.com/Onno-Dirkzwager/ESP8266-Library/blob/develop/config-app-settings.jpg"/>
+
 
 Currently only char arrays are supported.
 Use functions like atoi() and atof() to transform the char array to integers or floats
 Use dPinConv() to convert Dpin numbers(pin-name) to integers (D6 > 14)
+
+
 
 
 Example:
