@@ -72,8 +72,6 @@ setup () {
     IAS.preSetWifi("ssid","password");
 
 
-    // Now start it up
-
     IAS.begin();
 }
 ```
