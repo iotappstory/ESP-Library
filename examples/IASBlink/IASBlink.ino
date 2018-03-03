@@ -26,10 +26,10 @@
 #define APPNAME "IASBlink"
 #define VERSION "V1.0.2"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
-#include <IOTAppStory.h>
+#include <IOTAppStory.h>                                    // IotAppStory.com library
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 
@@ -43,7 +43,7 @@ unsigned long blinkEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "D4";																        // The value given here is the default value and can be overwritten by values saved in configuration mode
+char* LEDpin = "2";																          // The value given here is the default value and can be overwritten by values saved in configuration mode
 char* blinkTime = "1000";
 
 
@@ -53,12 +53,8 @@ void setup() {
   IAS.preSetDeviceName("iasblink");                         // preset Boardname this is also your MDNS responder: http://iasblink.local
 
 
-  IAS.addField(LEDpin, "ledpin", 2);                        // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field name | field label value | max char return
-
-
-  IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(blinkTime, "Blinktime(mS)", 5, 'N');         // reference to org variable | field label value | max char return
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -74,8 +70,11 @@ void setup() {
   });
 
   
-  IAS.begin(true,'P');                                      // 1st parameter: true or false to view BOOT STATISTICS
-                                                            // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                           // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+  IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  
 	
   //-------- Your Setup starts from here ---------------
 	
@@ -98,10 +97,10 @@ void loop() {
     blinkEntry = millis();
 
     // Serial feedback
-    Serial.println("");
-    Serial.print(F("blinkEntry: "));
+    Serial.print(F("\nblinkEntry: "));
     Serial.println(blinkEntry);
     Serial.print(F("LEDpin: "));
     Serial.println(LEDpin);
+    Serial.println(F("You can change blink settings in config mode"));
   }
 }

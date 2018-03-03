@@ -7,7 +7,7 @@
 	
 	#define DEBUG_LVL 							2			// Debug level: 0, 1, 2 or 3 | none - max
 	#define SERIAL_SPEED						115200
-	
+	#define BOOTSTATISTICS					true
 	// config 
 	#define INC_CONFIG 							true  // include Config mode (Wifimanager!!!)
 	#define CFG_PAGE_INFO						true	// include the info page in Config mode
@@ -21,18 +21,18 @@
 	#define DNS_PORT								53
 	#define UDP_PORT      					514
 	
-	#define HTTPS         					true	// Try to use HTTPS for updates
+	#define HTTPS         					true	// Try to use HTTPS for updates when there is enough free heap
 	#define HEAPFORHTTPS  					31500	// Min free heap needed for HTTPS
 
 	#if defined  ESP8266
 		#define EEPROM_SIZE 					4096	// EEPROM_SIZE depending on device
-		#define MAXNUMEXTRAFIELDS 		6			// wifimanger | max num of fields that can be added
+		#define MAXNUMEXTRAFIELDS 		8			// wifimanger | max num of fields that can be added
 	#elif defined ESP32
 		#define EEPROM_SIZE		 				1984
 		#define MAXNUMEXTRAFIELDS 		12
 	#else
 		#define EEPROM_SIZE 					1024
-		#define MAXNUMEXTRAFIELDS 		6
+		#define MAXNUMEXTRAFIELDS 		8
 	#endif
 
 	#define MAGICBYTES    					"CFG" 
@@ -280,7 +280,7 @@
 						void setCallHome(bool callHome);
             void setCallHomeInterval(unsigned long interval);
 						
-						void begin(bool bootstats, char ea);
+						void begin(char ea);
 						
             ModeButtonState buttonLoop();
 
@@ -358,6 +358,7 @@
 						bool _connected											=	false;									// wifi connection status bool
 						bool _tryToConf											=	false;									// try to confirm device registration bool
 						int  _confirmed											=	false;									// confirmed status bool
+						bool _writeConfig										= false;
 						bool _changeMode 										= false;
 						
             unsigned long _lastCallHomeTime			= 0; 											//Time when we last called home

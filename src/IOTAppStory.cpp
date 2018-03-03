@@ -182,7 +182,7 @@ void IOTAppStory::setCallHomeInterval(unsigned long interval) {
    _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
-void IOTAppStory::begin(bool bootstats, char ea){
+void IOTAppStory::begin(char ea){
 	
 	// if deviceName is not set, set it to the appName
 	if(_setDeviceName == false){
@@ -241,14 +241,14 @@ void IOTAppStory::begin(bool bootstats, char ea){
 	}
 	
 	// BOOT STATISTICS read and increase boot statistics (optional)
-	if(bootstats == true){
+	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
 		writePref();
 		
 		#if DEBUG_LVL >= 1
 			printPref();
 		#endif
-	}
+	#endif
 
 	// process added fields
 	processField();
@@ -481,12 +481,13 @@ void IOTAppStory::runConfigServer() {
 				if(_connected){
 					
 					// Saving config to eeprom
-					writeConfig();
+					_writeConfig = true;
 					
 					#if DEBUG_LVL >= 3
 						DEBUG_PRINT(F(" Connected. Saving config to eeprom"));
 					#endif
 				}else{
+					readConfig();
 					DEBUG_PRINTLN(F("\n Failed, try again!!!"));					// <---------- temp...remove...
 				}
 				
@@ -497,10 +498,16 @@ void IOTAppStory::runConfigServer() {
 			
 			// write actCode to EEPROM
 			if(!_confirmed && _tryToConf){
-				writeConfig();
 				_confirmed = true;
-				yield();
 				_tryToConf = false;
+				_writeConfig = true;
+			}			
+			
+			// write EEPROM
+			if(_writeConfig){
+				writeConfig();
+				yield();
+				_writeConfig = false;
 			}
 			
 			// when succesfully added wifi cred in AP mode change to STA mode
@@ -628,7 +635,12 @@ void IOTAppStory::connectNetwork() {
 	Returns false if not connected after MAX_WIFI_RETRIES retries 
 */
 bool IOTAppStory::isNetworkConnected() {
-	int retries = MAX_WIFI_RETRIES;
+	#if defined  ESP8266
+		int retries = MAX_WIFI_RETRIES;
+	#elif defined ESP32
+		int retries = (MAX_WIFI_RETRIES/2);
+	#endif
+	
 	DEBUG_PRINT(" ");
 	
 #if WIFI_MULTI == true
@@ -1465,8 +1477,18 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 		if(request->hasParam("s", true) && request->hasParam("p", true)){
 			
 			if(!request->hasParam("i", true)){
+				
 					//Saved from first screen. When in Wifi AP mode
 					if(!_connected && !_tryToConn){
+						
+						#if WIFI_MULTI == true
+							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[1]).toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
+							
+							String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[0]).toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
+						#endif
+						
 						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
 						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
 							
@@ -1483,6 +1505,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 						
 					}else if(!_connected && _tryToConn){
 						
+						// if server is called while connecting wifi anser busy
 						retHtml = F("2");		// busy
 						
 					}else if(_connected && !_tryToConn){
@@ -1491,14 +1514,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 						#if DEBUG_LVL == 3
 							DEBUG_PRINTLN(F("\n Processing received credentials"));
 						#endif
-						
-						#if WIFI_MULTI == true
-							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[1]).toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
-							
-							String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[0]).toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
-						#endif
+
 						
 						#if DEBUG_LVL == 3
 							DEBUG_PRINTLN(F("\n Connected and saved received credentials"));
@@ -1511,6 +1527,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 			
 			}else{
 					// Saved / added from config. When in Wifi STA mode
+					_writeConfig = true;
 
 					int apNr = atoi(request->getParam("i", true)->value().c_str());
 					#if DEBUG_LVL == 3
