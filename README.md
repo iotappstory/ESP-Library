@@ -77,8 +77,8 @@ setup () {
 ```
 </br>
 
-### `addField(char* var, string fieldName, string fieldVar, uint maxLen, char type = 'L')`
-reference to org variable | html field name | html field label | max nr of char | Optional "special field" char
+### `addField(char* var, string fieldLab, uint maxLen, char type = 'L')`
+reference to org variable | html field label | max nr of char | Optional "special field" char
 
 These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
 
