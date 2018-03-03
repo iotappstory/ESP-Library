@@ -79,27 +79,6 @@ setup () {
 ```
 </br>
 
-
-### `setCallHome(bool)`
-Set to 'true' to enable calling home frequently (disabled by default)</br></br>
-
-### `setCallHomeInterval(int)`
-Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
-
-Example:
-
-```c
-...
-
-setup () {
-    ...
-    
-    IAS.setCallHome(true);
-    IAS.setCallHomeInterval(60);
-}
-```
-</br>
-
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
 reference to org variable | html field name | html field label | max nr of char
 
@@ -182,7 +161,7 @@ setup () {
 ```
 </br>
 
-### `begin(bool bootstat, char eraseEeprom)`
+### `begin(char eraseEeprom)`
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
@@ -206,6 +185,27 @@ setup () {
     ...
     
     IAS.begin(true,'P');
+}
+```
+</br>
+
+
+### `setCallHome(bool)`
+Set to 'true' to enable calling home frequently (disabled by default)</br></br>
+
+### `setCallHomeInterval(int)`
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+
+Example:
+
+```c
+...
+
+setup () {
+    ...
+    
+    IAS.setCallHome(true);
+    IAS.setCallHomeInterval(60);
 }
 ```
 </br>
