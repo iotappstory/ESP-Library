@@ -21,7 +21,7 @@
 	#define DNS_PORT								53
 	#define UDP_PORT      					514
 	
-	#define HTTPS         					true	// Try to use HTTPS for updates
+	#define HTTPS         					true	// Try to use HTTPS for updates when there is enough free heap
 	#define HEAPFORHTTPS  					31500	// Min free heap needed for HTTPS
 
 	#if defined  ESP8266
@@ -358,6 +358,7 @@
 						bool _connected											=	false;									// wifi connection status bool
 						bool _tryToConf											=	false;									// try to confirm device registration bool
 						int  _confirmed											=	false;									// confirmed status bool
+						bool _writeConfig										= false;
 						bool _changeMode 										= false;
 						
             unsigned long _lastCallHomeTime			= 0; 											//Time when we last called home
