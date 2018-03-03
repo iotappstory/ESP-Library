@@ -1,6 +1,6 @@
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/readme.jpg"/>
 
-Download and update Infrastructure for IOT devices, currenlty the ESP8266. You will need an account at IOTAppStory.com
+Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. You will need an account at IOTAppStory.com
 
 Wiki pages: https://iotappstory.com/wiki
 </br></br>
@@ -170,7 +170,7 @@ contents of RTC memory.
 If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
-If `eraseEeprom` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
+If `eraseEeprom` is 'P' (partial)(DEFAULT), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
 If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
@@ -184,7 +184,7 @@ Example:
 setup () {
     ...
     
-    IAS.begin(true,'P');
+    IAS.begin('P');
 }
 ```
 </br>
@@ -203,6 +203,8 @@ Example:
 
 setup () {
     ...
+    
+    IAS.begin();
     
     IAS.setCallHome(true);
     IAS.setCallHomeInterval(60);
@@ -247,8 +249,6 @@ And if you originally developed your code for these “Special ESP’s”. This 
 </br>
 
 ## Contributions and thanks
-For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
-
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
 
 And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP8266-Library/graphs/contributors)
