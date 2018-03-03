@@ -80,8 +80,11 @@ setup () {
 ### `addField(char* var, string fieldName, string fieldVar, uint maxLen, char type = 'L')`
 reference to org variable | html field name | html field label | max nr of char | Optional "special field" char
 
-These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable. You can find the example below in the "VirginSoil-Full" example.
+These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
+
 <img src="https://github.com/Onno-Dirkzwager/ESP8266-Library/blob/develop/config-app-settings.jpg"/>
+
+By default added fields will be renderd like the input field "TEXTLINE" in the pic above. You can use the other field types by adding the optional "special field" char. For more info about these fields have a look at the "VirginSoil-Full" example.
 
 
 Currently only char arrays are supported.
@@ -102,8 +105,8 @@ char* lbl1      = "Light Show";
 setup () {
     ...
     
-    IAS.addField(LEDpin, "ledpin", "ledPin", 2);
-    IAS.addField(lbl1, "label1", "Label 1", 16);
+    IAS.addField(LEDpin, "ledPin", 2, 'P');
+    IAS.addField(lbl1, "Label 1", 16);
     
     IAS.begin();
 }
