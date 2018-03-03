@@ -1,6 +1,6 @@
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/readme.jpg"/>
 
-Download and update Infrastructure for IOT devices, currenlty the ESP8266. You will need an account at IOTAppStory.com
+Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. ESP8266's need at least 1MB flash. You will need a free account at IOTAppStory.com
 
 Wiki pages: https://iotappstory.com/wiki
 </br></br>
@@ -15,11 +15,11 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 ## Develop branch
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
 
-## Upcoming release 1.1.0
+## Upcoming release 2.0.0
 https://github.com/iotappstory/ESP8266-Library
 </br></br>
 
-## API 1.1.0
+## API 2.0.0
 
 ### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
 
@@ -38,22 +38,6 @@ IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 setup () { ... }
 loop () { ... }
-```
-</br>
-
-### `serialdebug(bool enabled, int speed=115200)`
-Set enabled to true to send debuging feedback over serial. You can set the port speed as the second parameter. The default speed id 115200. Use this during development only! And remove these lines for published apps.
-
-Example:
-```c
-...
-
-setup () {
-  IAS.serialdebug(true);
-  //IAS.serialdebug(true,115200);
-
-  IAS.begin();
-}
 ```
 </br>
 
@@ -88,42 +72,26 @@ setup () {
     IAS.preSetWifi("ssid","password");
 
 
-    // Now start it up
-
     IAS.begin();
 }
 ```
 </br>
 
+### `addField(char* var, string fieldLab, uint maxLen, char type = 'L')`
+reference to org variable | html field label | max nr of char | Optional "special field" char
 
-### `setCallHome(bool)`
-Set to 'true' to enable calling home frequently (disabled by default)</br></br>
+These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
 
-### `setCallHomeInterval(int)`
-Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+<img src="https://github.com/Onno-Dirkzwager/ESP8266-Library/blob/develop/config-app-settings.jpg"/>
 
-Example:
+By default added fields will be renderd like the input field "TEXTLINE" in the pic above. You can use the other field types by adding the optional "special field" char. For more info about these fields have a look at the "VirginSoil-Full" example.
 
-```c
-...
-
-setup () {
-    ...
-    
-    IAS.setCallHome(true);
-    IAS.setCallHomeInterval(60);
-}
-```
-</br>
-
-### `addField(char* var, string fieldName, string fieldVar, uint maxLen)`
-reference to org variable | html field name | html field label | max nr of char
-
-These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
 
 Currently only char arrays are supported.
 Use functions like atoi() and atof() to transform the char array to integers or floats
 Use dPinConv() to convert Dpin numbers(pin-name) to integers (D6 > 14)
+
+
 
 
 Example:
@@ -137,8 +105,8 @@ char* lbl1      = "Light Show";
 setup () {
     ...
     
-    IAS.addField(LEDpin, "ledpin", "ledPin", 2);
-    IAS.addField(lbl1, "label1", "Label 1", 16);
+    IAS.addField(LEDpin, "ledPin", 2, 'P');
+    IAS.addField(lbl1, "Label 1", 16);
     
     IAS.begin();
 }
@@ -198,7 +166,7 @@ setup () {
 ```
 </br>
 
-### `begin(bool bootstat, char eraseEeprom)`
+### `begin(char eraseEeprom)`
 Set up IAS and start all dependent services. 
 
 If `bootstat` is true, the code will keep track of number of boots and print
@@ -207,7 +175,7 @@ contents of RTC memory.
 If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
-If `eraseEeprom` is 'P' (partial), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
+If `eraseEeprom` is 'P' (partial)(DEFAULT), some of the EEPROM (excluding wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
 If `eraseEeprom` is 'L' (leave intact), none of the EEPROM (including wifi credentials and IAS activation code) will be
@@ -221,7 +189,30 @@ Example:
 setup () {
     ...
     
-    IAS.begin(true,'P');
+    IAS.begin('P');
+}
+```
+</br>
+
+
+### `setCallHome(bool)`
+Set to 'true' to enable calling home frequently (disabled by default)</br></br>
+
+### `setCallHomeInterval(int)`
+Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production.
+
+Example:
+
+```c
+...
+
+setup () {
+    ...
+    
+    IAS.begin();
+    
+    IAS.setCallHome(true);
+    IAS.setCallHomeInterval(60);
 }
 ```
 </br>
@@ -263,8 +254,6 @@ And if you originally developed your code for these “Special ESP’s”. This 
 </br>
 
 ## Contributions and thanks
-For Wifi AP management we forked and modified the WifiManager from [kentaylor](https://github.com/kentaylor/WiFiManager) which in its turn was a fork from [tzapu](https://github.com/tzapu/WiFiManager)
-
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
 
 And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP8266-Library/graphs/contributors)

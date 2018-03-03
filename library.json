@@ -1,13 +1,13 @@
 {
-  "name": "IOTAppStory-ESP8266",
-  "keywords": "esp8266, IOT, IAS, wifi, wi-fi, OTA",
-  "description": "Update your ESP8266 modules over the air(OTA)",
+  "name": "IOTAppStory-ESP",
+  "keywords": "esp8266, esp32, IOT, IAS, wifi, wi-fi, OTA",
+  "description": "Update your ESP8266 & ESP32 modules over the air(OTA)",
   "repository":
   {
     "type": "git",
     "url": "https://github.com/iotappstory/ESP8266-Library.git"
   },
   "frameworks": "arduino",
-  "platforms": "espressif8266",
-  "version": "1.1.0"
+  "platforms": "espressif32",
+  "version": "2.0.0"
 }

@@ -1,10 +1,10 @@
 /*
-  This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
-  Your code can be added wherever it is marked. 
+	This is an initial sketch to get your device registered at IOTappstory.com
+	You will need an account at IOTAppStory.com 
 
   You will need the button & OLED shields!
 
-  Copyright (c) [2018] [Andreas Spiess]
+  Copyright (c) [2016] [Andreas Spiess]
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +26,22 @@
 
 */
 
-#define APPNAME "Wemos-OLED-VirginSoil"
-#define VERSION "V1.0.0"
+#define APPNAME "WemosLoader"
+#define VERSION "V1.1.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON D3
+#define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
-
-#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 
-SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
-
+SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
@@ -49,10 +51,7 @@ unsigned long printEntry;
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-  
-  display.init();                                         // setup OLED and show "Wait"
+  display.init();
   display.flipScreenVertically();
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -60,18 +59,11 @@ void setup() {
   display.drawString(48, 35, F("Wait"));
   display.display();
 
-
-  String boardName = "woled-vs-" + WiFi.macAddress();
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://woled-vs.local
-
-
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  String deviceName = APPNAME"_" + WiFi.macAddress();
+  IAS.preSetDeviceName(deviceName);                       // preset Boardname
+  IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
 
 
-  // You can configure callback functions that can give feedback to the app user about the current state of the application.
-  // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
-  
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -82,6 +74,13 @@ void setup() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     dispTemplate_threeLineV2(F("Release"), F("for"), F("Config"));
+  });
+  
+  IAS.onFirstBoot([]() {
+    Serial.println(F(" Manual reset necessary after serial upload!"));
+    Serial.println(F("*-------------------------------------------------------------------------*"));
+    dispTemplate_threeLineV1(F("Press"), F("Reset"), F("Button"));
+    ESP.reset();
   });
 
   IAS.onConfigMode([]() {
@@ -99,27 +98,31 @@ void setup() {
   IAS.onFirmwareUpdateError([]() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
+
+
+  IAS.begin('F');                                           // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+  IAS.setCallHome(true);                                    // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                              // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
   
-
-  IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
-                                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-
   //-------- Your Setup starts from here ---------------
 
+
+  IAS.callHome(true);
+  
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.buttonLoop();                                         // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
-
-  //-------- Your Sketch starts from here ---------------
 
   if (millis() - printEntry > 5000 && digitalRead(D3) == HIGH) {
+    // if the sketch reaches this point, you failed to activate your device at IotAppStory.com, did not create a project or did not add an app to your project
     printEntry = millis();
-    dispTemplate_threeLineV1(F("Loop"), F("Running"), F("Do Stuff..."));
+    dispTemplate_fourLineV1(F("Error"), F("Not registred"), F("No project"), F("No app"));
   }
 }
 
@@ -160,3 +163,4 @@ void dispTemplate_fourLineV1(String str1, String str2, String str3, String str4)
   display.drawString(32, 51, str4);
   display.display();
 }
+

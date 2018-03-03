@@ -39,7 +39,11 @@
 #define FEEDBACKLED 4                                     // Pin on the esp8266 connected to the NeoPixel you want to use for feedback. D2 for the Wemos!
 
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <ESP8266WiFi.h>                                  // esp core wifi library
+#if defined  ESP8266
+  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
+#elif defined ESP32
+  #include <WiFi.h>                                       // esp32 core wifi library
+#endif
 #include <Adafruit_NeoPixel.h>                            // Adafruit_NeoPixel_Library (https://github.com/adafruit/Adafruit_NeoPixel)
 
 
@@ -69,10 +73,6 @@ uint32_t green  = pixels.Color(0, 128, 0);                // loop / running
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.serialdebug(true);                                  // 1st parameter: true or false for serial debugging. Default: false
-  //IAS.serialdebug(true,115200);                         // 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-
-  
   pixels.begin();                                         // This initializes the NeoPixel library.
   pixels.setBrightness(1);                                // set pixel brightness (1-255)
 
@@ -82,11 +82,7 @@ void setup() {
   
 
   String boardName = "ws2812b-vs-" + WiFi.macAddress().substring(9, 99);
-  IAS.preSetBoardname(boardName);                         // preset Boardname this is also your MDNS responder: http://woled-vs.local
-
-
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.preSetDeviceName(boardName);                        // preset Boardname this is also your MDNS responder: http://woled-vs.local
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -134,8 +130,10 @@ void setup() {
   });
   
 
-  IAS.begin(true,'P');                                    // 1st parameter: true or false to view BOOT STATISTICS
-                                                          // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+
+  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
   //-------- Your Setup starts from here ---------------
 
