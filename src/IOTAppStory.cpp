@@ -1404,6 +1404,11 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 		#if defined  ESP8266
 			retHtml.replace(F("{cid}"), String(ESP.getChipId()));
 			retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
+			
+			retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
+			retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
+		
+		
 		#elif defined ESP32
 			retHtml.replace(F("{cid}"), "");				// not available yet
 			retHtml.replace(F("{fid}"), "");				// not available yet
