@@ -182,7 +182,7 @@
 	const char HTTP_WIFI_SCAN[] PROGMEM		= "{\"s\":\"{s}\", \"q\":\"{q}\", \"e\":\"{e}\"}";
 	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"po\"><div id=\"m\"><button class=\"btn sm\" id=\"b\" onclick=\"ep()\">Ok</button></div></div><div id=\"cnt\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
 
-	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
 	
 	#if defined  ESP32
 			const char ROOT_CA[] PROGMEM = \
