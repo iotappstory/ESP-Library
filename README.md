@@ -1,4 +1,4 @@
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/readme.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/readme.jpg"/>
 
 Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. ESP8266's need at least 1MB flash. You will need a free account at IOTAppStory.com
 
@@ -6,7 +6,7 @@ Wiki pages: https://iotappstory.com/wiki
 </br></br>
 
 ## Latest stable release 1.0.6
-https://github.com/iotappstory/ESP8266-Library/releases/latest
+https://github.com/iotappstory/ESP-Library/releases/latest
 
 ## Arduino IDE librairy manager
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
@@ -82,7 +82,7 @@ reference to org variable | html field label | max nr of char | Optional "specia
 
 These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
 
-<img src="https://github.com/Onno-Dirkzwager/ESP8266-Library/blob/develop/config-app-settings.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/config-app-settings.jpg"/>
 
 By default added fields will be renderd like the input field "TEXTLINE" in the pic above. You can use the other field types by adding the optional "special field" char. For more info about these fields have a look at the "VirginSoil-Full" example.
 
@@ -250,7 +250,7 @@ Normally this would be handled by the defined ”const” in your boards [pins_a
 
 And if you originally developed your code for these “Special ESP’s”. This part makes makes it compatible when compiling for "Generic ESP's"
 
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/pin_mapping.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/pin_mapping.jpg"/>
 </br>
 
 ## Contributions and thanks
