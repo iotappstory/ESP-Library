@@ -30,7 +30,7 @@ digital input is the force-update/reset button. Note: the EEPROM size and number
 #define APPNAME my_app
 #define VERSION V1.0.0
 #define COMPDATE __DATE__ __TIME__
-#define MODE_BUTTON D3
+#define MODE_BUTTON 0
 
 
 #include <IOTAppStory.h>
