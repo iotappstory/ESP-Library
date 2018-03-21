@@ -16,7 +16,7 @@ https://github.com/iotappstory/ESP-Library/releases/latest
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
 
 ## Upcoming release 2.0.0
-https://github.com/iotappstory/ESP8266-Library
+https://github.com/iotappstory/ESP-Library
 </br></br>
 
 ## API 2.0.0
@@ -244,7 +244,7 @@ void loop() {
 ### `dPinConv(...)`
 Use dPinConv() to convert Dpin & Ppin numbers to integers (D6 > 14)
 
-We advise to use the original Gpio numbers used by the ESP8266. However a lot of our users use boards like the “Wemos” & “NodeMCU”. They tend to use the silkscreen numbering like D6, D2 etc.
+We advise to use the original Gpio numbers used by the ESP. However a lot of our users use boards like the “Wemos” & “NodeMCU”. They tend to use the silkscreen numbering like D6, D2 etc.
 
 Normally this would be handled by the defined ”const” in your boards [pins_arduino.h](https://github.com/esp8266/Arduino/tree/master/variants) file during compilation. However when entered after compilation, like with the added fields in the html config pages “addField(.. .. .. ..)”, these values get returned as ”String” instead of being translated to a “int”
 
@@ -256,4 +256,4 @@ And if you originally developed your code for these “Special ESP’s”. This 
 ## Contributions and thanks
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
 
-And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP8266-Library/graphs/contributors)
+And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP-Library/graphs/contributors)
