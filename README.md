@@ -169,9 +169,6 @@ setup () {
 ### `begin(char eraseEeprom)`
 Set up IAS and start all dependent services. 
 
-If `bootstat` is true, the code will keep track of number of boots and print
-contents of RTC memory.
-
 If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
