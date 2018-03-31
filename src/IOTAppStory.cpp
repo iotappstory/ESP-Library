@@ -382,7 +382,7 @@ void IOTAppStory::runConfigServer() {
 		dnsServer.reset(new DNSServer());
 		server.reset(new AsyncWebServer(80));
 
-		WiFi.mode(WIFI_AP);
+		WiFi.mode(WIFI_AP_STA);
 		#if SMARTCONFIG == true
 			WiFi.beginSmartConfig();
 		#endif
@@ -466,7 +466,12 @@ void IOTAppStory::runConfigServer() {
 			
 			// wifi connect when asked
 			if(_tryToConn == true){
-				///WiFi.mode(WIFI_AP_STA);
+				#if DEBUG_LVL >= 3
+					DEBUG_PRINT(F("Received cred: "));
+					DEBUG_PRINT(config.ssid[0]);
+					DEBUG_PRINT(F(" - "));
+					DEBUG_PRINTLN(config.password[0]);
+				#endif
 				
 				#if WIFI_MULTI == true
 					wifiMulti.addAP(config.ssid[0], config.password[0]);
@@ -489,6 +494,7 @@ void IOTAppStory::runConfigServer() {
 				}else{
 					readConfig();
 					DEBUG_PRINTLN(F("\n Failed, try again!!!"));					// <---------- temp...remove...
+					_tryToConnFail = true;
 				}
 				
 				_tryToConn = false;
@@ -1191,7 +1197,7 @@ void IOTAppStory::readConfig() {
 	
 	if(EEPROM.read(magicBytesBegin) == MAGICBYTES[0] && EEPROM.read(magicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(magicBytesBegin + 2) == MAGICBYTES[2]) {
 			
-		#if DEBUG_LVL >= 1
+		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(F(" EEPROM Configuration found"));
 		#endif
 		
@@ -1374,9 +1380,9 @@ void IOTAppStory::servHdlRoot(AsyncWebServerRequest *request) {
 			
 				retHtml.replace("{h}", FPSTR(HTTP_AP_CSS));
 				
-				
-				retHtml += F("<h2>Wifi connection</h2>");
+				//retHtml += F("<h2>Wifi connection</h2>");
 				retHtml += FPSTR(HTTP_WIFI_FORM);
+				retHtml.replace("{r}", strWifiScan());
 				
 				retHtml += FPSTR(HTTP_AP_JS);
 				
@@ -1397,9 +1403,9 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 		
     String retHtml;
 		retHtml += FPSTR(HTTP_DEV_INFO);
-		retHtml.replace("{s1}", config.ssid[0]);
-		retHtml.replace("{s2}", config.ssid[1]);
-		retHtml.replace("{s3}", config.ssid[2]);
+		retHtml.replace(F("{s1}"), config.ssid[0]);
+		retHtml.replace(F("{s2}"), config.ssid[1]);
+		retHtml.replace(F("{s3}"), config.ssid[2]);
 
 		#if defined  ESP8266
 			retHtml.replace(F("{cid}"), String(ESP.getChipId()));
@@ -1414,15 +1420,15 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 			retHtml.replace(F("{fid}"), "");				// not available yet
 		#endif
 		
-		retHtml.replace("{fs}", String(ESP.getFlashChipSize()));
-		retHtml.replace("{ab}", ARDUINO_BOARD);
-		retHtml.replace("{mc}", WiFi.macAddress());
-		retHtml.replace("{xf}", String(_nrXF));
+		retHtml.replace(F("{fs}"), String(ESP.getFlashChipSize()));
+		retHtml.replace(F("{ab}"), ARDUINO_BOARD);
+		retHtml.replace(F("{mc}"), WiFi.macAddress());
+		retHtml.replace(F("{xf}"), String(_nrXF));
 		
 		if(String(config.actCode) == "000000" || String(config.actCode) == ""){
-			retHtml.replace("{ac}", "0");	
+			retHtml.replace(F("{ac}"), "0");	
 		}else{
-			retHtml.replace("{ac}", "1");	
+			retHtml.replace(F("{ac}"), "1");	
 		}
 		
 		
@@ -1432,13 +1438,10 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 
 
 /** Handle wifi scan */
-void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
-		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN(F(" Serving results of Wifiscan"));
-		#endif
-		
+String IOTAppStory::strWifiScan(){
+
     // WiFi.scanNetworks will return the number of networks found	
-		String retJson = F("[");
+		String retHtml;
 		int n = WiFi.scanComplete();
 		if(n == -2){
 			
@@ -1449,14 +1452,11 @@ void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
 			for (int i = 0; i < n; ++i) {
 					
 					// return html results from the wifi scan
-					if(i > 0){
-						retJson += F(",");
-					}
-					retJson += FPSTR(HTTP_WIFI_SCAN);
+					retHtml += FPSTR(HTTP_WIFI_SCAN);
 					
-					retJson.replace("{s}", WiFi.SSID(i));
-					retJson.replace("{q}", String(WiFi.RSSI(i)));
-					retJson.replace("{e}", String(WiFi.encryptionType(i)));             
+					retHtml.replace(F("{s}"), WiFi.SSID(i));
+					retHtml.replace(F("{q}"), String(WiFi.RSSI(i)));
+					retHtml.replace(F("{e}"), String(WiFi.encryptionType(i)));             
 					delay(10);
 			}
 			
@@ -1465,10 +1465,19 @@ void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
 				WiFi.scanNetworks(true);
 			}
 		}
-		retJson += F("]");
+	return retHtml;
+}
 
-    hdlReturn(request, retJson, F("text/json"));
-		retJson = String();
+void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" Serving results of Wifiscan"));
+		#endif
+		
+		String retHtml = strWifiScan();
+
+
+    hdlReturn(request, retHtml, F("text/json"));
+		retHtml = String();
 }
 
 
@@ -1484,7 +1493,10 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 			if(!request->hasParam("i", true)){
 				
 					//Saved from first screen. When in Wifi AP mode
-					if(!_connected && !_tryToConn){
+					if(_tryToConnFail){
+						retHtml = F("3");					// return html Failed
+						_tryToConnFail = false;		// reset for next try
+					}else if(!_connected && !_tryToConn){
 						
 						#if WIFI_MULTI == true
 							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
@@ -1555,6 +1567,8 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 }
 
 
+
+
 /** Handle app / firmware information */
 void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		#if DEBUG_LVL >= 3
@@ -1571,11 +1585,11 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 				}
 				retHtml += FPSTR(HTTP_APP_INFO);
 				
-				retHtml.replace("{l}", String(fieldStruct[i].fieldLabel));
-				retHtml.replace("{v}", String((*fieldStruct[i].varPointer)));
-				retHtml.replace("{n}", String(i));
-				retHtml.replace("{m}", String(fieldStruct[i].length));
-				retHtml.replace("{t}", String(fieldStruct[i].type));
+				retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
+				retHtml.replace(F("{v}"), String((*fieldStruct[i].varPointer)));
+				retHtml.replace(F("{n}"), String(i));
+				retHtml.replace(F("{m}"), String(fieldStruct[i].length));
+				retHtml.replace(F("{t}"), String(fieldStruct[i].type));
 				delay(10);
 		}
 		retHtml += F("]");
@@ -1678,78 +1692,8 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type) {
 	
 	AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
-	response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	response->addHeader("Pragma", "no-cache");
-	response->addHeader("Expires", "-1");
+	response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+	response->addHeader(F("Pragma"), F("no-cache"));
+	response->addHeader(F("Expires"), F("-1"));
 	request->send(response);
 }
-
-
-/** get device registration confirmation from IAS 
-int IOTAppStory::getDevConf() {
-
-		String url = "";
-		bool httpSwitch = false;
-		int retInt = 0;
-		
-		if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
-			httpSwitch = true;
-		}
-
-		#if DEBUG_LVL >= 3
-			DEBUG_PRINT(F("\n Checking for device confirmation at IAS"));
-		#endif
-
-		if(httpSwitch == true){
-			url = F("https://");
-		}else{
-			url = F("http://");
-		}
-
-		// location 1
-		url += _updateHost;
-		url += F("/ota/cfg-esp/confirm.php");
-		
-		DEBUG_PRINTLN(url);
-		DEBUG_PRINTLN(system_get_free_heap_size());
-		
-		
-		HTTPClient http;
-		httpClientSetup(http, httpSwitch, url);
-		int code = http.GET();
-
-		if(code == HTTP_CODE_OK){
-			
-			if(http.getString() == "1"){
-				// Succes, device activation confirmed. Save activation code to eeprom
-				writeConfig();
-				retInt = 1;
-				
-				#if DEBUG_LVL >= 3
-					DEBUG_PRINT(F("\n Succes, saved code"));
-				#endif
-			}else{
-				// Error, could not confirm device activation
-				String("000000").toCharArray(config.actCode, 7);
-				retInt = 2;
-				
-				#if DEBUG_LVL >= 3
-					DEBUG_PRINT(F("\n Error: could not confirm"));
-				#endif
-			}
-
-		}else{
-			
-			// Error, could not connect to IAS server
-			retInt = 3;
-			
-			#if DEBUG_LVL >= 3
-				DEBUG_PRINTLN(code);
-				DEBUG_PRINTLN(http.getString());
-			#endif
-		}
-
-		http.end();
-		return retInt;
-}
-*/
