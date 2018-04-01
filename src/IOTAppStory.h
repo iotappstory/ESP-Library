@@ -41,7 +41,8 @@
 	#define RTCMEMBEGIN   					68
 
 	// length of config variables
-	#define STRUCT_CHAR_ARRAY_SIZE  50    
+	#define STRUCT_CHAR_ARRAY_SIZE  50
+	#define STRUCT_PASSWORD_SIZE		64		// Thankyou reibuehl
 	#define STRUCT_COMPDATE_SIZE    20
 	#define STRUCT_BNAME_SIZE       30
 	#define STRUCT_HOST_SIZE        24
@@ -133,7 +134,7 @@
 	
   typedef struct  {
     char ssid[3][STRUCT_CHAR_ARRAY_SIZE];			// 3x SSID
-    char password[3][STRUCT_CHAR_ARRAY_SIZE];	// 3x PASS
+    char password[3][STRUCT_PASSWORD_SIZE];	// 3x PASS
 		char deviceName[STRUCT_BNAME_SIZE];
     char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
     char actCode[7];													// saved IotAppStory activation code
