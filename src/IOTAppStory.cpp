@@ -87,11 +87,11 @@ void IOTAppStory::firstBoot(char ea){
 		emty.toCharArray(config.actCode, 7);
 		emty = "";
 		emty.toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
-		emty.toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
 		emty.toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
-		emty.toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
 		emty.toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
-		emty.toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
+		emty.toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
 
 	}else if(ea == 'P'){
 		
@@ -155,12 +155,10 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	if (!_configReaded) {
 		readConfig();
 	}
-	
-	//ssid.toCharArray(config.ssid, STRUCT_CHAR_ARRAY_SIZE);
-	//password.toCharArray(config.password, STRUCT_CHAR_ARRAY_SIZE);
+
 	_setPreSet = true;
 	SetConfigValueCharArray(config.ssid[0], ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.password[0], password, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
+	SetConfigValueCharArray(config.password[0], password, STRUCT_PASSWORD_SIZE, _setPreSet);
 }
 
 /*
@@ -698,7 +696,7 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 	}
 	
 
-	#if defined ESP8266
+	//#if defined ESP8266
 		if (spiffs) {
 			
 			// try to update spiffs from address 1
@@ -709,11 +707,11 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 				updateHappened = iotUpdater(1,1);
 			}
 		}
-	#elif defined ESP32
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINTLN(F("\n No OTA SPIFFS support for ESP32 yet!"));
-		#endif
-	#endif
+	//#elif defined ESP32
+	//	#if DEBUG_LVL >= 2
+	//		DEBUG_PRINTLN(F("\n No OTA SPIFFS support for ESP32 yet!"));
+	//	#endif
+	//#endif
 
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F("\n Returning from IOTAppStory.com"));
@@ -1500,14 +1498,14 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 						
 						#if WIFI_MULTI == true
 							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[1]).toCharArray(config.password[2], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[1]).toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
 							
 							String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[0]).toCharArray(config.password[1], STRUCT_CHAR_ARRAY_SIZE);
+							String(config.password[0]).toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
 						#endif
 						
 						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
-						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_CHAR_ARRAY_SIZE);
+						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
 							
 						#if DEBUG_LVL == 2
 							DEBUG_PRINTLN(F("\n Connect with received credentials"));
@@ -1552,7 +1550,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 					#endif
 					
 					request->getParam("s", true)->value().toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
-					request->getParam("p", true)->value().toCharArray(config.password[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
+					request->getParam("p", true)->value().toCharArray(config.password[apNr-1], STRUCT_PASSWORD_SIZE);
 					retHtml = F("1");		// ok
 			}
 
