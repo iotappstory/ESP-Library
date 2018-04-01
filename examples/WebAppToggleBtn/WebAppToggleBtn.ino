@@ -32,22 +32,35 @@
 */
 
 #define APPNAME "WebAppToggleBtn"
-#define VERSION "V2.0.1"
+#define VERSION "V3.0.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0
+#define MODEBUTTON 0                                  // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
 
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
+#if defined ESP8266
+  #include <ESPAsyncTCP.h>                            // https://github.com/me-no-dev/ESPAsyncTCP
+#elif defined ESP32
+  #include <AsyncTCP.h>                               // https://github.com/me-no-dev/AsyncTCP
+  #include <SPIFFS.h>
+#endif
+
+#include <ESPAsyncWebServer.h>                        // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <FS.h>
-ESP8266WebServer server(80);
 
 
+IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON); // Initialize IotAppStory
+AsyncWebServer server(80);                            // Initialize AsyncWebServer
 
-// ================================================ EXAMPLE VARS =========================================
+//called when the url is not defined here return 404
+void onRequest(AsyncWebServerRequest *request){
+  //Handle Unknown Request
+  request->send(404);
+}
+
+
+// ================================================ VARS =================================================
 // Variables will change:
 int ledState = LOW;					// the current state of the output pin
 int buttonState;						// the current reading from the input pin
@@ -63,27 +76,24 @@ long debounceDelay = 50;		// the debounce time; increase if the output flickers
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "D4";                                    // The value given here is the default value and can be overwritten by values saved in configuration mode
-char* btnDefPin = "14";
+char* LEDpin      = "2";                                  // The value given here is the default value and can be overwritten by values saved in configuration mode
+char* btnDefPin   = "14";
+char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* updInt      = "60";                                 // every x sec
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-	IAS.serialdebug(true);																// 1st parameter: true or false for serial debugging. Default: false | When set to true or false serialdebug can be set from wifi config manager
-	//IAS.serialdebug(true,115200);												// 1st parameter: true or false for serial debugging. Default: false | 2nd parameter: serial speed. Default: 115200
-	/* TIP! delete the above lines when not used */
+	IAS.preSetDeviceName("webtoggle");											// preset Boardname this is also your MDNS responder: http://webtoggle.local
+  IAS.preSetAutoUpdate(true);                             // automaticUpdate (true, false)
 
 
-	IAS.preSetBoardname("webtoggle");											// preset Boardname this is also your MDNS responder: http://virginSoil-full.local
-  IAS.preSetAutoUpdate(true);                           // automaticUpdate (true, false)
+  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(updInt, "Update every", 8, 'I');           // reference to org variable | field label value | max char return | Optional "special field" char
+	IAS.addField(LEDpin, "Led Pin", 2, 'P');
+	IAS.addField(btnDefPin, "Button Pin", 2, 'P');
 
-	IAS.addField(LEDpin, "ledpin", "Led Pin", 2);					// These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-	IAS.addField(btnDefPin, "btnpin", "Button Pin", 2);		// reference to org variable | field name | field label value | max char return
-
-
-  IAS.setCallHome(true);                                // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                          // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -99,32 +109,32 @@ void setup() {
   });
 
 	
-  IAS.begin(true,'P');                                  // 1st parameter: true or false to view BOOT STATISTICS
-                                                        // 2nd parameter: Wat to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
-	//-------- Sketch Specific starts from here ---------------
-	
-	
+  IAS.setCallHome(atoi(updTimer));                        // Set to true to enable calling home frequently (disabled by default)
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+
+
+  //-------- Your Setup starts from here ---------------
+
+  if(!SPIFFS.begin()){
+      Serial.println(F(" SPIFFS Mount Failed"));
+      return;
+  }
+  
 	pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 	pinMode(IAS.dPinConv(btnDefPin), INPUT);
 
 
-	//called when the url is not defined here return 404
-	server.onNotFound([](){
-		if(!handleFileRead(server.uri())){
-			server.send(404, "text/plain", "FileNotFound");
-		}
-	});
+
 
 	// When the button is pressed in the WebApp							<<<<<<<<<<<<--------------- <<<-------------------- <<<-----------
-	server.on("/btn", HTTP_GET, [](){
-		Serial.println("");
-		Serial.println("WebApp button pressed");
+	server.on("/btn", HTTP_GET, [](AsyncWebServerRequest *request){
+		Serial.println(F("\n WebApp button pressed"));
 
 		// toggle ledState
 		ledState = !ledState;
-		Serial.println("Changed led status to ("+String(ledState)+") on pin ("+String(LEDpin)+")");
-		Serial.println("");
+		Serial.println(" Changed led status to ("+String(ledState)+") on pin ("+String(LEDpin)+")\n");
 
 		// update LEDpin
 		digitalWrite(IAS.dPinConv(LEDpin), ledState);
@@ -135,36 +145,34 @@ void setup() {
 		json += "}";
 
 		// return json to WebApp
-		server.send(200, "text/json", json);
+		request->send(200, F("text/json"), json);
 		json = String();
 	});
 
-	server.on("/getState", HTTP_GET, [](){
+	server.on("/getState", HTTP_GET, [](AsyncWebServerRequest *request){
 		// create json return
 		String json = "{";
 		json += "\"ledState\":\""+String(ledState)+"\"";
 		json += "}";
 
 		// return json to WebApp
-		server.send(200, "text/json", json);
+		request->send(200, F("text/json"), json);
 		json = String();
 	});
 
+  server.serveStatic("/", SPIFFS, "/");
+
+
+  
+  server.onNotFound(onRequest);
+  
 	// start the HTTP server
 	server.begin();
-	Serial.print("HTTP server started at: ");
+	Serial.print(F(" HTTP server started at: "));
 	Serial.println(WiFi.localIP());
 	Serial.println("");
-	SPIFFS.begin();
-	{
-		Dir dir = SPIFFS.openDir("/");
-		while (dir.next()) {    
-			String fileName = dir.fileName();
-			size_t fileSize = dir.fileSize();
-			Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
-		}
-		Serial.println("");
-	}
+	
+
 }
 
 
@@ -174,9 +182,8 @@ void loop() {
   IAS.buttonLoop(); // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
-	//-------- Sketch Specific starts from here ---------------
- 
-	server.handleClient();
+  //-------- Your Sketch starts from here ---------------
+
 
 	// read the state of the pushbutton value:
 	int reading = digitalRead(IAS.dPinConv(btnDefPin));
@@ -204,8 +211,8 @@ void loop() {
 			if (buttonState == HIGH) {
 				ledState = !ledState;
 				Serial.println("");
-				Serial.println("Hardware button pressed. Pin ("+String(btnDefPin)+")");
-				Serial.println("Changed led status to ("+String(ledState)+") on pin ("+String(LEDpin)+")");
+				Serial.println(" Hardware button pressed. Pin ("+String(btnDefPin)+")");
+				Serial.println(" Changed led status to ("+String(ledState)+") on pin ("+String(LEDpin)+")");
 				Serial.println("");
 			}
 		}
@@ -222,47 +229,3 @@ void loop() {
 
 
 // ================================================ EXTRA FUNCTIONS ================================================
-//format bytes
-String formatBytes(size_t bytes){
-	if (bytes < 1024){
-		return String(bytes)+"B";
-	} else if(bytes < (1024 * 1024)){
-		return String(bytes/1024.0)+"KB";
-	} else if(bytes < (1024 * 1024 * 1024)){
-		return String(bytes/1024.0/1024.0)+"MB";
-	} else {
-		return String(bytes/1024.0/1024.0/1024.0)+"GB";
-	}
-}
-
-String getContentType(String filename){
-	if(server.hasArg("download")) return "application/octet-stream";
-	else if(filename.endsWith(".htm")) return "text/html";
-	else if(filename.endsWith(".html")) return "text/html";
-	else if(filename.endsWith(".css")) return "text/css";
-	else if(filename.endsWith(".js")) return "application/javascript";
-	else if(filename.endsWith(".png")) return "image/png";
-	else if(filename.endsWith(".gif")) return "image/gif";
-	else if(filename.endsWith(".jpg")) return "image/jpeg";
-	else if(filename.endsWith(".ico")) return "image/x-icon";
-	else if(filename.endsWith(".xml")) return "text/xml";
-	else if(filename.endsWith(".pdf")) return "application/x-pdf";
-	else if(filename.endsWith(".zip")) return "application/x-zip";
-	else if(filename.endsWith(".gz")) return "application/x-gzip";
-	return "text/plain";
-}
-
-bool handleFileRead(String path){
-	Serial.println("handleFileRead: " + path);
-	if(path.endsWith("/")) path += "index.htm";
-	String contentType = getContentType(path);
-	String pathWithGz = path + ".gz";
-	if(SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)){
-		if(SPIFFS.exists(pathWithGz)) path += ".gz";
-		File file = SPIFFS.open(path, "r");
-		size_t sent = server.streamFile(file, contentType);
-		file.close();
-		return true;
-	}
-	return false;
-}

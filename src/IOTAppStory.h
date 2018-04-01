@@ -41,7 +41,8 @@
 	#define RTCMEMBEGIN   					68
 
 	// length of config variables
-	#define STRUCT_CHAR_ARRAY_SIZE  50    
+	#define STRUCT_CHAR_ARRAY_SIZE  50
+	#define STRUCT_PASSWORD_SIZE		64		// Thankyou reibuehl
 	#define STRUCT_COMPDATE_SIZE    20
 	#define STRUCT_BNAME_SIZE       30
 	#define STRUCT_HOST_SIZE        24
@@ -78,6 +79,7 @@
 			#include <ESP8266HTTPClient.h>
 	#endif
 	
+
 	#include <DNSServer.h> 
 	#include <FS.h>
 	#include <EEPROM.h>
@@ -131,11 +133,11 @@
 	} eFields;
 	
   typedef struct  {
+    char actCode[7];													// saved IotAppStory activation code
     char ssid[3][STRUCT_CHAR_ARRAY_SIZE];			// 3x SSID
-    char password[3][STRUCT_CHAR_ARRAY_SIZE];	// 3x PASS
+    char password[3][STRUCT_PASSWORD_SIZE];		// 3x PASS
 		char deviceName[STRUCT_BNAME_SIZE];
     char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
-    char actCode[7];													// saved IotAppStory activation code
 		#if defined  ESP8266
 			char sha1[60];
 		#endif
@@ -173,15 +175,15 @@
 	const char HTTP_TEMP_START[] PROGMEM	= "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><meta name=\"theme-color\" content=\"#000\" />{h}<title>Config</title></head><body>";
 	const char HTTP_TEMP_END[] PROGMEM		= "</body></html>";
 	
-	const char HTTP_STA_JS[] PROGMEM    	= "<script src=\"https://iotappstory.com/ota/cfg-esp/cfg.js\"></script>";
-	const char HTTP_AP_JS[] PROGMEM     	= "<script>var d=document;var p=d.getElementById(\"po\");var b=d.getElementById(\"b\");var m=d.getElementById(\"m\");function c(l){d.getElementById('s').value=l.innerText||l.textContent;d.getElementById('p').focus()}function ld(u){var f=\"\";var c=false;var x=new XMLHttpRequest();x.open(\"POST\",u,true);x.setRequestHeader(\"Content-type\",\"application/x-www-form-urlencoded\");p.classList.add('fi');var g=d.querySelectorAll(\"input,select\");for(i=0;i<g.length;i++){if(f!=\"\"){f+=\"&\"}f+=g[i].name+\"=\"+g[i].value}x.onreadystatechange=function(){if(this.readyState==4&&this.status==200){var d=this.responseText;if(d.includes(\"1:\")){var a=d.split(\":\");var e=\"http://\"+a[1];m.innerHTML='Connected!<br>Changed to STA mode.<br>You will be redirected to<br>'+e+'<br>in <b id=\"cd\">22</b>s';cd(22);setTimeout(function(){window.location.href=e},22000)}else if(d==\"2\"){setTimeout(function(){ld('\wsa')},8500);if(!c){m.innerHTML=\"Connecting...\"}else{m.innerHTML+=\"...\"}}else{m.innerHTML+=\"<br>Failed to connect. Try again\";b.style.display='block'}m.classList.add('fi')}};x.send(f)}function cd(s){setTimeout(function(){s--;d.getElementById(\"cd\").innerHTML=s;cd(s)},1000)}function ep(){p.classList.remove('fi');m.classList.remove('fi');t.innerHTML=\"\"}</script>";
-	const char HTTP_AP_CSS[] PROGMEM    	= "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}.btn,.q{float:right}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:16px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;color:#000;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}h1{font-size:3em}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc;font-size:14px}input:focus{border-color:#fcbc12}input:invalid{border-color:red}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;background:#fcbc12;border-radius:4px;border:0;font-size:1.2em;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px;display:none}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}.q{width:64px;text-align:right}.l{background:url('data:image/png; base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNrsV89rE0EUfm83odVaFKmWhlIPWlAUxFZb8SSieJEWeirqUXrxqH+C99JDjz3k4MGDYPVUCoInUWpOokJVEIRiaSldE8Qks89vNhPdbjbZ3XRLD2bIx87uzLz3zfs1ExYR2s+WafwEQuUNPN2otTbQCzDgAKpBjtUNDUcSEqhukaxcJylvQnQmbM0tYBoYAfrMN824ADwBXnhfVJH4+CTxuYWEBOASqWwDW0ECw8A8cCNEzjHgDHAHWAbug8AqqZJnnmQEsILZrin/R+Ai8BwYiOFWTfAV1k4wWSvJY0C8H/lCcxBYDFGuzf7F9E/63EG1ubJIVnYc+/neioAVY0dzQM73/gt4CJwFLhvo/gMzZiR35aj4aU6+PiIqfWgqnBvSsLJJ7usxBOGGdoEOtHe+0d/AJLDURN5NY60u+BGJVEFGOaPWhccFHrjdlgWmAu+zLZSTGZutB7MXQ5nsFHG2bReM+hMUyMdwWd7MDZORmMBRXx95SWsxCKyZuWEyEhPwj6udydG0SaAqWrshkMZBIbshoAKCnBgKnZ1KRbF9MEkl1FXQOoXetUD+9/hynVvs9oCZ+7ceyPqzGS6vv6Tc3c/BjGisA6WPJ9y3V9+IW+6PV6cimq4H1Z+6vP+wrhTGqef0t9YuKL4fw0GUjvJ6PbAP4VHth+xLkTEgnnWZ0m+s/cNxgnAvr0jSzmG0p61DoEOgQ2DfCYT881B2vR6mW4HEyI4gwN1Dq7poinJSNJBbK/CQHW2B3vMFHrw3TdVtXEjtbDoEVIUzh59q2dHX8v8tCP8IMADfe61URz1LDwAAAABJRU5ErkJggg==') left center no-repeat;background-size:1em}.table{width:100%}.table td{padding:.5em;text-align:left}.table tbody>:nth-child(2n-1){background:#364048}</style>";
+	const char HTTP_STA_JS[] PROGMEM    	= "<script src=\"https://iotappstory.com/ota/cfg-esp/cfg2.js\"></script>";
+	const char HTTP_AP_JS[] PROGMEM     	= "<script>var d=document,p=d.getElementById(\"po\"),b=d.getElementById(\"b\"),m=d.getElementById(\"m\");function c(e){d.getElementById(\"s\").value=e.innerText||e.textContent,d.getElementById(\"p\").focus()}function ld(e){var t=\"\",n=new XMLHttpRequest;n.open(\"POST\",e,!0),n.setRequestHeader(\"Content-type\",\"application/x-www-form-urlencoded\"),p.classList.add(\"fi\");var o=d.querySelectorAll(\"input,select\");for(i=0;i<o.length;i++)\"\"!=t&&(t+=\"&\"),t+=o[i].name+\"=\"+o[i].value;n.onreadystatechange=function(){if(4==this.readyState&&200==this.status){var e=this.responseText;if(e.includes(\"1:\")){var t=e.split(\":\"),n=\"http://\"+t[1];m.innerHTML='Connected!<br>Changed to STA mode.<br>You will be redirected to<br><a href=\"http://'+t[1]+'\">'+t[1]+'</a><br>in <b id=\"cd\">22</b>s',cd(22),setTimeout(function(){window.location.href=n},22e3)}else\"2\"==e?(setTimeout(function(){ld(\"wsa\")},8500),m.innerHTML=\"Connecting...\"):m.innerHTML+='<br>Failed to connect. Try again<button class=\"btn sm\" id=\"b\" onclick=\"ep()\">Ok</button>';m.classList.add(\"fi\")}},n.send(t)}function cd(e){setTimeout(function(){e--,d.getElementById(\"cd\").innerHTML=e,cd(e)},1e3)}function ep(){p.classList.remove(\"fi\"),m.classList.remove(\"fi\"),t.innerHTML=\"\"}</script>";
+
+	const char HTTP_AP_CSS[] PROGMEM    	= "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#m,#m a{color:#000}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:14px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc}input:focus{border-color:#fcbc12}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;float:right;background:#fcbc12;border-radius:4px;border:0;font-size:16px;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}table{width:100%}table tr:nth-child(2n-1){background:#1A1A1A}table td{padding:3px 4px}table td:nth-child(3):not([data-e=\"7\"]){width:20px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAABFElEQVQ4je2Pu07DUBBEz/oGBAUPG3dpEEI0CApEjSIlvIrwP6Hj9TN8QmxACKhIgeySHtFgRAMKvvZSxJFIcIoISqZZaWdnZ0YoQRr4NSFvIWwUq47mejqx83o3fCs/xKF7Jkir4N6KOQtkAkemkZx8v3cGxd6eIIfAs8K+qSeuuU1c0CbwonCcBn6tLDUA2YUX29DTtL1QH+bspX9gQ09t6N2XVtCbOTfrmkQgNo1kvczABu4jIkvmY2pGmk/vAxXsp6wBqEg8MqIjEeCk093V/qoCoOdMZrmz3M+jV/OLpRUztOear2iHB9kkFQAbetfA1kjnMijtynayW1SQ6lhiQIRqL80v8f/g7x5oNK5QlQjgCxBXWhCbZi53AAAAAElFTkSuQmCC) right center no-repeat;background-width:16px}table td:nth-child(3)[data-e=\"7\"]{background:0 0}</style>";
+
+	const char HTTP_WIFI_SCAN[] PROGMEM		= "<tr><td onclick=\"c(this);\">{s}</td><td>{q} dBm</td><td data-e=\"{e}\"></td></tr>";
+	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
 
 	const char HTTP_APP_INFO[] PROGMEM		= "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
-	
-	const char HTTP_WIFI_SCAN[] PROGMEM		= "{\"s\":\"{s}\", \"q\":\"{q}\", \"e\":\"{e}\"}";
-	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"po\"><div id=\"m\"><button class=\"btn sm\" id=\"b\" onclick=\"ep()\">Ok</button></div></div><div id=\"cnt\"><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
-
 	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
 	
 	#if defined  ESP32
@@ -240,10 +242,10 @@
 						
 						
             strConfig config = {
+                "",
 								{"","",""},
                 {"","",""},
                 "yourESP",
-                "",
                 "",
 								#if defined  ESP8266
 									"76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",
@@ -355,6 +357,7 @@
 						bool _callHome 											= false;
 						
 						bool _tryToConn											= false;									// try to connect to wifi bool
+						bool _tryToConnFail									= false;									// try to connect to wifi bool
 						bool _connected											=	false;									// wifi connection status bool
 						bool _tryToConf											=	false;									// try to confirm device registration bool
 						int  _confirmed											=	false;									// confirmed status bool
@@ -396,13 +399,10 @@
             void readPref();
             void writePref();
             void printPref();
-						
-						
-            //void readRTCmem();
-            //void writeRTCmem();
-            //void printRTCmem();
 						void processField();
 						void httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs=false);
+						
+						String strWifiScan();
 						
 						void servHdlRoot(AsyncWebServerRequest *request);
 						void servHdlDevInfo(AsyncWebServerRequest *request);
