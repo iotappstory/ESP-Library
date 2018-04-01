@@ -133,11 +133,11 @@
 	} eFields;
 	
   typedef struct  {
+    char actCode[7];													// saved IotAppStory activation code
     char ssid[3][STRUCT_CHAR_ARRAY_SIZE];			// 3x SSID
-    char password[3][STRUCT_PASSWORD_SIZE];	// 3x PASS
+    char password[3][STRUCT_PASSWORD_SIZE];		// 3x PASS
 		char deviceName[STRUCT_BNAME_SIZE];
     char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
-    char actCode[7];													// saved IotAppStory activation code
 		#if defined  ESP8266
 			char sha1[60];
 		#endif
@@ -242,10 +242,10 @@
 						
 						
             strConfig config = {
+                "",
 								{"","",""},
                 {"","",""},
                 "yourESP",
-                "",
                 "",
 								#if defined  ESP8266
 									"76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",
@@ -399,11 +399,6 @@
             void readPref();
             void writePref();
             void printPref();
-						
-						
-            //void readRTCmem();
-            //void writeRTCmem();
-            //void printRTCmem();
 						void processField();
 						void httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs=false);
 						
