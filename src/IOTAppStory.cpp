@@ -1476,6 +1476,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 					}else if(!_connected && !_tryToConn){
 						
 						#if WIFI_MULTI == true
+							// Shift array members to the right
 							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
 							String(config.password[1]).toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
 							
@@ -1483,6 +1484,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 							String(config.password[0]).toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
 						#endif
 						
+						// Replace the first array member
 						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
 						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
 							
@@ -1642,10 +1644,19 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 
 /** return page handler */
 void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type) {
+	#if CFG_AUTHENTICATE == true
+	if(!request->authenticate("admin", config.cfg_pass)){ 
+		return request->requestAuthentication(); 
+	}else{
+	#endif
+		
+		AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
+		response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+		response->addHeader(F("Pragma"), F("no-cache"));
+		response->addHeader(F("Expires"), F("-1"));
+		request->send(response);
 	
-	AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
-	response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-	response->addHeader(F("Pragma"), F("no-cache"));
-	response->addHeader(F("Expires"), F("-1"));
-	request->send(response);
+	#if CFG_AUTHENTICATE == true
+	}
+	#endif
 }
