@@ -26,10 +26,9 @@
 
 */
 
-#define APPNAME "WemosLoader"
-#define VERSION "V1.1.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
+
 
 #if defined  ESP8266
   #include <ESP8266WiFi.h>                                // esp8266 core wifi library
@@ -40,18 +39,20 @@
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 
 
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
 unsigned long printEntry;
 
+String deviceName = "wemosloader-";
+String chipId     = "";
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  display.init();
+  display.init();                                         // setup OLED and show "Wait"
   display.flipScreenVertically();
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -59,8 +60,14 @@ void setup() {
   display.drawString(48, 35, F("Wait"));
   display.display();
 
-  String deviceName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetDeviceName(deviceName);                       // preset Boardname
+
+  chipId     = String(ESP.getChipId());                   // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId     = chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
+  IAS.preSetAppName(F("WemosLoader"));                    // preset appName
+  IAS.preSetAppVersion(F("1.1.0"));                       // preset appVersion
   IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
 
 
@@ -84,7 +91,7 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "x:x:" + WiFi.macAddress().substring(9, 99));
+    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-" + chipId);
   });
 
   IAS.onFirmwareUpdateCheck([]() {
@@ -163,4 +170,3 @@ void dispTemplate_fourLineV1(String str1, String str2, String str3, String str4)
   display.drawString(32, 51, str4);
   display.display();
 }
-
