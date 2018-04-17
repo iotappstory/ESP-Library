@@ -26,21 +26,13 @@
 
 */
 
-#define APPNAME "TempSensor"
-#define VERSION "V1.3.1"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON D3             // Button pin on the esp for selecting modes. 0 for Generic devices!
+#define MODEBUTTON D3
 
 
 #include <SSD1306.h>              // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>          // IotAppStory.com library
 #include <DHT.h>                  // Adafruit DHT Arduino library
-
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>        // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>               // esp32 core wifi library
-#endif
 
 #include <PubSubClient.h>         // Arduino Client for MQTT by knolleary/pubsubclient
 
@@ -58,14 +50,17 @@
 
 WiFiClient espClient;
 PubSubClient thingspeak(espClient);
-DHT dht(DHTPIN, DHTTYPE);                                 // Initialize DHT sensor.
-SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
+DHT dht(DHTPIN, DHTTYPE);                               // Initialize DHT sensor.
+SSD1306  display(0x3c, D2, D1);                         // Initialize OLED
 
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                  // Initialize IotAppStory
 
 
 
 // ================================================ VARS =================================================
+String deviceName = "tempsensor-";
+String chipId     = "";
+
 int tempEntry;
 float h, t, f, hic, hif;
 char* outTopic          = "channels/<channelID/publish/";
@@ -95,7 +90,10 @@ void setup() {
   display.display();
 
 
-  String deviceName = APPNAME"_" + WiFi.macAddress();
+  chipId     = String(ESP.getChipId());                           // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId     = chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
   IAS.preSetDeviceName(deviceName);                               // preset Boardname this is also your MDNS responder: http://deviceName.local
 
 
@@ -122,7 +120,7 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "x:x:" + WiFi.macAddress().substring(9, 99));
+    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-" + chipId);
   });
 
   IAS.onFirmwareUpdateCheck([]() {
