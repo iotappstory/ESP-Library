@@ -136,6 +136,8 @@
 	
   typedef struct  {
     char actCode[7];													// saved IotAppStory activation code
+		char appName[33];
+		char appVersion[12];
     char ssid[3][STRUCT_CHAR_ARRAY_SIZE];			// 3x SSID
     char password[3][STRUCT_PASSWORD_SIZE];		// 3x PASS
 		char deviceName[STRUCT_BNAME_SIZE];
@@ -146,7 +148,7 @@
 		#if CFG_AUTHENTICATE == true
 			char cfg_pass[17];
 		#endif
-    char magicBytes[4];
+    const char magicBytes[4];
   } strConfig;
   
 	enum ModeButtonState {
@@ -247,6 +249,8 @@
 						
             strConfig config = {
                 "",
+                "",
+                "",
 								{"","",""},
                 {"","",""},
                 "yourESP",
@@ -277,9 +281,11 @@
             /** 
 							------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------ 
 						*/
-            IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton);
+            IOTAppStory(const char *compDate, const int modeButton);
             
 						// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
+            void preSetAppName(String appName);
+            void preSetAppVersion(String appVersion);
             void preSetDeviceName(String deviceName);
 						void preSetAutoUpdate(bool automaticUpdate);
 						void preSetAutoConfig(bool automaticConfig);
@@ -342,9 +348,7 @@
             const char *_compDate;
             const int     _modeButton;
 						int _nrXF 													= 0;											// nr of extra fields required in the config manager
-						
-						const char* _appName								= NULL;
-						const char* _appVersion							= NULL;
+
 						
 						const char* _updateHost							= "iotappstory.com";			// ota update host
 						#if defined  ESP8266
