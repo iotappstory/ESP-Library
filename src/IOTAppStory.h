@@ -8,8 +8,10 @@
 	#define DEBUG_LVL 							2			// Debug level: 0, 1, 2 or 3 | none - max
 	#define SERIAL_SPEED						115200
 	#define BOOTSTATISTICS					true
+	
 	// config 
 	#define INC_CONFIG 							true  // include Config mode (Wifimanager!!!)
+	#define CFG_AUTHENTICATE				false	// Set authentication | Default: admin - admin | Password can be changed when in config mode | max 16 char
 	#define CFG_PAGE_INFO						true	// include the info page in Config mode
 	#define CFG_PAGE_IAS 						true  // include the IAS page in Config mode
 	
@@ -141,6 +143,9 @@
 		#if defined  ESP8266
 			char sha1[60];
 		#endif
+		#if CFG_AUTHENTICATE == true
+			char cfg_pass[17];
+		#endif
     char magicBytes[4];
   } strConfig;
   
@@ -162,7 +167,6 @@
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
 	*/
   const char SER_DEV[] PROGMEM          = "*-------------------------------------------------------------------------*";
-   
   const char HOST2[] PROGMEM            = "iotappstory.com";
   
 	#if defined  ESP8266
@@ -249,6 +253,9 @@
                 "",
 								#if defined  ESP8266
 									"76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",
+								#endif
+								#if CFG_AUTHENTICATE == true
+									"admin",
 								#endif
                 "CFG"  // Magic Bytes
             };
