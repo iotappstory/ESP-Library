@@ -24,25 +24,20 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+  Wemos-OLED-VirginSoil v1.0.0
 */
 
-#define APPNAME "Wemos-OLED-VirginSoil"
-#define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>                                       // esp32 core wifi library
-#endif
+
 
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 
 
 
@@ -62,8 +57,7 @@ void setup() {
   display.display();
 
 
-  String deviceName = "woled-vs-" + WiFi.macAddress();
-  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://woled-vs.local
+  IAS.preSetDeviceName("wemos-oled-virginsoil");          // preset deviceName this is also your MDNS responder: http://woled-vs.local
   
 
 
@@ -83,7 +77,7 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "x:x:" + WiFi.macAddress().substring(9, 99));
+    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-soil");
   });
 
   IAS.onFirmwareUpdateCheck([]() {
