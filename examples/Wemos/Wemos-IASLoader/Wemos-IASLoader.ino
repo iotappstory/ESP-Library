@@ -30,11 +30,6 @@
 #define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>                                       // esp32 core wifi library
-#endif
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 
