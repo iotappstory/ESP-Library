@@ -48,6 +48,8 @@ void setup() {
   deviceName += chipId;
   
   IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName.local
+  IAS.preSetAppName(F("INITLoader"));     // preset appName
+  IAS.preSetAppVersion(F("1.2.0"));       // preset appVersion
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
