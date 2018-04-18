@@ -21,7 +21,7 @@ https://github.com/iotappstory/ESP-Library
 
 ## API 2.0.0
 
-### `IOTAppStory(char* compDate, char* modeButton)`
+### `IOTAppStory(const char* compDate, const int modeButton)`
 
 Tells IAS the compilation date and what digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
 
