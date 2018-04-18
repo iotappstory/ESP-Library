@@ -31,7 +31,7 @@ Tells IAS the compilation date and what digital input is the force-update/reset 
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(COMPDATE, MODEBUTTON);
 
 setup () { ... }
 loop () { ... }
