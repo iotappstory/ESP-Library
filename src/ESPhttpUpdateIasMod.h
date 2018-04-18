@@ -63,17 +63,13 @@
 		
 		public:
 
-			void rebootOnUpdate(bool reboot){
-				_rebootOnUpdate = reboot;
-			}
 
-			void handleUpdate(HTTPClient& http, int len, bool spiffs);
+			bool handleUpdate(HTTPClient& http, int len, bool spiffs);
 
 
 		protected:
 
 			bool runUpdate(Stream& in, uint32_t size, String md5, int command = U_FLASH);
-			bool _rebootOnUpdate = true;
 		
 	};
 
