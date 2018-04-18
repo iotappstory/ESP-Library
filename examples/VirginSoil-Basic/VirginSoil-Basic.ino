@@ -22,16 +22,15 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+  virginSoilBasic V2.1.2
 */
 
-#define APPNAME "virginSoilBasic"
-#define VERSION "V2.1.2"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0			// Button pin on the esp for selecting modes. D3 for the Wemos!
+#define MODEBUTTON 0										// Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
-#include <IOTAppStory.h>	// IotAppStory.com library
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+#include <IOTAppStory.h>								// IotAppStory.com library
+IOTAppStory IAS(COMPDATE, MODEBUTTON);	// Initialize IotAppStory
 
 
 

@@ -8,8 +8,10 @@
 	#define DEBUG_LVL 							2			// Debug level: 0, 1, 2 or 3 | none - max
 	#define SERIAL_SPEED						115200
 	#define BOOTSTATISTICS					true
+	
 	// config 
 	#define INC_CONFIG 							true  // include Config mode (Wifimanager!!!)
+	#define CFG_AUTHENTICATE				false	// Set authentication | Default: admin - admin | Password can be changed when in config mode | max 16 char
 	#define CFG_PAGE_INFO						true	// include the info page in Config mode
 	#define CFG_PAGE_IAS 						true  // include the IAS page in Config mode
 	
@@ -134,6 +136,8 @@
 	
   typedef struct  {
     char actCode[7];													// saved IotAppStory activation code
+		char appName[33];
+		char appVersion[12];
     char ssid[3][STRUCT_CHAR_ARRAY_SIZE];			// 3x SSID
     char password[3][STRUCT_PASSWORD_SIZE];		// 3x PASS
 		char deviceName[STRUCT_BNAME_SIZE];
@@ -141,7 +145,10 @@
 		#if defined  ESP8266
 			char sha1[60];
 		#endif
-    char magicBytes[4];
+		#if CFG_AUTHENTICATE == true
+			char cfg_pass[17];
+		#endif
+    const char magicBytes[4];
   } strConfig;
   
 	enum ModeButtonState {
@@ -162,7 +169,6 @@
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
 	*/
   const char SER_DEV[] PROGMEM          = "*-------------------------------------------------------------------------*";
-   
   const char HOST2[] PROGMEM            = "iotappstory.com";
   
 	#if defined  ESP8266
@@ -243,12 +249,17 @@
 						
             strConfig config = {
                 "",
+                "",
+                "",
 								{"","",""},
                 {"","",""},
                 "yourESP",
                 "",
 								#if defined  ESP8266
 									"76:31:B2:F5:9B:5C:F0:8D:CB:D2:D4:4A:B9:71:8B:32:C8:FD:0B:37",
+								#endif
+								#if CFG_AUTHENTICATE == true
+									"admin",
 								#endif
                 "CFG"  // Magic Bytes
             };
@@ -270,9 +281,11 @@
             /** 
 							------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------ 
 						*/
-            IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton);
+            IOTAppStory(const char *compDate, const int modeButton);
             
 						// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
+            void preSetAppName(String appName);
+            void preSetAppVersion(String appVersion);
             void preSetDeviceName(String deviceName);
 						void preSetAutoUpdate(bool automaticUpdate);
 						void preSetAutoConfig(bool automaticConfig);
@@ -335,9 +348,7 @@
             const char *_compDate;
             const int     _modeButton;
 						int _nrXF 													= 0;											// nr of extra fields required in the config manager
-						
-						const char* _appName								= NULL;
-						const char* _appVersion							= NULL;
+
 						
 						const char* _updateHost							= "iotappstory.com";			// ota update host
 						#if defined  ESP8266

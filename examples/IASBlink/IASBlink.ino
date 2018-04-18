@@ -21,16 +21,16 @@
 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 	SOFTWARE.
+
+  IASBlink V1.0.2
 */
 
-#define APPNAME "IASBlink"
-#define VERSION "V1.0.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
 #include <IOTAppStory.h>                                    // IotAppStory.com library
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IOTAppStory
 
 
 
@@ -43,14 +43,14 @@ unsigned long blinkEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* LEDpin = "2";																          // The value given here is the default value and can be overwritten by values saved in configuration mode
+char* LEDpin    = "2";																      // The value given here is the default value and can be overwritten by values saved in configuration mode
 char* blinkTime = "1000";
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.preSetDeviceName("iasblink");                         // preset Boardname this is also your MDNS responder: http://iasblink.local
+  IAS.preSetDeviceName("iasblink");                         // preset deviceName this is also your MDNS responder: http://iasblink.local
 
 
   IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.

@@ -29,6 +29,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+  WS2812B-VirginSoil V0.7.0
 */
 
 #define APPNAME "WS2812B-VirginSoil"
@@ -39,15 +40,11 @@
 #define FEEDBACKLED 4                                     // Pin on the esp8266 connected to the NeoPixel you want to use for feedback. D2 for the Wemos!
 
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>                                       // esp32 core wifi library
-#endif
 #include <Adafruit_NeoPixel.h>                            // Adafruit_NeoPixel_Library (https://github.com/adafruit/Adafruit_NeoPixel)
 
 
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
+
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, FEEDBACKLED, NEO_GRB + NEO_KHZ800);
 
 
@@ -81,8 +78,7 @@ void setup() {
   delay(100);
   
 
-  String boardName = "ws2812b-vs-" + WiFi.macAddress().substring(9, 99);
-  IAS.preSetDeviceName(boardName);                        // preset Boardname this is also your MDNS responder: http://woled-vs.local
+  IAS.preSetDeviceName("ws2812b-vs");                        // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.

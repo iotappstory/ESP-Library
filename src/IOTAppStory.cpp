@@ -47,10 +47,8 @@
 
 
 
-IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char *compDate, const int modeButton)
-: _appName(appName)
-, _appVersion(appVersion)
-, _compDate(compDate)
+IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
+: _compDate(compDate)
 , _modeButton(modeButton)
 {
 	#if DEBUG_LVL >= 1
@@ -61,6 +59,7 @@ IOTAppStory::IOTAppStory(const char* appName, const char* appVersion, const char
 		DEBUG_PRINT(F("\n\n\n\n\n"));
 	#endif
 }
+
 
 
 /**
@@ -135,6 +134,20 @@ void IOTAppStory::firstBoot(char ea){
 
 
 
+void IOTAppStory::preSetAppName(String appName){
+	if (!_configReaded) {
+		readConfig();
+	}
+	_setDeviceName = true;
+	SetConfigValueCharArray(config.appName, appName, 33, _setPreSet);
+}
+void IOTAppStory::preSetAppVersion(String appVersion){
+	if (!_configReaded) {
+		readConfig();
+	}
+	_setDeviceName = true;
+	SetConfigValueCharArray(config.appVersion, appVersion, 11, _setPreSet);
+}
 void IOTAppStory::preSetDeviceName(String deviceName){
 	if (!_configReaded) {
 		readConfig();
@@ -206,13 +219,13 @@ void IOTAppStory::begin(char ea){
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 		
 		DEBUG_PRINT(F(" Start "));
-		DEBUG_PRINT(_appName);
-		DEBUG_PRINT(F(" "));
-		DEBUG_PRINTLN(_appVersion);
+		DEBUG_PRINT(config.appName);
+		DEBUG_PRINT(F(" v"));
+		DEBUG_PRINTLN(config.appVersion);
 		/*
-		String firmware = _appName;
+		String firmware = config.appName;
 		firmware += " ";
-		firmware += _appVersion;
+		firmware += config.appVersion;
 		DEBUG_PRINTF_P(PSTR(" Start %s\n"), firmware);
 		*/
 	#endif
@@ -672,9 +685,9 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F(" Calling Home"));
 		//DEBUG_PRINT(PSTR(" Calling Home\n Current App: "));
-		//DEBUG_PRINT(_appName);
+		//DEBUG_PRINT(config.appName);
 		//DEBUG_PRINT(F(" "));
-		//DEBUG_PRINTLN(_appVersion);
+		//DEBUG_PRINTLN(config.appVersion);
 	#endif
 
 	if (_firmwareUpdateCheckCallback){
@@ -784,7 +797,7 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	httpClientSetup(http, httpSwitch, url, spiffs);
 
 	// track these headers for later use
-	const char * headerkeys[] = { "x-MD5", "x-name" };
+	const char * headerkeys[] = { "x-MD5", "x-name", "x-ver"};
 	size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
 	http.collectHeaders(headerkeys, headerkeyssize);
 
@@ -794,7 +807,6 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 	if(code == HTTP_CODE_OK){
 		
 		ESP8266HTTPUpdate ESPhttpUpdate;
-		ESPhttpUpdate.rebootOnUpdate(true);
 		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINT(F(" Download & Process update..."));
@@ -821,11 +833,24 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 				DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
 				DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
 			#endif
-			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", _appVersion);
+			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", config.appVersion);
 			
 		#endif
 
-		ESPhttpUpdate.handleUpdate(http, len, spiffs);
+		if(ESPhttpUpdate.handleUpdate(http, len, spiffs)) {
+			// succesfull update
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN(F(" Reboot necessary!"));
+			#endif
+			
+			// store received appName & appVersion
+			strcpy(config.appName,  http.header("x-name").c_str());
+			strcpy(config.appVersion,  http.header("x-ver").c_str());
+			writeConfig();
+			
+			// reboot
+			ESP.restart();
+		}
 		return true;
 
 	}else{
@@ -1476,6 +1501,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 					}else if(!_connected && !_tryToConn){
 						
 						#if WIFI_MULTI == true
+							// Shift array members to the right
 							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
 							String(config.password[1]).toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
 							
@@ -1483,6 +1509,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 							String(config.password[0]).toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
 						#endif
 						
+						// Replace the first array member
 						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
 						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
 							
@@ -1630,7 +1657,7 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 	#endif
 
 	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
-	http.addHeader(F("x-ESP-VERSION"), String(_appName) + " " + String(_appVersion));
+	http.addHeader(F("x-ESP-VERSION"), String(config.appName) + " v" + config.appVersion);
 	
 	if(spiffs) {
 			http.addHeader(F("x-ESP-MODE"), F("spiffs"));
@@ -1642,10 +1669,19 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 
 /** return page handler */
 void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type) {
+	#if CFG_AUTHENTICATE == true
+	if(!request->authenticate("admin", config.cfg_pass)){ 
+		return request->requestAuthentication(); 
+	}else{
+	#endif
+		
+		AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
+		response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+		response->addHeader(F("Pragma"), F("no-cache"));
+		response->addHeader(F("Expires"), F("-1"));
+		request->send(response);
 	
-	AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
-	response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-	response->addHeader(F("Pragma"), F("no-cache"));
-	response->addHeader(F("Expires"), F("-1"));
-	request->send(response);
+	#if CFG_AUTHENTICATE == true
+	}
+	#endif
 }

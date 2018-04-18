@@ -29,10 +29,10 @@
 
 	Don't forget to upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
 	or you can upload it to IOTAppStory.com
+
+  WebAppToggleBtn V3.0.0
 */
 
-#define APPNAME "WebAppToggleBtn"
-#define VERSION "V3.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                                  // Button pin on the esp for selecting modes. D3 for the Wemos!
 
@@ -50,7 +50,7 @@
 #include <FS.h>
 
 
-IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON); // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE,MODEBUTTON);                 // Initialize IotAppStory
 AsyncWebServer server(80);                            // Initialize AsyncWebServer
 
 //called when the url is not defined here return 404
@@ -85,7 +85,7 @@ char* updInt      = "60";                                 // every x sec
 
 // ================================================ SETUP ================================================
 void setup() {
-	IAS.preSetDeviceName("webtoggle");											// preset Boardname this is also your MDNS responder: http://webtoggle.local
+	IAS.preSetDeviceName("webtoggle");											// preset deviceName this is also your MDNS responder: http://webtoggle.local
   IAS.preSetAutoUpdate(true);                             // automaticUpdate (true, false)
 
 

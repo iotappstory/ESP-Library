@@ -26,37 +26,33 @@
 
 */
 
-#define APPNAME "WemosClock"
-#define VERSION "V2.2.0"
 #define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. D3 for the Wemos!
+#define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <SNTPtime.h>                                     // 
-
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>                                // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>                                       // esp32 core wifi library
-#endif
+#include <SNTPtime.h>                                     //
 
 
 SNTPtime NTPch("ch.pool.ntp.org");                        // Initialize time
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);  // Initialize IotAppStory
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
 strDateTime dateTime;
 
-int screenW = 64;
-int screenH = 48;
-int clockCenterX = screenW / 2;
-int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
-int clockRadius = 23;
-int x = 30, y = 10;
+String deviceName = "wemosclock-";
+String chipId     = "";
+
+int screenW       = 64;
+int screenH       = 48;
+int clockCenterX  = screenW / 2;
+int clockCenterY  = ((screenH - 16) / 2) + 16;            // top yellow part is 16 px height
+int clockRadius   = 23;
+int x             = 30;
+int y             = 10;
 
 unsigned long loopEntry;
 
@@ -82,8 +78,11 @@ void setup() {
   display.display();
 
 
-  String deviceName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetDeviceName(deviceName);                       // preset Boardname this is also your MDNS responder: http://deviceName.local
+  chipId     = String(ESP.getChipId());                   // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId     = chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
 
 
   IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
@@ -108,7 +107,7 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "x:x:" + WiFi.macAddress().substring(9, 99));
+    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-" + chipId);
   });
 
   IAS.onFirmwareUpdateCheck([]() {
@@ -124,7 +123,7 @@ void setup() {
   });
   
 
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('L');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
   IAS.setCallHome(atoi(updTimer));                        // Set to true to enable calling home frequently (disabled by default)
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
