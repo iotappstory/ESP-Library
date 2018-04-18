@@ -39,7 +39,7 @@ extern "C" uint32_t _SPIFFS_end;
  * @param currentVersion const char *
  * @return HTTPUpdateResult
  */
-void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
+bool ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 	
 	if(len <= 0){
 		#if DEBUG_LVL >= 2
@@ -132,14 +132,15 @@ void ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 					#if DEBUG_LVL >= 1
 						DEBUG_PRINT(F(" Received & installed: "));
 						DEBUG_PRINT(http.header("x-name").c_str());
+						DEBUG_PRINT(F(" "));
+						DEBUG_PRINT(http.header("x-ver").c_str());
 					#endif
 					http.end();
 
-					if(_rebootOnUpdate && spiffs == false) {
-						#if DEBUG_LVL >= 1
-							DEBUG_PRINTLN(F(" Reboot necessary!"));
-						#endif
-						ESP.restart();
+					if(spiffs == false) {
+						return true;
+					}else{
+						return false;
 					}
 
 				}
