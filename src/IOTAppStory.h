@@ -5,7 +5,7 @@
 		------ ------ ------ ------ ------ ------ DEFINES for library ------ ------ ------ ------ ------ ------ 
 	*/
 	
-	#define DEBUG_LVL 							2			// Debug level: 0, 1, 2 or 3 | none - max
+	#define DEBUG_LVL 							2			// Debug level: 0 - 3 | none - max
 	#define SERIAL_SPEED						115200
 	#define BOOTSTATISTICS					true
 	
@@ -23,8 +23,8 @@
 	#define DNS_PORT								53
 	#define UDP_PORT      					514
 	
-	#define HTTPS         					true	// Try to use HTTPS for updates when there is enough free heap
-	#define HEAPFORHTTPS  					31500	// Min free heap needed for HTTPS
+	#define HTTPS         					true	// Use HTTPS for OTA updates
+	//#define HEAPFORHTTPS  					31500	// Min free heap needed for HTTPS
 
 	#if defined  ESP8266
 		#define EEPROM_SIZE 					4096	// EEPROM_SIZE depending on device
@@ -169,13 +169,6 @@
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
 	*/
   const char SER_DEV[] PROGMEM          = "*-------------------------------------------------------------------------*";
-  const char HOST2[] PROGMEM            = "iotappstory.com";
-  
-	#if defined  ESP8266
-		const char FILE2[] PROGMEM          = "/ota/esp8266-v2.0.1.php";	// loc2, file at host that handles 8266 updates
-	#elif defined ESP32
-		const char FILE2[] PROGMEM          = "/ota/esp32-v1.php";				// loc2, file at host that handles 32 updates
-	#endif
 	
 	const char HTTP_200[] PROGMEM         = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 	const char HTTP_TEMP_START[] PROGMEM	= "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><meta name=\"theme-color\" content=\"#000\" />{h}<title>Config</title></head><body>";
@@ -308,8 +301,9 @@
 						bool isNetworkConnected();
 						
 						void callHome(bool spiffs = true);
-						bool iotUpdater(bool spiffs, bool loc = false);
+						bool iotUpdater(bool spiffs);
 						void addField(char* &defaultVal,const char *fieldLabel, int length, char type = 'L');
+						void iasLog(char* msg = "");
 						void runConfigServer();
 						int dPinConv(String orgVal);
             
@@ -411,7 +405,7 @@
             void writePref();
             void printPref();
 						void processField();
-						void httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs=false);
+						void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
 						
 						String strWifiScan();
 						
