@@ -1,20 +1,3 @@
-/*
-#include <ESP8266WiFi.h>
-#include "ESP8266httpUpdateIasMod.h"
-#include <DNSServer.h>
-#include <ESP8266mDNS.h>
-#include <EEPROM.h>
-#include <pgmspace.h>
-#include <ArduinoJson.h>
-#include <FS.h>
-#include "IOTAppStory.h"
-#include "INC_CONFIGagerMod.h"
-
-#ifdef REMOTEDEBUGGING
-	#include <WiFiUDP.h>
-#endif
-*/
-
 #include "IOTAppStory.h"
 
 #ifdef ESP32
@@ -372,6 +355,32 @@ void IOTAppStory::printPref(){
 }
 
 
+/** send msg to iasLog */
+void IOTAppStory::iasLog(char* msg) {
+		// notifi IAS & enduser about the localIP
+		String url = F("https://");
+		url += _updateHost;
+		url += F("/ota/cfg-sta.php");
+		url += "?msg=";
+		url += msg;
+		
+		HTTPClient http;
+		httpClientSetup(http, url, false);
+		
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(F(" update iasLog"));
+		#endif
+			
+		if(http.GET() != HTTP_CODE_OK){
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(F(" Failed: "));
+				DEBUG_PRINTLN(http.getString());
+			#endif
+		}
+		http.end();
+}
+
+
 /** config server */
 void IOTAppStory::runConfigServer() {
 	
@@ -407,6 +416,9 @@ void IOTAppStory::runConfigServer() {
 		#endif
 		
 	}else{
+		
+		// notifi IAS & enduser this device went to config mode (also sends localIP)
+		iasLog("1");
 		
 		// when there is wifi setup server in STA mode
 		server.reset(new AsyncWebServer(80));
@@ -544,6 +556,9 @@ void IOTAppStory::runConfigServer() {
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F(" Exit config"));
 	#endif
+	
+	// notifi IAS & enduser this device has left config mode (also sends localIP)
+	iasLog("0");
 	
 	// Return to Normal Operation
 	espRestart('N');
@@ -694,25 +709,16 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 		_firmwareUpdateCheckCallback();
 	}
 	
-	// try to update from address 1
-	updateHappened = iotUpdater(0,0);
-	
-	// if address 1 was unsuccesfull try address 2
-	if (updateHappened == false) {
-		updateHappened = iotUpdater(0,1);
-	}
+	// try to update from IOTAppStory
+	updateHappened = iotUpdater(0);
+
 	
 
 	//#if defined ESP8266
 		if (spiffs) {
 			
-			// try to update spiffs from address 1
-			updateHappened = iotUpdater(1,0);
-			
-			// if address 1 was unsuccesfull try address 2
-			if (updateHappened == false) {
-				updateHappened = iotUpdater(1,1);
-			}
+			// try to update spiffs from IOTAppStory
+			updateHappened = iotUpdater(1);
 		}
 	//#elif defined ESP32
 	//	#if DEBUG_LVL >= 2
@@ -733,20 +739,8 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 /** 
 	IOT updater
 */
-bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
+bool IOTAppStory::iotUpdater(bool spiffs) {
 	String url = "";
-	bool httpSwitch = false;
-	
-	if(HTTPS == true && system_get_free_heap_size() > HEAPFORHTTPS){
-		httpSwitch = true;
-	}
-
-	#if defined ESP32 && HTTPS == true
-		httpSwitch = false;	// Overide. For HTTPS 443. As of today, HTTPS doesn't work for ota updates on the esp32.
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINT(F("\n No HTTPS OTA support for ESP32 yet!"));
-		#endif
-	#endif
 	
 	#if DEBUG_LVL == 1
 		DEBUG_PRINT(F(" Checking for "));
@@ -764,37 +758,31 @@ bool IOTAppStory::iotUpdater(bool spiffs, bool loc) {
 			DEBUG_PRINT(F("SPIFFS"));
 		}
 	#endif
-
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(F(" updates from: "));
 	#else
 		DEBUG_PRINT(F(" updates"));
 	#endif
 
-	if(httpSwitch == true){
+	#if HTTPS == true
 		url = F("https://");
-	}else{
+	#else
 		url = F("http://");
-	}
+	#endif
 
-	if(loc == 0){
-		// location 1
-		url += _updateHost;
-		url += _updateFile;
-	}else{
-		// location 2
-		url += FPSTR(HOST2);
-		url += FPSTR(FILE2);
-	}
+	// location 1
+	url += _updateHost;
+	url += _updateFile;
 	
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(url);
-	#else
+	#endif
+	#if DEBUG_LVL == 1
 		DEBUG_PRINTLN("");		
 	#endif
 
 	HTTPClient http;
-	httpClientSetup(http, httpSwitch, url, spiffs);
+	httpClientSetup(http, url, spiffs);
 
 	// track these headers for later use
 	const char * headerkeys[] = { "x-MD5", "x-name", "x-ver"};
@@ -1624,18 +1612,18 @@ void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 
 
 /** default httpclient */
-void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url, bool spiffs) {
-	if(httpSwitch == true){
+void IOTAppStory::httpClientSetup(HTTPClient& http, String url, bool spiffs) {
+	#if HTTPS == true && !defined ESP32
 	
-	#if defined  ESP8266
-		http.begin(url, config.sha1);
-	#elif defined ESP32
-		http.begin(url, ROOT_CA);
-	#endif
+		#if defined  ESP8266
+			http.begin(url, config.sha1);
+		#elif defined ESP32
+			http.begin(url, ROOT_CA);
+		#endif
 		
-	}else{
+	#else
 		http.begin(url);
-	}
+	#endif
 	
 	// use HTTP/1.0 the update handler does not support transfer encoding
 	http.useHTTP10(true);
@@ -1644,6 +1632,7 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 
 	http.addHeader(F("x-ESP-STA-MAC"), WiFi.macAddress());
 	http.addHeader(F("x-ESP-ACT-ID"), String(config.actCode));
+	http.addHeader(F("x-ESP-LOCIP"), String(WiFi.localIP().toString()));
 	
 	#if defined ESP32
 		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getSdkVersion()));
@@ -1656,6 +1645,7 @@ void IOTAppStory::httpClientSetup(HTTPClient& http, bool httpSwitch, String url,
 		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getCoreVersion()));
 	#endif
 
+	
 	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
 	http.addHeader(F("x-ESP-VERSION"), String(config.appName) + " v" + config.appVersion);
 	
