@@ -22,30 +22,34 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+  INITLoader V1.2.0
 */
 
-#define APPNAME "INITLoader"
-#define VERSION "V1.2.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                      // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
 
-#if defined  ESP8266
-  #include <ESP8266WiFi.h>                // esp8266 core wifi library
-#elif defined ESP32
-  #include <WiFi.h>                       // esp32 core wifi library
-#endif
-#include <IOTAppStory.h>                  // IotAppStory.com library
+#include <IOTAppStory.h>                  // IOTAppStory.com library
 
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(COMPDATE, MODEBUTTON);    // Initialize IOTAppStory
+
+
+// ================================================ VARS =================================================
+String deviceName = "initloader-";
+String chipId     = "";
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  String boardName = APPNAME"_" + WiFi.macAddress();
-  IAS.preSetDeviceName(boardName);	      // preset Boardname
+  chipId     = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId     = chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName.local
+  IAS.preSetAppName(F("INITLoader"));     // preset appName
+  IAS.preSetAppVersion(F("1.2.0"));       // preset appVersion
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 

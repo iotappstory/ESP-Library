@@ -18,6 +18,8 @@ serialdebug	KEYWORD2
 preSetConfig	KEYWORD2
 
 preSetDeviceName	KEYWORD2
+preSetAppName	KEYWORD2
+preSetAppVersion	KEYWORD2
 preSetAutoUpdate	KEYWORD2
 preSetAutoConfig	KEYWORD2
 preSetWifi	KEYWORD2

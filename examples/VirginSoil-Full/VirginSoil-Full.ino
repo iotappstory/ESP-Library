@@ -22,16 +22,15 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+  virginSoilFull V2.2.2
 */
 
-#define APPNAME "virginSoilFull"
-#define VERSION "V2.2.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
 #include <IOTAppStory.h>                                    // IotAppStory.com library
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotAppStory
 
 
 
@@ -60,7 +59,7 @@ char* timeZone    = "0.0";
 // ================================================ SETUP ================================================
 void setup() {
   /* TIP! delete lines below when not used */
-  IAS.preSetDeviceName("virginsoil");                       // preset Boardname this is also your MDNS responder: http://virginsoil.local
+  IAS.preSetDeviceName("virginsoil");                       // preset deviceName this is also your MDNS responder: http://virginsoil.local
   //IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
   //IAS.preSetAutoConfig(false);                            // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                      // preset Wifi

@@ -1,4 +1,4 @@
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/readme.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/readme.jpg"/>
 
 Wifi & OTA update manager for IOT devices, currenlty the ESP8266 and from v2.0.0 on the <b>ESP32</b>. ESP8266's need at least 1MB flash. You will need a free account at IOTAppStory.com
 
@@ -6,7 +6,7 @@ Wiki pages: https://iotappstory.com/wiki
 </br></br>
 
 ## Latest stable release 1.0.6
-https://github.com/iotappstory/ESP8266-Library/releases/latest
+https://github.com/iotappstory/ESP-Library/releases/latest
 
 ## Arduino IDE librairy manager
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
@@ -16,25 +16,22 @@ https://github.com/iotappstory/ESP8266-Library/releases/latest
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
 
 ## Upcoming release 2.0.0
-https://github.com/iotappstory/ESP8266-Library
+https://github.com/iotappstory/ESP-Library
 </br></br>
 
 ## API 2.0.0
 
-### `IOTAppStory(char* appName, char* appVersion, char* compDate, char* modeButton)`
+### `IOTAppStory(const char* compDate, const int modeButton)`
 
-Tells IAS the name of the application, its version, compilation date and what
-digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
+Tells IAS the compilation date and what digital input is the force-update/reset button. Note: the EEPROM size and number of firmware variables are limited to 1024 and 12 respectively. If additional resources are needed beyond these limits `EEPROM_SIZE` and `MAXNUMEXTRAFIELDS` can be defined / modified in `IOTAppStory.h`.
 
 ```c
-#define APPNAME my_app
-#define VERSION V1.0.0
 #define COMPDATE __DATE__ __TIME__
-#define MODE_BUTTON D3
+#define MODE_BUTTON 0
 
 
 #include <IOTAppStory.h>
-IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
+IOTAppStory IAS(COMPDATE, MODEBUTTON);
 
 setup () { ... }
 loop () { ... }
@@ -82,7 +79,7 @@ reference to org variable | html field label | max nr of char | Optional "specia
 
 These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
 
-<img src="https://github.com/Onno-Dirkzwager/ESP8266-Library/blob/develop/config-app-settings.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/config-app-settings.jpg"/>
 
 By default added fields will be renderd like the input field "TEXTLINE" in the pic above. You can use the other field types by adding the optional "special field" char. For more info about these fields have a look at the "VirginSoil-Full" example.
 
@@ -169,9 +166,6 @@ setup () {
 ### `begin(char eraseEeprom)`
 Set up IAS and start all dependent services. 
 
-If `bootstat` is true, the code will keep track of number of boots and print
-contents of RTC memory.
-
 If `eraseEeprom` is 'F' (full), the entire EEPROM (including wifi credentials and IAS activation code) will be
 erased on first boot of the sketch/app.
 
@@ -244,16 +238,16 @@ void loop() {
 ### `dPinConv(...)`
 Use dPinConv() to convert Dpin & Ppin numbers to integers (D6 > 14)
 
-We advise to use the original Gpio numbers used by the ESP8266. However a lot of our users use boards like the “Wemos” & “NodeMCU”. They tend to use the silkscreen numbering like D6, D2 etc.
+We advise to use the original Gpio numbers used by the ESP. However a lot of our users use boards like the “Wemos” & “NodeMCU”. They tend to use the silkscreen numbering like D6, D2 etc.
 
 Normally this would be handled by the defined ”const” in your boards [pins_arduino.h](https://github.com/esp8266/Arduino/tree/master/variants) file during compilation. However when entered after compilation, like with the added fields in the html config pages “addField(.. .. .. ..)”, these values get returned as ”String” instead of being translated to a “int”
 
 And if you originally developed your code for these “Special ESP’s”. This part makes makes it compatible when compiling for "Generic ESP's"
 
-<img src="https://github.com/iotappstory/ESP8266-Library/blob/master/pin_mapping.jpg"/>
+<img src="https://github.com/iotappstory/ESP-Library/blob/master/pin_mapping.jpg"/>
 </br>
 
 ## Contributions and thanks
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
 
-And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP8266-Library/graphs/contributors)
+And thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP-Library/graphs/contributors)
