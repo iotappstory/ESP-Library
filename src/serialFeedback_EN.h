@@ -42,7 +42,7 @@
 	#define SER_DEV_MDNS_FAIL						" MDNS responder failed to start"
 	
 	#define SER_CALLING_HOME						" Calling Home"
-	#define SER_CALLHOME_FAILED					" Failed. Server down OR HTTPS problems"
+	#define SER_CALLHOME_FAILED					" Failed. Lost Wifi, Server down OR HTTPS problems"
 	#define SER_RET_FROM_IAS						"\n Returning from IOTAppStory.com"
 	#define SER_CHECK_FOR								" Checking for "
 	#define SER_APP_SKETCH							"App(Sketch)"
