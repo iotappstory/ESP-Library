@@ -244,7 +244,7 @@
 						void eraseFlash(int eepFrom, int eepTo);
 						
 						void connectNetwork();
-						bool isNetworkConnected();
+						bool isNetworkConnected(bool multi = true);
 						
 						void callHome(bool spiffs = true);
 						bool iotUpdater(bool spiffs);
