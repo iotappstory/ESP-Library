@@ -310,11 +310,7 @@ void IOTAppStory::printPref(){
 	#ifdef ESP32
 		DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
 	#else
-		DEBUG_PRINTF_P(SER_BOOTTIMES_POWERUP), rtcMem.bootTimes, rtcMem.boardMode);
-		//DEBUG_PRINTF_P(PSTR(" rtcMem\n markerFlag: %c\n"), rtcMem.markerFlag);
-		//DEBUG_PRINTF_P(PSTR(" bootTimes since powerup: "));
-		//DEBUG_PRINT(rtcMem.bootTimes);
-		//DEBUG_PRINTF_P(PSTR("\n boardMode: %c\n"), rtcMem.boardMode);
+		DEBUG_PRINTF_P(SER_BOOTTIMES_POWERUP, rtcMem.bootTimes, rtcMem.boardMode);
 	#endif
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
@@ -456,14 +452,9 @@ void IOTAppStory::runConfigServer() {
 					DEBUG_PRINTLN(config.password[0]);
 				#endif
 				
-				#if WIFI_MULTI == true
-					wifiMulti.addAP(config.ssid[0], config.password[0]);
-					///wifiMulti.run();
-				#else
-					WiFi.begin(config.ssid[0], config.password[0]);
-				#endif
-					
-				_connected = isNetworkConnected();
+
+				WiFi.begin(config.ssid[0], config.password[0]);
+				_connected = isNetworkConnected(false);
 				yield();
 				
 				if(_connected){
@@ -625,26 +616,37 @@ void IOTAppStory::connectNetwork() {
 	Wait until network is connected. 
 	Returns false if not connected after MAX_WIFI_RETRIES retries 
 */
-bool IOTAppStory::isNetworkConnected() {
+bool IOTAppStory::isNetworkConnected(bool multi) {
 	#if defined  ESP8266
 		int retries = MAX_WIFI_RETRIES;
 	#elif defined ESP32
 		int retries = (MAX_WIFI_RETRIES/2);
 	#endif
 	
-	DEBUG_PRINT(" ");
-	
-#if WIFI_MULTI == true
-	while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
-#else
-	while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
-#endif
-		
-		delay(500);
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(F("."));
-		#endif
-	}
+	DEBUG_PRINT(F(" "));
+
+	#if WIFI_MULTI == true
+		if(multi){
+			while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
+				delay(500);
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINT(F("."));
+				#endif
+			}
+
+		}else{
+	#endif
+			while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {	
+				delay(500);
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINT(F("."));
+				#endif
+
+			}
+	#if WIFI_MULTI == true
+		}
+	#endif	
+
 	
 	if(retries > 0){
 		return true;
