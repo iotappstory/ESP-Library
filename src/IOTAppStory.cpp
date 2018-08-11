@@ -65,8 +65,8 @@ void IOTAppStory::firstBoot(char ea){
 	#if DEBUG_LVL >= 1
 	else{
 		DEBUG_PRINTLN(SER_ERASE_NONE);
-	#endif
 	}
+	#endif
 	
 	boardMode = 'N';
 	bootTimes = 0;
@@ -305,6 +305,7 @@ void IOTAppStory::writePref(){
 }
 
 
+#if DEBUG_LVL >= 1
 /** print preferences */
 void IOTAppStory::printPref(){
 	#ifdef ESP32
@@ -314,6 +315,7 @@ void IOTAppStory::printPref(){
 	#endif
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
+#endif
 
 
 /** send msg to iasLog */
@@ -467,7 +469,9 @@ void IOTAppStory::runConfigServer() {
 					#endif
 				}else{
 					readConfig();
-					DEBUG_PRINTLN(SER_FAILED_TRYAGAIN);
+					#if DEBUG_LVL >= 1
+						DEBUG_PRINTLN(SER_FAILED_TRYAGAIN);
+					#endif
 					_tryToConnFail = true;
 				}
 				
@@ -496,7 +500,10 @@ void IOTAppStory::runConfigServer() {
 				WiFi.mode(WIFI_STA);
 				delay(100);
 				_changeMode = false;
-
+				
+				// notifi IAS & enduser this device went to config mode (also sends localIP)
+				iasLog("1");
+				
 				#if DEBUG_LVL >= 2
 					//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
 					
@@ -593,7 +600,8 @@ void IOTAppStory::connectNetwork() {
 				
 				#if DEBUG_LVL >= 2
 					DEBUG_PRINTLN(SER_DEV_MDNS_INFO);
-				#else
+				#endif
+				#if DEBUG_LVL == 1
 					DEBUG_PRINTLN(F(""));
 				#endif
 				
@@ -623,8 +631,10 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 		int retries = (MAX_WIFI_RETRIES/2);
 	#endif
 	
-	DEBUG_PRINT(F(" "));
-
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINT(F(" "));
+	#endif
+	
 	#if WIFI_MULTI == true
 		if(multi){
 			while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
@@ -715,7 +725,8 @@ bool IOTAppStory::iotUpdater(bool spiffs) {
 	#endif
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(SER_UPDATES_FROM);
-	#else
+	#endif
+	#if DEBUG_LVL == 1
 		DEBUG_PRINT(SER_UPDATES);
 	#endif
 
@@ -1273,13 +1284,14 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 		
 		case AppStateFirmwareUpdate:
 			_appState = AppStateNoPress;
-			//DEBUG_PRINTLN("Calling Home");
 			callHome();
 			continue;
 #if INC_CONFIG == true	
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
-			DEBUG_PRINTLN(SER_CONFIG_ENTER);
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN(SER_CONFIG_ENTER);
+			#endif
 			espRestart('C');
 			continue;
 #endif
@@ -1499,7 +1511,7 @@ void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
 
 					int apNr = atoi(request->getParam("i", true)->value().c_str());
 					#if DEBUG_LVL == 3
-						DEBUG_PRINTF_P(SER_CONN_ADDED_AP_CRED),apNr);
+						DEBUG_PRINTF_P(SER_CONN_ADDED_AP_CRED,apNr);
 					#endif
 					
 					request->getParam("s", true)->value().toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
