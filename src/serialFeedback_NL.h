@@ -31,7 +31,7 @@
 
 	#define SER_CONN_SAVE_EEPROM				" Verbonden. Opslaan config naar eeprom"
 	#define SER_CONNECTING							" Verbinden met WiFi AP"
-	#define SER_CONN_NONE_GO_CFG				"\n Geen verbinding. Ga in Configuratie Modus\n"
+	#define SER_CONN_NONE_GO_CFG				"\n Geen verbinding. Ga naar Configuratie Modus\n"
 	#define SER_CONN_NONE_CONTINU				"\n WiFi NIET verbonden. Toch verder\n" 
 	#define SER_CONNECTED								"\n WiFi verbonden\n"
 	
