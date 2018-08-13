@@ -211,8 +211,24 @@ setup () {
 ```
 </br>
 
+### `loop()`
+This function ensures the library performs all the periodic tasks it needs to performm:
+
+* [`buttonLoop()`](#buttonLoop())
+* [`callHome()`](#callHome()): This will be called if you have previously called [`setCallHome(true)`](#setCallHome(bool)) and if the timer set by [`setCallHomeInterval()`](#setCallHomeInterval(int)) (default = 7200 seconds or 2 hours) has expired.
+
+It is essential that this function called on the first line of your main sketch's `loop()`.
+
 ### `buttonLoop()`
-Checks if the button is depressed and what mode to enter when once it is released. This is essential and needs to be called on the first line of your `loop()`.</br></br>
+Checks if the button is depressed and what mode to enter when once it is released. Also returns the buttonstate in `ModeButtonState` format:
+```
+ModeButtonNoPress,        // mode button is not pressed
+ModeButtonShortPress,     // short press - will enter in firmwareupdate mode
+ModeButtonLongPress,      // long press - will enter in configurationmode
+ModeButtonVeryLongPress,  // very long press - won't do anything (but the app developer might want to do something)
+ModeButtonFirmwareUpdate, // about to enter in firmware update mode
+ModeButtonConfigMode      // about to enter in configuration mode
+```
 
 ### `callHome(bool spiffs)`
 Calls IOTAppStory.com to check for updates. The `setCallHomeInterval()` function mentioned above already handles calling home at a certain interval. But if you would like to decide yourself under which circumstances and when to call home. This is for you.
@@ -225,7 +241,7 @@ If `spiffs` is true, the call also checks if there is a new filesystem image to 
 ...
 
 void loop() {
-    IAS.buttonLoop();
+    IAS.loop();
     
     if(batLvl >= 20 && lstUpd != today){
         IAS.callHome();

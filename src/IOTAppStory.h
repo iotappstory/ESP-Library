@@ -232,11 +232,12 @@
 						//void preSetServer(String HOST1, String FILE1);
             
 						void setCallHome(bool callHome);
-            void setCallHomeInterval(unsigned long interval);
+                  void setCallHomeInterval(unsigned long interval);
 						
 						void begin(char ea);
 						
-            ModeButtonState buttonLoop();
+                  void loop();
+                  ModeButtonState buttonLoop();
 
 						void writeConfig(bool wifiSave = false);
 						void readConfig();
