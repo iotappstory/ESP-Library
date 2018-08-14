@@ -195,7 +195,7 @@
                 "yourESP",
                 "",
 								#if defined  ESP8266
-									"00:BC:82:90:15:40:F3:FF:72:E3:DF:61:76:EE:D4:99:E9",
+									"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1",
 								#endif
 								#if CFG_AUTHENTICATE == true
 									"admin",
