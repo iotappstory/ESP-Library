@@ -67,6 +67,7 @@
 	#define SER_SERV_APP_SETTINGS				" Serving App Settings"
 	
 	#define SER_SAVE_APP_SETTINGS				" Saving App Settings"
+	#define SER_SAVE_FINGERPRINT				" Saving Fingerprint"
 	
 	
 	#define SER_CONN_REC_CRED						"\n Connect with received credentials"

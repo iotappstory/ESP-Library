@@ -397,6 +397,9 @@ void IOTAppStory::runConfigServer() {
 	
   server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlRoot(request); });
   server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlDevInfo(request); });
+  #if defined  ESP8266
+		server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlFngPrintSave(request); });
+	#endif
   server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlWifiScan(request); });
   server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlWifiSave(request); });
   server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlAppInfo(request); });
@@ -1380,6 +1383,7 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 			retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
 			retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
 			retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
+			retHtml.replace(F("{f}"), config.sha1);
 		#elif defined ESP32
 			retHtml.replace(F("{cid}"), "");				// not available yet
 			retHtml.replace(F("{fid}"), "");				// not available yet
@@ -1559,6 +1563,24 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		#endif
     hdlReturn(request, retHtml, F("application/json"));
 }
+
+
+
+#if defined  ESP8266
+/** Save new fingerprint */
+void IOTAppStory::servHdlFngPrintSave(AsyncWebServerRequest *request){
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SAVE_FINGERPRINT);
+	#endif
+	
+	request->getParam("f", true)->value().toCharArray(config.sha1, 60);
+	
+	String retHtml = F("1");
+	writeConfig();
+	hdlReturn(request,  retHtml);
+}
+#endif
+
 
 
 /** Save App Settings */
