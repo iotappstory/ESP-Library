@@ -241,8 +241,8 @@
 						
 						void begin(char ea);
 						
-                  void loop();
-                  ModeButtonState buttonLoop();
+            void loop();
+                  
 
 						void writeConfig(bool wifiSave = false);
 						void readConfig();
@@ -382,7 +382,7 @@
             void updateLoop();
             bool isModeButtonPressed();
             ModeButtonState getModeButtonState();
-    
+						ModeButtonState buttonLoop();
 
 						
 						
