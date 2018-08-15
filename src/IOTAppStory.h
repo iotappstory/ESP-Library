@@ -129,9 +129,14 @@
 	const char HTTP_WIFI_FORM[] PROGMEM		= "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('\wsa')\">Save</button></div>";
 
 	const char HTTP_APP_INFO[] PROGMEM		= "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
-	const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+	
+	#if defined  ESP8266
+			const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\", \"f\":\"{f}\"}";
+	#endif
 	
 	#if defined  ESP32
+			const char HTTP_DEV_INFO[] PROGMEM		= "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+			
 			const char ROOT_CA[] PROGMEM = \
 			"-----BEGIN CERTIFICATE-----\n" \
 			"MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n" \
@@ -357,6 +362,11 @@
 						
 						void servHdlRoot(AsyncWebServerRequest *request);
 						void servHdlDevInfo(AsyncWebServerRequest *request);
+						
+						#if defined  ESP8266
+							void servHdlFngPrintSave(AsyncWebServerRequest *request);
+						#endif
+						
 						void servHdlWifiScan(AsyncWebServerRequest *request);
 						void servHdlWifiSave(AsyncWebServerRequest *request);
 						
