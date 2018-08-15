@@ -106,7 +106,7 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.buttonLoop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------
