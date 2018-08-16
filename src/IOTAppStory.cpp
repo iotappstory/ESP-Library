@@ -1202,16 +1202,17 @@ void IOTAppStory::readConfig() {
 }
 
 
-void IOTAppStory::updateLoop() {
+void IOTAppStory::loop() {
    if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
       this->callHome();
       _lastCallHomeTime = millis();
    }
+
+   this->buttonLoop();
 }
 
 
 ModeButtonState IOTAppStory::buttonLoop() {
-   this->updateLoop();
    return getModeButtonState();
 }
 
