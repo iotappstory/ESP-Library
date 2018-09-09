@@ -259,6 +259,10 @@ And if you originally developed your code for these “Special ESP’s”. This 
 <img src="https://github.com/iotappstory/ESP-Library/blob/master/pin_mapping.jpg"/>
 </br>
 
+## IAS WIKI
+https://iotappstory.com/wiki/arduino-esp
+</br></br>
+
 ## Contributions and thanks
 Thanks to [msiebuhr](https://github.com/msiebuhr) for this readme file.
 
