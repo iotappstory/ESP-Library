@@ -58,8 +58,7 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);                  // Initialize IotAppStor
 
 
 // ================================================ VARS =================================================
-String deviceName = "tempsensor-";
-String chipId     = "";
+String deviceName = "tempsensor";
 
 int tempEntry;
 float h, t, f, hic, hif;
@@ -90,9 +89,11 @@ void setup() {
   display.display();
 
 
-  chipId     = String(ESP.getChipId());                           // creat a unique deviceName for classroom situations (deviceName-123)
-  chipId     = chipId.substring(chipId.length()-3);
-  deviceName += chipId;
+  #if defined  ESP8266
+    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
+    chipId         = "-"+chipId.substring(chipId.length()-3);
+    deviceName    += chipId;
+  #endif
   
   IAS.preSetDeviceName(deviceName);                               // preset Boardname this is also your MDNS responder: http://deviceName.local
 
