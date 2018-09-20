@@ -986,8 +986,10 @@ void IOTAppStory::processField(){
 int IOTAppStory::dPinConv(String orgVal){
 	#if defined ESP8266_OAK
 
+		// https://github.com/esp8266/Arduino/blob/master/variants/oak/pins_arduino.h
 		// DEBUG_PRINTLN("- Digistump OAK -");
-		if      (orgVal == "P1"  || orgVal == "5")    return P1;
+		if      (orgVal == "P0"  || orgVal == "2")    return P0;
+		else if (orgVal == "P1"  || orgVal == "5")    return P1;
 		else if (orgVal == "P2"  || orgVal == "0")    return P2;
 		else if (orgVal == "P3"  || orgVal == "3")    return P3;
 		else if (orgVal == "P4"  || orgVal == "1")    return P4;
@@ -998,11 +1000,30 @@ int IOTAppStory::dPinConv(String orgVal){
 		else if (orgVal == "P9"  || orgVal == "14")   return P9;
 		else if (orgVal == "P10" || orgVal == "16")   return P10;
 		else if (orgVal == "P11" || orgVal == "17")   return P11;
-		else                                          return P1;
+		else                                          return P0;
 
-	#elif defined ESP8266_WEMOS_D1MINI || defined ESP8266_WEMOS_D1MINILITE || defined ESP8266_WEMOS_D1MINIPRO || defined ESP8266_NODEMCU || defined WIFINFO
+	#elif defined ESP8266_WEMOS_D1MINI || defined ESP8266_WEMOS_D1MINILITE || defined ESP8266_WEMOS_D1MINIPRO
 
-		// DEBUG_PRINTLN("- Special ESP's -");
+		// https://github.com/esp8266/Arduino/blob/master/variants/d1_mini/pins_arduino.h
+		// DEBUG_PRINTLN("- build-variant d1_mini -");
+		if      (orgVal == "D0"  || orgVal == "16")   return D0;
+		else if (orgVal == "D1"  || orgVal == "5")    return D1;
+		else if (orgVal == "D2"  || orgVal == "4")    return D2;
+		else if (orgVal == "D3"  || orgVal == "0")    return D3;
+		else if (orgVal == "D4"  || orgVal == "2")    return D4;
+		else if (orgVal == "D5"  || orgVal == "14")   return D5;
+		else if (orgVal == "D6"  || orgVal == "12")   return D6;
+		else if (orgVal == "D7"  || orgVal == "13")   return D7;
+		else if (orgVal == "D8"  || orgVal == "15")   return D8;
+		else if (orgVal == "RX"  || orgVal == "3")    return RX;
+		else if (orgVal == "TX" || orgVal == "1")     return TX;
+		else                                          return D0;
+
+	#elif defined ESP8266_NODEMCU || defined WIFINFO
+
+		// https://github.com/esp8266/Arduino/blob/master/variants/wifinfo/pins_arduino.h
+		// https://github.com/esp8266/Arduino/blob/master/variants/nodemcu/pins_arduino.h
+		// DEBUG_PRINTLN("- build-variant nodemcu and wifinfo -");
 		if      (orgVal == "D0"  || orgVal == "16")   return D0;
 		else if (orgVal == "D1"  || orgVal == "5")    return D1;
 		else if (orgVal == "D2"  || orgVal == "4")    return D2;
@@ -1015,7 +1036,7 @@ int IOTAppStory::dPinConv(String orgVal){
 		else if (orgVal == "D9"  || orgVal == "3")    return D9;
 		else if (orgVal == "D10" || orgVal == "1")    return D10;
 		else                                          return D0;
-		
+
 	#else
 
 		// DEBUG_PRINTLN("- Generic ESP's -");
