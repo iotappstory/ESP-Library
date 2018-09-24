@@ -23,7 +23,8 @@ https://github.com/iotappstory/ESP-Library/releases/latest
 
 #### ESP8266 and ESP32
 - <a href="https://www.arduino.cc/en/Main/Software" target="_blank">Arduino IDE</a> &gt;= 1.8.5
-- <a href="https://github.com/me-no-dev/ESPAsyncWebServer" target="_blank">Async Web Server</a></br>
+- <a href="https://github.com/me-no-dev/ESPAsyncWebServer" target="_blank">Async Web Server</a>
+</br>
 
 ## Develop branch
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
