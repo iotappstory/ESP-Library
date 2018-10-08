@@ -804,6 +804,10 @@ bool IOTAppStory::iotUpdater(bool spiffs) {
 			strcpy(config.appName,  http.header("x-name").c_str());
 			strcpy(config.appVersion,  http.header("x-ver").c_str());
 			writeConfig();
+
+			if (_firmwareUpdateSuccessCallback){
+				_firmwareUpdateSuccessCallback();
+			}
 			
 			// reboot
 			ESP.restart();
@@ -1355,6 +1359,9 @@ void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
 }
 void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
 	_firmwareUpdateErrorCallback = value;
+}
+void IOTAppStory::onFirmwareUpdateSuccess(THandlerFunction value) {
+	_firmwareUpdateSuccessCallback = value;
 }
 
 void IOTAppStory::onConfigMode(THandlerFunction value) {
