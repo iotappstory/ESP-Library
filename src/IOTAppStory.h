@@ -271,6 +271,7 @@
             void onFirmwareUpdateCheck(THandlerFunction fn);							// called when the app checks for firmware updates
             void onFirmwareUpdateDownload(THandlerFunction fn);						// called when firmware update
             void onFirmwareUpdateError(THandlerFunction fn);							// called when firmware update ends in an error
+            void onFirmwareUpdateSuccess(THandlerFunction fn);						// called when firmware update ends in success
 
             void onConfigMode(THandlerFunction fn);												// called when the app is about to enter in configuration mode
 						
@@ -344,6 +345,7 @@
             THandlerFunction _firmwareUpdateCheckCallback;
             THandlerFunction _firmwareUpdateDownloadCallback;
             THandlerFunction _firmwareUpdateErrorCallback;
+            THandlerFunction _firmwareUpdateSuccessCallback;
 						
             THandlerFunction _configModeCallback;
 						
