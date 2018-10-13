@@ -36,16 +36,18 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);    // Initialize IOTAppStory
 
 
 // ================================================ VARS =================================================
-String deviceName = "initloader-";
-String chipId     = "";
+String deviceName = "initloader";
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  chipId     = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
-  chipId     = chipId.substring(chipId.length()-3);
-  deviceName += chipId;
+  
+  #if defined  ESP8266
+    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
+    chipId         = "-"+chipId.substring(chipId.length()-3);
+    deviceName    += chipId;
+  #endif
   
   IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName.local
   IAS.preSetAppName(F("INITLoader"));     // preset appName

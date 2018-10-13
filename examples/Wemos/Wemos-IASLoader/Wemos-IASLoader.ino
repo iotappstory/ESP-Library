@@ -41,8 +41,7 @@ SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 // ================================================ VARS =================================================
 unsigned long printEntry;
 
-String deviceName = "wemosloader-";
-String chipId     = "";
+String deviceName = "wemosloader";
 
 
 // ================================================ SETUP ================================================
@@ -56,9 +55,11 @@ void setup() {
   display.display();
 
 
-  chipId     = String(ESP.getChipId());                   // creat a unique deviceName for classroom situations (deviceName-123)
-  chipId     = chipId.substring(chipId.length()-3);
-  deviceName += chipId;
+  #if defined  ESP8266
+    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
+    chipId         = "-"+chipId.substring(chipId.length()-3);
+    deviceName    += chipId;
+  #endif
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
   IAS.preSetAppName(F("WemosLoader"));                    // preset appName
