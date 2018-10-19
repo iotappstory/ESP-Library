@@ -5,6 +5,7 @@ Wifi & OTA update manager for IOT devices (ESP8266 and ESP32). ESP8266's need at
 
 ## Latest stable release 2.0.1
 https://github.com/iotappstory/ESP-Library/releases/latest
+</br>
 
 ## Arduino IDE librairy manager
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
@@ -28,8 +29,7 @@ https://github.com/iotappstory/ESP-Library/releases/latest
 If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
 
 ## IAS WIKI
-https://iotappstory.com/wiki/arduino-esp
-</br></br>
+https://iotappstory.com/wiki/arduino-esp</br></br>
 
 ## Contributions and thanks
 Thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP-Library/graphs/contributors)
