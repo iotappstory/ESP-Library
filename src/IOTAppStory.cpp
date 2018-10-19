@@ -67,7 +67,8 @@ void IOTAppStory::firstBoot(char ea){
 	
 	boardMode = 'N';
 	bootTimes = 0;
-	writePref();
+	boardInfo boardInfo(bootTimes, boardMode);
+	boardInfo.write();
 	
 	// update first boot config flag (date)
 	strcpy(config.compDate, _compDate);
@@ -189,7 +190,9 @@ void IOTAppStory::begin(char ea){
 	pinMode(_modeButton, INPUT_PULLUP);
 
 	// Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
-	readPref();
+	//readPref();
+	boardInfo boardInfo(bootTimes, boardMode);
+	boardInfo.read();
 	
 	// on first boot of the app run the firstBoot() function
 	if(strcmp(config.compDate,_compDate) != 0){
@@ -199,10 +202,11 @@ void IOTAppStory::begin(char ea){
 	// BOOT STATISTICS read and increase boot statistics (optional)
 	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
-		writePref();
+		//writePref();
+		boardInfo.write();
 		
 		#if DEBUG_LVL >= 1
-			printPref();
+			printBoardInfo();
 		#endif
 	#endif
 
@@ -243,73 +247,10 @@ void IOTAppStory::begin(char ea){
 }
 
 
-/** read / get the stored preferences */
-void IOTAppStory::readPref() {
-	#ifdef ESP32
-		Preferences preferences;
-		
-		// Open Preferences
-		preferences.begin("pref", false);
-		
-		// Get the bootTimes value, if the key does not exist, return a default value of 0
-		bootTimes	= preferences.getUInt("bootTimes", 0);
-		
-		// Get the boardMode value, if the key does not exist, return a default value of 'N'
-		boardMode	= preferences.getUInt("boardMode", 'N');
-		
-		// Close the Preferences
-		preferences.end();
-		
-	#else
-		
-		system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-		if (rtcMem.markerFlag != MAGICBYTE) {
-			rtcMem.markerFlag = MAGICBYTE;
-			rtcMem.bootTimes = 0;
-			rtcMem.boardMode = 'N';
-			system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-		}
-		boardMode = rtcMem.boardMode;
-		bootTimes = rtcMem.bootTimes;
-	#endif
-}
-
-
-/** store preferences */
-void IOTAppStory::writePref(){
-	#ifdef ESP32
-		Preferences preferences;
-		
-		// Open Preferences
-		preferences.begin("pref", false);
-		
-		// Store the bootTimes value
-		preferences.putUInt("bootTimes", bootTimes);
-		
-		// Store the boardMode value
-		preferences.putUInt("boardMode", boardMode);
-		
-		// Close the Preferences
-		preferences.end();
-		
-	#else
-		rtcMem.boardMode = boardMode;
-		rtcMem.bootTimes = bootTimes;
-		
-		rtcMem.markerFlag = MAGICBYTE;
-		system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-	#endif
-}
-
-
 #if DEBUG_LVL >= 1
-/** print preferences */
-void IOTAppStory::printPref(){
-	#ifdef ESP32
-		DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
-	#else
-		DEBUG_PRINTF_P(SER_BOOTTIMES_POWERUP, rtcMem.bootTimes, rtcMem.boardMode);
-	#endif
+/** print BoardInfo */
+void IOTAppStory::printBoardInfo(){
+	DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 #endif
@@ -544,8 +485,7 @@ void IOTAppStory::connectNetwork() {
 	#endif
 	
 
-	
-	//if(WiFi.status() != WL_CONNECTED) {
+
 	if(!isNetworkConnected()) {
 		
 
@@ -553,7 +493,9 @@ void IOTAppStory::connectNetwork() {
 				
 				if(boardMode == 'N'){
 					boardMode = 'C';
-					writePref();
+					//writePref();
+					boardInfo boardInfo(bootTimes, boardMode);
+					boardInfo.write();
 				}
 				
 				#if DEBUG_LVL >= 1
@@ -587,9 +529,6 @@ void IOTAppStory::connectNetwork() {
 			// Register host name in WiFi and mDNS
 			String hostNameWifi = config.deviceName;
 			hostNameWifi += ".local";
-
-			// wifi_station_set_hostname(config.deviceName);
-			// WiFi.hostname(hostNameWifi);
 
 			if(MDNS.begin(config.deviceName)){
 
@@ -769,26 +708,6 @@ void IOTAppStory::iotUpdater(bool spiffs) {
 			_firmwareUpdateDownloadCallback();
 		}
 
-		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN("[httpUpdate] Header read fin.\n");
-			DEBUG_PRINTLN("[httpUpdate] Server header:\n");
-			DEBUG_PRINTF_P("[httpUpdate]  - code: %d\n", code);
-			DEBUG_PRINTF_P("[httpUpdate]  - len: %d\n", len);
-
-			if(http.hasHeader("x-MD5")) {
-				DEBUG_PRINTF_P("[httpUpdate]  - MD5: %s\n", http.header("x-MD5").c_str());
-			}
-			
-			DEBUG_PRINTLN("[httpUpdate] ESP8266 info:\n");
-			#if defined ESP32
-
-			#elif defined ESP8266
-				DEBUG_PRINTF_P("[httpUpdate]  - free Space: %d\n", ESP.getFreeSketchSpace());
-				DEBUG_PRINTF_P("[httpUpdate]  - current Sketch Size: %d\n", ESP.getSketchSize());
-			#endif
-			DEBUG_PRINTF_P("[httpUpdate]  - current version: %s\n", config.appVersion);
-			
-		#endif
 
 		if(ESPhttpUpdate.handleUpdate(http, len, spiffs)) {
 			// succesfull update
@@ -855,7 +774,7 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length,
 	- load stored values
 */
 void IOTAppStory::processField(){
-
+	eepFreeFrom = sizeof(config)+2;
 	// to prevent longer then default values overwriting each other
 	// temp save value, overwrite variable with longest value posible
 	// and then resave the temp value to the original variable
@@ -899,9 +818,8 @@ void IOTAppStory::processField(){
 				prevTotLength += fieldStruct[i].length;
 			}
 			const int sizeOfVal = fieldStruct[nr-1].length;
-			const int sizeOfConfig = sizeof(config)+2;
-			const unsigned int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
-			const unsigned int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
+			const unsigned int eeBeg = eepFreeFrom+prevTotLength+nr+((nr-1)*2);
+			const unsigned int eeEnd = eepFreeFrom+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
 
 			#if DEBUG_LVL >= 2
 				DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), nr, fieldStruct[nr-1].fieldLabel, fieldStruct[nr-1].length-1, eeBeg, eeEnd, (*fieldStruct[nr-1].varPointer));
@@ -960,8 +878,14 @@ void IOTAppStory::processField(){
 			#if DEBUG_LVL >= 2
 				DEBUG_PRINTLN();
 			#endif
+			
+			if(nr == _nrXF){
+				eepFreeFrom = eeEnd+ 2;
+			}
 		}
 		EEPROM.end();
+		
+		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(FPSTR(SER_DEV));
 		#endif
@@ -1060,7 +984,8 @@ void IOTAppStory::espRestart(char mmode) {
 	delay(500);
 	
 	boardMode = mmode;
-	writePref();
+	boardInfo boardInfo(bootTimes, boardMode);
+	boardInfo.write();
 
 	ESP.restart();
 }
