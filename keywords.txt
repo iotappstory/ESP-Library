@@ -32,6 +32,7 @@ onFirstBoot	KEYWORD2
 onFirmwareUpdateCheck	KEYWORD2
 onFirmwareUpdateDownload	KEYWORD2
 onFirmwareUpdateError	KEYWORD2
+onFirmwareUpdateSuccess	KEYWORD2
 onConfigMode	KEYWORD2
 
 addField	KEYWORD2
@@ -41,6 +42,7 @@ callHome	KEYWORD2
 setCallHome	KEYWORD2
 setCallHomeInterval	KEYWORD2
 dPinConv	KEYWORD2
+eepFreeFrom	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
