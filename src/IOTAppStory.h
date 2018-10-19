@@ -13,16 +13,14 @@
 		#include <WiFi.h>
 		#include <WiFiMulti.h>
 		#include <ESPmDNS.h>
-		#include <Preferences.h>
+		#include "esp32/boardInfo.h"
 		#include <AsyncTCP.h>                    // https://github.com/me-no-dev/AsyncTCP
 		#include <HTTPClient.h>
-	#else
+	#elif defined  ESP8266
 		#include <ESP8266WiFi.h>
 		#include <ESP8266WiFiMulti.h>
 		#include <ESP8266mDNS.h>
-		extern "C" {
-			#include "user_interface.h"          // used by the RTC memory read/write functions
-		}
+		#include "esp8266/boardInfo.h"
 		#include <StreamString.h>
 		#include <ESPAsyncTCP.h>                 // https://github.com/me-no-dev/ESPAsyncTCP
 		#include <ESP8266HTTPClient.h>
@@ -66,15 +64,7 @@
 
 	/**
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
-	**/
-	#ifndef ESP32
-		typedef struct {
-			byte markerFlag;
-			int bootTimes;
-			char boardMode = 'N';                // Normal operation or Configuration mode?
-		} rtcMemDef __attribute__((aligned(4)));
-	#endif
-
+	*/
 	typedef struct {
 		const char *fieldLabel;
 		char* (*varPointer);
@@ -186,13 +176,10 @@
 			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
 		*/
 
-		#ifndef ESP32
-			rtcMemDef rtcMem;
-		#endif
-
-		int bootTimes;
-		char boardMode = 'N';                    // Normal operation or Configuration mode?
-
+		int bootTimes;							// nr of times this device booted since powerup
+		char boardMode = 'N';                   // Normal operation or Configuration mode?
+		unsigned int eepFreeFrom;				// From where can I use eeprom?
+		
 
 		strConfig config = {
 			"",
@@ -291,7 +278,7 @@
 		#if WIFI_MULTI == true
 			#ifdef ESP32
 				WiFiMulti wifiMulti;
-			#else
+			#elif defined  ESP8266
 				ESP8266WiFiMulti wifiMulti;
 			#endif
 		#endif
@@ -315,7 +302,6 @@
 		bool _setPreSet                      = false;   // ;) have there been any preSets set?
 		bool _setDeviceName                  = false;   // is the device name set?
 		bool _configReaded                   = false;   // has the config already been read?
-		const static bool _boolDefaulValue   = false;
 		bool _callHome                       = false;
 
 		bool _tryToConn                      = false;   // try to connect to wifi bool
@@ -340,7 +326,6 @@
 		//THandlerFunction _wifiConnectedCallback;
 		//THandlerFunction _wifiDisonnectedCallback;
 
-
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
 		THandlerFunction _longPressCallback;
@@ -359,10 +344,7 @@
 		*/
 
 		void firstBoot(char ea);
-
-		void readPref();
-		void writePref();
-		void printPref();
+		void printBoardInfo();
 		void processField();
 		void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
 
@@ -370,21 +352,16 @@
 
 		void servHdlRoot(AsyncWebServerRequest *request);
 		void servHdlDevInfo(AsyncWebServerRequest *request);
-
 		#if defined  ESP8266
 			void servHdlFngPrintSave(AsyncWebServerRequest *request);
 		#endif
-
 		void servHdlWifiScan(AsyncWebServerRequest *request);
 		void servHdlWifiSave(AsyncWebServerRequest *request);
-
 		void servHdlAppInfo(AsyncWebServerRequest *request);
 		void servHdlAppSave(AsyncWebServerRequest *request);
-
 		//void servHdlDevSave(AsyncWebServerRequest *request);
 
 		void hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type = "text/html");
-		//int  getDevConf();
 
 		void updateLoop();
 		bool isModeButtonPressed();
@@ -397,19 +374,7 @@
 		/** 
 			------ ------ ------ ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ ------ ------ ------
 		*/
-
-		/* ------ CHANGE CONFIG VALUES   */
-		template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
-			if (a != b) {
-				a = b;
-				changeFlag = true;
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		bool SetConfigValueCharArray(char* a, String &b, int len, bool changeFlag = &_boolDefaulValue) {
+		bool SetConfigValueCharArray(char* a, String &b, int len, bool &changeFlag) {
 			if (b != a) {
 				b.toCharArray(a, len);
 				changeFlag = true;
