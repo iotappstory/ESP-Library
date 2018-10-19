@@ -155,6 +155,7 @@ bool ESP8266HTTPUpdate::handleUpdate(HTTPClient& http, int len, bool spiffs){
 		}
 #endif
 	}
+	return false;
 }
 
 

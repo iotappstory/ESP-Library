@@ -9,5 +9,11 @@
   },
   "frameworks": "arduino",
   "platforms": "espressif32",
-  "version": "2.0.0"
+  "dependencies":
+  {
+    "name": "ESP Async WebServer",
+    "platforms": ["espressif8266", "espressif32"],
+    "authors": "Hristo Gochkov"
+  },
+  "version": "2.0.1"
 }
