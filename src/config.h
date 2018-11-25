@@ -4,8 +4,8 @@
 	#include "serialFeedback_EN.h"					// language file for serial feedback
 	
 	#define DEBUG_LVL 					2	// Debug level: 0 - 3 | none - max
-	#define SERIAL_SPEED				115200
-	#define BOOTSTATISTICS				true
+	#define SERIAL_SPEED					115200
+	#define BOOTSTATISTICS					true
 	
 
 	// config 
