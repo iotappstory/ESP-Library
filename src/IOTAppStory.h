@@ -8,29 +8,63 @@
 	*/
 
 	#include "config.h"
+	#include <Arduino.h>
 
 	#ifdef ESP32
+	
 		#include <WiFi.h>
 		#include <WiFiMulti.h>
 		#include <ESPmDNS.h>
-		#include "esp32/boardInfo.h"
-		#include <AsyncTCP.h>                    // https://github.com/me-no-dev/AsyncTCP
+
+		#include "espressif/esp32/boardInfo.h"
+		#include "espressif/esp32/otaUpdate.h"
+		#include "espressif/configServer.h"
+		///#include <AsyncTCP.h>                    		// https://github.com/me-no-dev/AsyncTCP
 		#include <HTTPClient.h>
-	#elif defined  ESP8266
+		#include <Update.h>
+		
+		//#include <DNSServer.h> 
+		///#include <FS.h>
+		#include <EEPROM.h>
+		#include <ESPAsyncWebServer.h>              // https://github.com/me-no-dev/ESPAsyncWebServer
+		
+	#endif
+	#ifdef  ESP8266
+	
 		#include <ESP8266WiFi.h>
 		#include <ESP8266WiFiMulti.h>
 		#include <ESP8266mDNS.h>
-		#include "esp8266/boardInfo.h"
-		#include <StreamString.h>
-		#include <ESPAsyncTCP.h>                 // https://github.com/me-no-dev/ESPAsyncTCP
+
+		#include "espressif/esp8266/boardInfo.h"
+		#include "espressif/esp8266/otaUpdate.h"
+		#include "espressif/configServer.h"
+		///#include <ESPAsyncTCP.h>										// https://github.com/me-no-dev/ESPAsyncTCP
 		#include <ESP8266HTTPClient.h>
+		
+		//#include <DNSServer.h> 
+		///#include <FS.h>
+		#include <EEPROM.h>
+		#include <ESPAsyncWebServer.h>							// https://github.com/me-no-dev/ESPAsyncWebServer
+
+	#endif
+	#ifdef ARDUINO_SAMD_VARIANT_COMPLIANCE
+
+		//#WIFI_MULTI false
+		#include <SPI.h>
+		#include <WiFiNINA.h>
+		//#include <WiFiMDNSResponder.h>
+		//#include <stlport.h>
+		//#include <type_traits>
+		
+		#include <stdio.h>
+		
+		#include "ardmkr/boardInfo.h"
+		#include "ardmkr/otaUpdate.h"
+		
+		#include <FlashAsEEPROM.h>
 	#endif
 
-	#include "ESPhttpUpdateIasMod.h"
-	#include <DNSServer.h> 
-	#include <FS.h>
-	#include <EEPROM.h>
-	#include <ESPAsyncWebServer.h>               // https://github.com/me-no-dev/ESPAsyncWebServer
+
 
 
 
@@ -64,15 +98,23 @@
 
 	/**
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
-	*/
-	typedef struct {
+	*
+	#ifndef ESP32
+		typedef struct {
+			byte markerFlag;
+			int bootTimes;
+			char boardMode = 'N';                // Normal operation or Configuration mode?
+		} rtcMemDef __attribute__((aligned(4)));
+	#endif
+*/
+	typedef struct eFields{
 		const char *fieldLabel;
 		char* (*varPointer);
 		int length;
 		char type;
-	} eFields;
+	} ;
 
-	typedef struct {
+	typedef struct strConfig{
 		char actCode[7];                         // saved IotAppStory activation code
 		char appName[33];
 		char appVersion[12];
@@ -87,16 +129,16 @@
 			char cfg_pass[17];
 		#endif
 		const char magicBytes[4];
-	} strConfig;
-
-	enum ModeButtonState {
+	} ;
+		//extern strConfig config;
+	enum  ModeButtonState{
 		ModeButtonNoPress,                       // mode button is not pressed
 		ModeButtonShortPress,                    // short press - will enter in firmware update mode
 		ModeButtonLongPress,                     // long press - will enter in configuration mode
 		ModeButtonVeryLongPress,                 // very long press - won't do anything (but the app developer might want to do something)
 		ModeButtonFirmwareUpdate,                // about to enter in firmware update mode
 		ModeButtonConfigMode                     // about to enter in configuration mode
-	};
+	} ;
 
 	typedef std::function<void(void)> THandlerFunction;
 
@@ -129,7 +171,7 @@
 
 	#if defined ESP32
 		const char HTTP_DEV_INFO[] PROGMEM = "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
-		
+		/**/
 		const char ROOT_CA[] PROGMEM = \
 			"-----BEGIN CERTIFICATE-----\n" \
 			"MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n" \
@@ -170,16 +212,22 @@
 
 
 	class IOTAppStory {
+		
+		
 
 		public:
+		
 		/** 
 			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
 		*/
 
-		int bootTimes;							// nr of times this device booted since powerup
-		char boardMode = 'N';                   // Normal operation or Configuration mode?
-		unsigned int eepFreeFrom;				// From where can I use eeprom?
-		
+		#ifndef ESP32
+			//rtcMemDef rtcMem;
+		#endif
+
+		int bootTimes;
+		char boardMode = 'N';                    // Normal operation or Configuration mode?
+
 
 		strConfig config = {
 			"",
@@ -244,10 +292,10 @@
 		bool isNetworkConnected(bool multi = true);
 
 		void callHome(bool spiffs = true);
-		void iotUpdater(bool spiffs);
+		void iotUpdater(int command = U_FLASH);
 		void addField(char* &defaultVal,const char *fieldLabel, int length, char type = 'L');
-		void iasLog(String msg = "");
-		void runConfigServer();
+		//void iasLog(String msg = "");
+		///void runConfigServer();
 		int dPinConv(String orgVal);
 
 		void onFirstBoot(THandlerFunction fn);              // called at the end of firstBoot
@@ -266,19 +314,20 @@
 
 		void onConfigMode(THandlerFunction fn);             // called when the app is about to enter in configuration mode
 
-
-
+		
+		//friend class configServer;
 
 		private:
-
-		std::unique_ptr<DNSServer>        dnsServer;
-		std::unique_ptr<AsyncWebServer> 	server;
-		//std::unique_ptr<Preferences> 			preferences;
-
+		#if defined ESP8266 || defined ESP32
+			//std::unique_ptr<DNSServer>        dnsServer;
+			//std::unique_ptr<AsyncWebServer> 	server;
+			//std::unique_ptr<Preferences> 			preferences;
+		#endif
+		
 		#if WIFI_MULTI == true
 			#ifdef ESP32
 				WiFiMulti wifiMulti;
-			#elif defined  ESP8266
+			#elif defined ESP8266
 				ESP8266WiFiMulti wifiMulti;
 			#endif
 		#endif
@@ -287,14 +336,14 @@
 		const int _modeButton;
 		unsigned int _nrXF                   = 0;                         // nr of extra fields required in the config manager
 
-
+		/*
 		const char* _updateHost              = "iotappstory.com";         // ota update host
 		#if defined  ESP8266
 			const char* _updateFile          	= "/ota/esp8266-v2.0.1.php"; // loc1, file at host that handles 8266 updates
 		#elif defined ESP32
 			const char* _updateFile          	= "/ota/esp32-v1.php";       // loc1, file at host that handles 32 updates
 		#endif
-
+		*/
 
 		bool _updateOnBoot                   = true;    // update on boot? (end of begin();)
 		bool _automaticConfig                = true;    // automaticly go to config on boot if there is no wifi connection present
@@ -302,13 +351,14 @@
 		bool _setPreSet                      = false;   // ;) have there been any preSets set?
 		bool _setDeviceName                  = false;   // is the device name set?
 		bool _configReaded                   = false;   // has the config already been read?
+		//const static bool _boolDefaulValue   = false;
 		bool _callHome                       = false;
 
 		bool _tryToConn                      = false;   // try to connect to wifi bool
 		bool _tryToConnFail                  = false;   // try to connect to wifi bool
 		bool _connected                      = false;   // wifi connection status bool
-		bool _tryToConf                      = false;   // try to confirm device registration bool
-		int _confirmed                       = false;   // confirmed status bool
+		//bool _tryToConf                      = false;   // try to confirm device registration bool
+		//int _confirmed                       = false;   // confirmed status bool
 		bool _writeConfig                    = false;
 		bool _changeMode                     = false;
 
@@ -325,6 +375,7 @@
 		THandlerFunction _firstBootCallback;
 		//THandlerFunction _wifiConnectedCallback;
 		//THandlerFunction _wifiDisonnectedCallback;
+
 
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
@@ -344,24 +395,28 @@
 		*/
 
 		void firstBoot(char ea);
+
+		//void readPref();
+		//void writePref();
 		void printBoardInfo();
 		void processField();
-		void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
+		//void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
 
 		String strWifiScan();
-
-		void servHdlRoot(AsyncWebServerRequest *request);
-		void servHdlDevInfo(AsyncWebServerRequest *request);
+		String servHdlRoot();
+		String servHdlDevInfo();
+		String servHdlAppInfo();
 		#if defined  ESP8266
-			void servHdlFngPrintSave(AsyncWebServerRequest *request);
+			String servHdlFngPrintSave(String fngprint);
 		#endif
-		void servHdlWifiScan(AsyncWebServerRequest *request);
-		void servHdlWifiSave(AsyncWebServerRequest *request);
-		void servHdlAppInfo(AsyncWebServerRequest *request);
-		void servHdlAppSave(AsyncWebServerRequest *request);
-		//void servHdlDevSave(AsyncWebServerRequest *request);
 
-		void hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type = "text/html");
+		//String servHdlWifiScan();
+		String servHdlWifiSave(String newSSID, String newPass, int apNr=0);
+		String servHdlAppSave(AsyncWebServerRequest *request);
+		String servHdlactcodeSave(String actcode="");
+
+		///void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
+		//int  getDevConf();
 
 		void updateLoop();
 		bool isModeButtonPressed();
@@ -369,11 +424,23 @@
 		ModeButtonState buttonLoop();
 
 
-
+		friend class configServer;
 
 		/** 
 			------ ------ ------ ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ ------ ------ ------
 		*/
+
+		/* ------ CHANGE CONFIG VALUES   
+		template <typename T, typename T2> bool SetConfigValue(T &a, T2 &b, bool &changeFlag = _boolDefaulValue) {
+			if (a != b) {
+				a = b;
+				changeFlag = true;
+				return true;
+			} else {
+				return false;
+			}
+		}
+*/
 		bool SetConfigValueCharArray(char* a, String &b, int len, bool &changeFlag) {
 			if (b != a) {
 				b.toCharArray(a, len);
@@ -395,7 +462,7 @@
 				return String("[" + String(value, DEC) + "]");
 			}
 		}
-	
+		//friend class configServer;
 	};
 
 #endif
