@@ -26,7 +26,7 @@ Nextion baudrate | 115200 / 57600 <- seems more stable
 </br>NEXT_BAUD	57600
 </br></br>
 
-## Note on baudrates
+## Note on baudrates from the author of the ESPNexUpload library
 - Nextion <-> ESP8266 communication seems to be quite fault prone. 
 - With ESP8266 arduino core v2.4.0: Doesn't work with 115200 baudrate. 
 57600 seems to work fine. 
