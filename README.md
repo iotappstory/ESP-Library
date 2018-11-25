@@ -1,9 +1,10 @@
-This is a beta for testing OTA updates to Nextion Displays</br></br>
+This is a beta for testing OTA updates to Nextion Displays. If you want to test this beta comment your IAS username in this <a href="https://github.com/iotappstory/ESP-Library/issues/86">issue</a> and we will add a nextion upload field to your account so you can test ota updates to your screen.</br></br>
 
 ## Prerequisites
 #### ESP8266
 - <a href="https://github.com/Nredor/ESPNexUpload" target="_blank">ESPNexUpload</a>
 - SoftwareSerial
+</br></br>
 
 
 ## ESP8266 only
