@@ -247,18 +247,18 @@
 		_client.stop();
 		
 		
-		SoftwareSerial softSerial(5, 4); /* For Wemos D1 mini RX:D1/5, TX:D2/4 */
-		ESPNexUpload nex_download(updateFileName.c_str(), 115200, &softSerial);
+		SoftwareSerial softSerial(NEXT_RX, NEXT_TX); /* For Wemos D1 mini RX:D1/5, TX:D2/4 */
+		ESPNexUpload nex_download(updateFileName.c_str(), NEXT_BAUD, &softSerial);
 
 		// get nextion update status
 		String status = "";
 		bool result = nex_download.upload(status);
 		
-		// reset nextion device
-    softSerial.print("rest");
-    softSerial.write(0xFF);
-    softSerial.write(0xFF);
-    softSerial.write(0xFF);
+		// soft reset nextion device
+		softSerial.print("rest");
+		softSerial.write(0xFF);
+		softSerial.write(0xFF);
+		softSerial.write(0xFF);
 		
 		// end softSerial connection
 		softSerial.end();
@@ -274,6 +274,12 @@
 	 
 			return false;
 		}
+		
+		// hard reset nextion device
+		//delay(800);
+		//digitalWrite(NEXT_RES, LOW);
+		//delay(300);
+		//digitalWrite(NEXT_RES, HIGH);
 
 		
 		// on succesfull firmware installation
