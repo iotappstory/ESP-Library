@@ -52,94 +52,94 @@ class ESPNexUpload
 {
 public: /* methods */
 
-    /**
-     * Constructor. 
-     * 
-     * @param file_name - tft file name. 
-     * @param download_baudrate - set download baudrate.
-     */
-		#if defined ESP8266
-			ESPNexUpload(const char *file_name,uint32_t download_baudrate, SoftwareSerial *softSerial);
-		#else
-			ESPNexUpload(const char *file_name,uint32_t download_baudrate, HardwareSerial *softSerial);
-		#endif
+	/**
+		* Constructor. 
+		* 
+		* @param file_name - tft file name. 
+		* @param download_baudrate - set download baudrate.
+	*/
+	#if defined ESP8266
+		ESPNexUpload(const char *file_name,uint32_t download_baudrate, SoftwareSerial *softSerial);
+	#else
+		ESPNexUpload(const char *file_name,uint32_t download_baudrate, HardwareSerial *softSerial);
+	#endif
     
     
-    /**
-     * destructor. 
-     * 
-     */
+	/**
+		* destructor. 
+		* 
+	*/
     ~ESPNexUpload(){}
     
-    /*
-     * start download.
-     *
-     * @return true if success, false for failure.
-     */
+	/*
+		* start download.
+		*
+		* @return true if success, false for failure.
+	*/
     bool upload();
     bool upload(String &statusMessage);
 
 private: /* methods */
 
-    /*
-     * get communicate baudrate. 
-     * 
-     * @return communicate baudrate.
-     *
-     */
+	/*
+		* get communicate baudrate. 
+		* 
+		* @return communicate baudrate.
+		*
+	*/
     uint16_t _getBaudrate(void);
     
-    /*
-     * check tft file.
-     *
-     * @return true if success, false for failure. 
-     */
+	/*
+		* check tft file.
+		*
+		* @return true if success, false for failure. 
+	*/
     bool _checkFile(void);
 
-    /*
-     * search communicate baudrate.
-     *
-     * @param baudrate - communicate baudrate.
-     *   
-     * @return true if success, false for failure. 
-     */
+	/*
+		* search communicate baudrate.
+		*
+		* @param baudrate - communicate baudrate.
+		*   
+		* @return true if success, false for failure. 
+	*/
     bool _searchBaudrate(uint32_t baudrate);
 
-    /*
-     * set download baudrate.
-     *
-     * @param baudrate - set download baudrate.
-     *   
-     * @return true if success, false for failure. 
-     */
+	/*
+		* set download baudrate.
+		*
+		* @param baudrate - set download baudrate.
+		*   
+		* @return true if success, false for failure. 
+	*/
     bool _setDownloadBaudrate(uint32_t baudrate);
     
-    /**
-     * start dowload tft file to nextion. 
-     * 
-     * @return none. 
-     */
+	/**
+		* start dowload tft file to nextion. 
+		* 
+		* @return none. 
+	*/
     bool _downloadTftFile(void);
     
-    /*
-     * Send command to Nextion.
-     *
-     * @param cmd - the string of command.
-     *
-     * @return none.
-     */
+	/*
+		* Send command to Nextion.
+		*
+		* @param cmd - the string of command.
+		*
+		* @return none.
+	*/
     void sendCommand(const char* cmd);
 
-    /*
-     * Receive string data. 
-     * 
-     * @param buffer - save string data.  
-     * @param timeout - set timeout time. 
-     * @param recv_flag - if recv_flag is true,will braak when receive 0x05.
-     *
-     * @return the length of string buffer.
-     *
-     */   
+	/*
+		* Receive string data. 
+		* 
+		* @param buffer - save string data.  
+		* @param timeout - set timeout time. 
+		* @param recv_flag - if recv_flag is true,will braak when receive 0x05.
+		*
+		* @return the length of string buffer.
+		*
+	*/   
     uint16_t recvRetString(String &string, uint32_t timeout = 500,bool recv_flag = false);
     
 private: /* data */ 
