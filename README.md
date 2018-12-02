@@ -2,7 +2,6 @@ This is a beta for testing OTA updates to Nextion Displays. If you want to test 
 
 ## Prerequisites
 #### ESP8266
-- <a href="https://github.com/Nredor/ESPNexUpload" target="_blank">ESPNexUpload</a>
 - SoftwareSerial
 </br></br>
 
