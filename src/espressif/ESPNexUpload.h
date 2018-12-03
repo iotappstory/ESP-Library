@@ -31,12 +31,10 @@
 #ifndef __ESPNEXUPLOAD_H__
 #define __ESPNEXUPLOAD_H__
 #include <Arduino.h>
-#include <FS.h>
 #include <IOTAppStory.h>								// IAS.com library
 #if defined ESP8266
 	#include <SoftwareSerial.h>
 #else
-	#include <SPIFFS.h>	
 	#include <HardwareSerial.h>
 #endif
 /**
@@ -59,9 +57,9 @@ public: /* methods */
 		* @param download_baudrate - set download baudrate.
 	*/
 	#if defined ESP8266
-		ESPNexUpload(const char *file_name,uint32_t download_baudrate, SoftwareSerial *softSerial);
+		ESPNexUpload(WiFiClientSecure file_name, uint32_t file_size, uint32_t download_baudrate, SoftwareSerial *softSerial);
 	#else
-		ESPNexUpload(const char *file_name,uint32_t download_baudrate, HardwareSerial *softSerial);
+		ESPNexUpload(WiFiClientSecure file_name, uint32_t file_size, uint32_t download_baudrate, HardwareSerial *softSerial);
 	#endif
     
     
@@ -94,7 +92,7 @@ private: /* methods */
 		*
 		* @return true if success, false for failure. 
 	*/
-    bool _checkFile(void);
+    //bool _checkFile(void);
 
 	/*
 		* search communicate baudrate.
@@ -145,14 +143,14 @@ private: /* methods */
 private: /* data */ 
     uint32_t _baudrate; /*nextion serail baudrate*/
     const char *_file_name; /*nextion tft file name*/
-    File _myFile; /*nextion tft file*/
+    WiFiClientSecure _myFile; /*nextion tft file*/
     uint32_t _undownloadByte; /*undownload byte of tft file*/
     uint32_t _download_baudrate; /*download baudrate*/
     #if defined ESP8266
-			SoftwareSerial *nexSerial;
-		#else
-			HardwareSerial *nexSerial;
-		#endif
+		SoftwareSerial *nexSerial;
+	#else
+		HardwareSerial *nexSerial;
+	#endif
 };
 /**
  * @}
