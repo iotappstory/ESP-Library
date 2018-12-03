@@ -29,16 +29,14 @@
  */
 
 #include "ESPNexUpload.h"
-#include <FS.h>
 #include <IOTAppStory.h>								// IAS.com library
 #if defined ESP8266
 	#include <SoftwareSerial.h>
 #else
-	#include <SPIFFS.h>	
 	#include <HardwareSerial.h>
 #endif
 
-#define DEBUG_SERIAL_ENABLE
+//#define DEBUG_SERIAL_ENABLE
 
 #ifdef DEBUG_SERIAL_ENABLE
 #define dbSerialPrint(a)    Serial.print(a)
@@ -53,14 +51,15 @@
 
 
 #if defined ESP8266
-	ESPNexUpload::ESPNexUpload(const char *file_name,uint32_t download_baudrate, SoftwareSerial *softSerial)
+	ESPNexUpload::ESPNexUpload(WiFiClientSecure file_name, uint32_t file_size, uint32_t download_baudrate, SoftwareSerial *softSerial)
 #else
-	ESPNexUpload::ESPNexUpload(const char *file_name,uint32_t download_baudrate, HardwareSerial *softSerial)
+	ESPNexUpload::ESPNexUpload(WiFiClientSecure file_name, uint32_t file_size, uint32_t download_baudrate, HardwareSerial *softSerial)
 #endif
 {
-    _file_name = file_name; 
-    _download_baudrate = download_baudrate;
-    nexSerial = softSerial;
+    _myFile 					= file_name; 
+		_undownloadByte 		= file_size;
+    _download_baudrate 	= download_baudrate;
+    nexSerial 					= softSerial;
 }
 
 bool ESPNexUpload::upload(void) {
@@ -71,12 +70,14 @@ bool ESPNexUpload::upload(void) {
 bool ESPNexUpload::upload(String &statusMessage)
 {
     dbSerialBegin(115200);
-    if(!_checkFile())
+    /*
+		if(!_checkFile())
     {
         dbSerialPrintln("checkFile error");
         statusMessage = "checkFile error";
         return false;
     }
+		*/
 
     if(_getBaudrate() == 0)
     {
@@ -104,6 +105,7 @@ bool ESPNexUpload::upload(String &statusMessage)
 
 uint16_t ESPNexUpload::_getBaudrate(void)
 {
+		yield();
     _baudrate = 0;
     uint32_t baudrate_array[7] = {115200,19200,9600,57600,38400,4800,2400};
     for(uint8_t i = 0; i < 7; i++)
@@ -117,7 +119,7 @@ uint16_t ESPNexUpload::_getBaudrate(void)
     }
     return _baudrate;
 }
-
+/*
 bool ESPNexUpload::_checkFile(void)
 {
     if (SPIFFS.exists(_file_name)) { 
@@ -133,10 +135,11 @@ bool ESPNexUpload::_checkFile(void)
     }
     return 0;
 }
-
+*/
 bool ESPNexUpload::_searchBaudrate(uint32_t baudrate)
 {
-    String string = String("");  
+    yield();
+		String string = String("");  
 
 
 		nexSerial->begin(baudrate);
@@ -153,7 +156,8 @@ bool ESPNexUpload::_searchBaudrate(uint32_t baudrate)
 
 void ESPNexUpload::sendCommand(const char* cmd)
 {
-    while (nexSerial->available())
+    yield();
+		while (nexSerial->available())
     {
         nexSerial->read();
     }
@@ -200,7 +204,8 @@ uint16_t ESPNexUpload::recvRetString(String &string, uint32_t timeout,bool recv_
 
 bool ESPNexUpload::_setDownloadBaudrate(uint32_t baudrate)
 {
-    String string = String(""); 
+    yield();
+		String string = String(""); 
     String cmd = String("");
     
     String filesize_str = String(_undownloadByte,10);
@@ -224,7 +229,7 @@ bool ESPNexUpload::_setDownloadBaudrate(uint32_t baudrate)
 
 bool ESPNexUpload::_downloadTftFile(void)
 {
-	
+		yield();
 		nexSerial->begin(57600);
 		
     uint8_t c;
