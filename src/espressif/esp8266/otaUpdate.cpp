@@ -227,45 +227,15 @@
 	/* ----------------------------------------------------------------------------------------- */
 	
 	bool otaUpdate::installNEXTION(){
-		
-		// Using always same name for updates
-		String updateFileName 	= F("/update.tft");
-		
-		File fsUploadFile = SPIFFS.open(updateFileName, "w");            // Open the file for writing in SPIFFS (create if it doesn't exist)
-		
-		if (!fsUploadFile) {
-			error = F("Could not write file to SPIFFS");
-			return false;
-		}
-		
-		while (_client.available()) {
-			char c = _client.read();
-			fsUploadFile.write(c);
-		}
-
-		fsUploadFile.close();
-		_client.stop();
-		
+		yield();
 		
 		SoftwareSerial softSerial(NEXT_RX, NEXT_TX); /* For Wemos D1 mini RX:D1/5, TX:D2/4 */
-		ESPNexUpload nex_download(updateFileName.c_str(), NEXT_BAUD, &softSerial);
+		ESPNexUpload nex_download(_client, _totalSize, NEXT_BAUD, &softSerial);
 
 		// get nextion update status
 		String status = "";
 		bool result = nex_download.upload(status);
-		
-		// soft reset nextion device
-		softSerial.print("rest");
-		softSerial.write(0xFF);
-		softSerial.write(0xFF);
-		softSerial.write(0xFF);
-		
-		// end softSerial connection
-		softSerial.end();
-		
-		// remove temp file from SPIFFS
-		SPIFFS.remove(updateFileName);
-		SPIFFS.end();
+
 
 		// if nextion update failed return false & error
 		if(!result){
@@ -275,11 +245,19 @@
 			return false;
 		}
 		
-		// hard reset nextion device
-		//delay(800);
-		//digitalWrite(NEXT_RES, LOW);
-		//delay(300);
-		//digitalWrite(NEXT_RES, HIGH);
+		// wait for the nextion to finish internal processes
+		delay(1600);
+
+		
+		
+		// soft reset nextion device
+		softSerial.print("rest");
+		softSerial.write(0xFF);
+		softSerial.write(0xFF);
+		softSerial.write(0xFF);
+		
+		// end softSerial connection
+		softSerial.end();
 
 		
 		// on succesfull firmware installation
