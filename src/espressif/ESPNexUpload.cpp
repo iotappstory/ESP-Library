@@ -229,8 +229,8 @@ bool ESPNexUpload::_setDownloadBaudrate(uint32_t baudrate)
 
 bool ESPNexUpload::_downloadTftFile(void)
 {
-		yield();
-		nexSerial->begin(57600);
+	yield();
+	nexSerial->begin(_download_baudrate);
 		
     uint8_t c;
     uint16_t send_timer = 0;
