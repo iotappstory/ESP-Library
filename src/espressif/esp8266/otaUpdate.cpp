@@ -181,33 +181,7 @@
 		}else if(_command == U_SPIFFS){
 			// current SPIFFS free space
 			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
-			
-		}else if(_command == U_NEXTION){
-			// mount SPIFFS and get free space
-			if (!SPIFFS.begin()) {
-				error = F("Error: Could not mount SPIFFS");
-				return false;
-			}
-			
-			FSInfo fs_info;
-			SPIFFS.info(fs_info);
-			freeSpace = fs_info.totalBytes - fs_info.usedBytes;
 		}
-
-
-		/**
-			Check if there is enough free space for the received sketch / SPIFFS "file"
-		*/
-//		if(_totalSize > freeSpace){
-//			#if DEBUG_LVL >= 3
-//				DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, _totalSize);
-//			#endif
-//			
-//			#if DEBUG_LVL >= 2
-//				error = F("Error: Not enough space");
-//			#endif
-//		  return false;
-//		}
 		
 		if(_command == U_NEXTION){
 			return installNEXTION();
