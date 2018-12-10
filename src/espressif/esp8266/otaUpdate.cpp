@@ -198,16 +198,16 @@
 		/**
 			Check if there is enough free space for the received sketch / SPIFFS "file"
 		*/
-		if(_totalSize > freeSpace){
-			#if DEBUG_LVL >= 3
-				DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, _totalSize);
-			#endif
-			
-			#if DEBUG_LVL >= 2
-				error = F("Error: Not enough space");
-			#endif
-		  return false;
-		}
+//		if(_totalSize > freeSpace){
+//			#if DEBUG_LVL >= 3
+//				DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, _totalSize);
+//			#endif
+//			
+//			#if DEBUG_LVL >= 2
+//				error = F("Error: Not enough space");
+//			#endif
+//		  return false;
+//		}
 		
 		if(_command == U_NEXTION){
 			return installNEXTION();
