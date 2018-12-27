@@ -6,12 +6,12 @@
 		#include <WiFiClientSecure.h>
 		#include <StreamString.h>
 											 
-
-		#include <FS.h>
-		#include <SoftwareSerial.h>
-		#include "../ESPNexUpload.h"
-
-		#define U_NEXTION 300
+		#if NEXT_OTA == true
+			#include <ESPNexUpload.h>
+			#define U_NEXTION 300
+		#endif
+		
+		
 		
 		struct strConfig;
 		extern "C" uint32_t _SPIFFS_start;
