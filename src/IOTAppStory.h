@@ -58,8 +58,8 @@
 		
 		#include <stdio.h>
 		
-		#include "ardmkr/boardInfo.h"
-		#include "ardmkr/otaUpdate.h"
+		//#include "ardmkr/boardInfo.h"
+		//#include "ardmkr/otaUpdate.h"
 		
 		#include <FlashAsEEPROM.h>
 	#endif
@@ -127,6 +127,9 @@
 		#endif
 		#if CFG_AUTHENTICATE == true
 			char cfg_pass[17];
+		#endif
+		#if NEXT_OTA == true
+			char next_md5[33];
 		#endif
 		const char magicBytes[4];
 	} ;
@@ -242,6 +245,9 @@
 			#endif
 			#if CFG_AUTHENTICATE == true
 				"admin",
+			#endif
+			#if NEXT_OTA == true
+				"00000000000000000000000000000000",
 			#endif
 			"CFG"  // Magic Bytes
 		};
