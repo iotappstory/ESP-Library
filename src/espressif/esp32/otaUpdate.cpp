@@ -5,15 +5,13 @@
 	#include <StreamString.h>
 	#include <Update.h>
 	
-	#include <FS.h>														// esp32 core SPIFFS library
-	#include <SPIFFS.h>	
-	
 	otaUpdate::otaUpdate(strConfig &config, int command){
 		_config = &config;
 		_command = command;
 	}
 
 
+	
 	bool otaUpdate::getUpdate(){
 		
 		#if DEBUG_LVL >= 2
@@ -55,14 +53,24 @@
 		}
 		*/
 		
-		String mode;
+		String mode, md5;
 		if(_command == U_FLASH){
 			mode = "sketch";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_SPIFFS){
 			mode = "spiffs";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_NEXTION){
 			mode = "nextion";
+			if(_config->next_md5 == ""){
+				md5 = "00000000000000000000000000000000";
+			}else{
+				md5 = _config->next_md5;
+			}
 		}	
+
+		DEBUG_PRINT(F("\n MD5: "));		
+		DEBUG_PRINTLN(_config->next_md5);		
 		
 		// This will send the request to the server
 		_client.print(String("GET ") + _updateFile + F(" HTTP/1.1\r\n") +
@@ -71,11 +79,12 @@
 				   F("\r\nx-ESP-STA-MAC: ") + WiFi.macAddress() +
 				   F("\r\nx-ESP-ACT-ID: ") + _config->actCode +
 				   F("\r\nx-ESP-LOCIP: ") + WiFi.localIP().toString() +
-				   //F("\r\nx-ESP-FREE-SPACE: ") + ESP.getFreeSketchSpace() +
-				   //F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
+				   F("\r\nx-ESP-FREE-SPACE: ") + ESP.getFreeSketchSpace() +
+				   F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
 
 
-				   //F("\r\nx-ESP-SKETCH-MD5: ") + ESP.getSketchMD5() +
+				   F("\r\nx-ESP-SKETCH-MD5: ") + ESP.getSketchMD5() +
+				   
 				   //F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
 				   //F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getSdkVersion() +
@@ -150,10 +159,11 @@
 
 			}else if(line == "\r") {
 				line.trim();
+				DEBUG_PRINTLN(F(" End of header"));
 				break;
 			} 
 		}
-		
+		/* */
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(F(" Extracted from header"));
 			DEBUG_PRINTLN(F(" ---------------------"));
@@ -178,7 +188,6 @@
 
 
 	
-	
 	bool otaUpdate::install(){
 		
 		DEBUG_PRINT(SER_INSTALLING);
@@ -190,26 +199,10 @@
 			Get free sketch / SPIFFS space
 		*/
 		int freeSpace;
-		/* not yet supported for the ESP32
+		
 		if(_command == U_FLASH){
 			// current FreeSketchSpace
 			freeSpace = ESP.getFreeSketchSpace();
-			
-		}else if(_command == U_SPIFFS){
-			// current SPIFFS free space
-			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
-			
-		}else 
-		*/
-	
-		if(_command == U_NEXTION){
-			// mount SPIFFS and get free space
-			if (!SPIFFS.begin()) {
-				error = F("Error: Could not mount SPIFFS");
-				return false;
-			}
-			
-			freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
 			
 			/**
 				Check if there is enough free space for the received sketch / SPIFFS "file"
@@ -225,75 +218,56 @@
 				return false;
 			}
 		}
-
-
-
 		
-		if(_command == U_NEXTION){
-			return installNEXTION();
-		}else{
-			return installESP();
+		
+		/* this will come with the next esp32 core release
+		else if(_command == U_SPIFFS){ not yet supported for the ESP32 
+			// current SPIFFS free space
+			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
+			
+		}else if(_command == U_NEXTION){
+			// mount SPIFFS and get free space
+			if (!SPIFFS.begin()) {
+				error = F("Error: Could not mount SPIFFS");
+				return false;
+			}
+			
+			freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
 		}
+		*/
 
+		#if NEXT_OTA == true
+			if(_command == U_NEXTION){
+				return installNEXTION();
+			}else{
+				return installESP();
+			}
+		#elif
+			return installESP();
+		#endif
 	}
 
-
 	
-	
-	
-	
-	
-	
-	/* ----------------------------------------------------------------------------------------- */
 	
 	bool otaUpdate::installNEXTION(){
 		
-		// Using always same name for updates
-		String updateFileName 	= F("/update.tft");
-		
-		File fsUploadFile = SPIFFS.open(updateFileName, "w");            // Open the file for writing in SPIFFS (create if it doesn't exist)
-		
-		if (!fsUploadFile) {
-			error = F("Could not write file to SPIFFS");
-			return false;
-		}
-		
-		while (_client.available()) {
-			char c = _client.read();
-			fsUploadFile.write(c);
-		}
-
-		fsUploadFile.close();
-		_client.stop();
-		
-		
-		HardwareSerial softSerial(2); /* (5, 4) For Wemos D1 mini RX:D1/5, TX:D2/4 */
-		ESPNexUpload nex_download(updateFileName.c_str(), 115200, &softSerial);
-
-		// get nextion update status
-		String status = "";
-		bool result = nex_download.upload(status);
-		
-		// reset nextion device
-    softSerial.print("rest");
-    softSerial.write(0xFF);
-    softSerial.write(0xFF);
-    softSerial.write(0xFF);
-		
-		// end softSerial connection
-		softSerial.end();
-		
-		// remove temp file from SPIFFS
-		SPIFFS.remove(updateFileName);
-		SPIFFS.end();
+		ESPNexUpload nextion(NEXT_BAUD);
 
 		// if nextion update failed return false & error
-		if(!result){
-			error = F("Error: ");
-			error += status;					 
+		if(!nextion.prepairUpload(_totalSize)){
+			error = "Error: " + nextion.statusMessage;
 	 
 			return false;
 		}
+
+		// if nextion update failed return false & error
+		if(!nextion.upload(_client)){
+			error = "Error: " + nextion.statusMessage;
+	 
+			return false;
+		}
+
+		nextion.end();
 
 		
 		// on succesfull firmware installation
@@ -301,17 +275,13 @@
 			DEBUG_PRINT(F(" Updated Nextion to: "));
 			DEBUG_PRINTLN(_xname+" v"+ _xver);
 		#endif
-
+		
+		// update nextion md5
+		_xmd5.toCharArray(_config->next_md5, 33);
+		
 		return true;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	
 	bool otaUpdate::installESP(){
