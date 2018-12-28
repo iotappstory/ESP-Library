@@ -36,13 +36,20 @@
 			return false;
 		}
 		
-		String mode;
+		String mode, md5;
 		if(_command == U_FLASH){
 			mode = "sketch";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_SPIFFS){
 			mode = "spiffs";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_NEXTION){
 			mode = "nextion";
+			if(_config->next_md5 == ""){
+				md5 = "00000000000000000000000000000000";
+			}else{
+				md5 = _config->next_md5;
+			}
 		}	
 	
 		
@@ -57,7 +64,7 @@
 				   F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
 
 
-				   F("\r\nx-ESP-SKETCH-MD5: ") + ESP.getSketchMD5() +
+				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
 				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
 				   F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getCoreVersion() +
@@ -131,7 +138,6 @@
 				_xmd5 = line;
 
 			}else if(line == "\r") {
-				line.trim();
 				break;
 			} 
 		}
@@ -202,7 +208,7 @@
 			}else{
 				return installESP();
 			}
-		#elif
+		#else
 			return installESP();
 		#endif
 	}
@@ -212,6 +218,11 @@
 	bool otaUpdate::installNEXTION(){
 		
 		ESPNexUpload nextion(NEXT_BAUD);
+		
+		// what to do during update progress *optional!
+		nextion.setUpdateProgressCallback([](){
+			Serial.print(F("."));
+		});
 
 		// if nextion update failed return false & error
 		if(!nextion.prepairUpload(_totalSize)){
