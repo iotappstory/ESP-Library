@@ -542,7 +542,6 @@ void IOTAppStory::iotUpdater(int command) {
 			// reboot
 			ESP.restart();
 		}
-		DEBUG_PRINTLN(" end iotUpdater ");
 	}
 }
 
@@ -1341,71 +1340,3 @@ String IOTAppStory::servHdlactcodeSave(String actcode) {
 
 	return retHtml;
 }
-
-
-
-/** default httpclient 
-void IOTAppStory::httpClientSetup(HTTPClient& http, String url, bool spiffs) {
-	#if HTTPS == true
-	
-		#if defined  ESP8266
-			http.begin(url, config.sha1);
-		#elif defined ESP32
-			http.begin(url, ROOT_CA);
-		#endif
-		
-	#else
-		http.begin(url);
-	#endif
-	
-	// use HTTP/1.0 the update handler does not support transfer encoding
-	http.useHTTP10(true);
-	http.setTimeout(8000);
-	http.setUserAgent(F("ESP-http-Update"));
-
-	http.addHeader(F("x-ESP-STA-MAC"), WiFi.macAddress());
-	http.addHeader(F("x-ESP-ACT-ID"), String(config.actCode));
-	http.addHeader(F("x-ESP-LOCIP"), String(WiFi.localIP().toString()));
-	
-	#if defined ESP32
-		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getSdkVersion()));
-	#elif defined ESP8266
-		http.addHeader(F("x-ESP-FREE-SPACE"), String(ESP.getFreeSketchSpace()));
-		http.addHeader(F("x-ESP-SKETCH-SIZE"), String(ESP.getSketchSize()));
-		http.addHeader(F("x-ESP-SKETCH-MD5"), String(ESP.getSketchMD5()));
-		http.addHeader(F("x-ESP-FLASHCHIP-ID"), String(ESP.getFlashChipId()));
-		http.addHeader(F("x-ESP-CHIP-ID"), String(ESP.getChipId()));
-		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getCoreVersion()));
-	#endif
-
-	
-	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
-	http.addHeader(F("x-ESP-VERSION"), String(config.appName) + " v" + config.appVersion);
-	
-	if(spiffs) {
-			http.addHeader(F("x-ESP-MODE"), F("spiffs"));
-	} else {
-			http.addHeader(F("x-ESP-MODE"), F("sketch"));
-	}
-}
-*/
-
-/** return page handler 
-void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String retHtml, String type) {
-	#if CFG_AUTHENTICATE == true
-	if(!request->authenticate("admin", config.cfg_pass)){ 
-		return request->requestAuthentication(); 
-	}else{
-	#endif
-		
-		AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
-		response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-		response->addHeader(F("Pragma"), F("no-cache"));
-		response->addHeader(F("Expires"), F("-1"));
-		request->send(response);
-	
-	#if CFG_AUTHENTICATE == true
-	}
-	#endif
-}
-*/
