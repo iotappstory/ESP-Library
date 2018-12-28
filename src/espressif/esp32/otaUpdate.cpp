@@ -69,9 +69,6 @@
 			}
 		}	
 
-		DEBUG_PRINT(F("\n MD5: "));		
-		DEBUG_PRINTLN(_config->next_md5);		
-		
 		// This will send the request to the server
 		_client.print(String("GET ") + _updateFile + F(" HTTP/1.1\r\n") +
 				   F("Host: ") + _updateHost + F("\r\nUser-Agent: ESP-http-Update") +
@@ -83,7 +80,7 @@
 				   F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
 
 
-				   F("\r\nx-ESP-SKETCH-MD5: ") + ESP.getSketchMD5() +
+				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
 				   
 				   //F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
 				   //F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
@@ -158,14 +155,12 @@
 				_xmd5 = line;
 
 			}else if(line == "\r") {
-				line.trim();
-				DEBUG_PRINTLN(F(" End of header"));
 				break;
 			} 
 		}
 		/* */
 		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN(F(" Extracted from header"));
+			DEBUG_PRINTLN(F("\n Extracted from header"));
 			DEBUG_PRINTLN(F(" ---------------------"));
 			DEBUG_PRINT(F(" Content-Length: "));
 			DEBUG_PRINTLN(_totalSize);
@@ -242,7 +237,7 @@
 			}else{
 				return installESP();
 			}
-		#elif
+		#else
 			return installESP();
 		#endif
 	}
@@ -252,6 +247,13 @@
 	bool otaUpdate::installNEXTION(){
 		
 		ESPNexUpload nextion(NEXT_BAUD);
+		
+		// what to do during update progress *optional!
+		nextion.setUpdateProgressCallback([](){
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(F("."));
+			#endif
+		});
 
 		// if nextion update failed return false & error
 		if(!nextion.prepairUpload(_totalSize)){
