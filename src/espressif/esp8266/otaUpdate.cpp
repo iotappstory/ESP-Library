@@ -221,7 +221,9 @@
 		
 		// what to do during update progress *optional!
 		nextion.setUpdateProgressCallback([](){
-			Serial.print(F("."));
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(F("."));
+			#endif
 		});
 
 		// if nextion update failed return false & error
