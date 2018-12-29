@@ -19,12 +19,10 @@
 		#include "espressif/esp32/boardInfo.h"
 		#include "espressif/esp32/otaUpdate.h"
 		#include "espressif/configServer.h"
-		///#include <AsyncTCP.h>                    		// https://github.com/me-no-dev/AsyncTCP
 		#include <HTTPClient.h>
 		#include <Update.h>
 		
 		//#include <DNSServer.h> 
-		///#include <FS.h>
 		#include <EEPROM.h>
 		#include <ESPAsyncWebServer.h>              // https://github.com/me-no-dev/ESPAsyncWebServer
 		
@@ -38,11 +36,9 @@
 		#include "espressif/esp8266/boardInfo.h"
 		#include "espressif/esp8266/otaUpdate.h"
 		#include "espressif/configServer.h"
-		///#include <ESPAsyncTCP.h>										// https://github.com/me-no-dev/ESPAsyncTCP
 		#include <ESP8266HTTPClient.h>
 		
 		//#include <DNSServer.h> 
-		///#include <FS.h>
 		#include <EEPROM.h>
 		#include <ESPAsyncWebServer.h>							// https://github.com/me-no-dev/ESPAsyncWebServer
 
@@ -58,8 +54,8 @@
 		
 		#include <stdio.h>
 		
-		#include "ardmkr/boardInfo.h"
-		#include "ardmkr/otaUpdate.h"
+		//#include "ardmkr/boardInfo.h"
+		//#include "ardmkr/otaUpdate.h"
 		
 		#include <FlashAsEEPROM.h>
 	#endif
@@ -98,15 +94,7 @@
 
 	/**
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
-	*
-	#ifndef ESP32
-		typedef struct {
-			byte markerFlag;
-			int bootTimes;
-			char boardMode = 'N';                // Normal operation or Configuration mode?
-		} rtcMemDef __attribute__((aligned(4)));
-	#endif
-*/
+	**/
 	typedef struct eFields{
 		const char *fieldLabel;
 		char* (*varPointer);
@@ -127,6 +115,9 @@
 		#endif
 		#if CFG_AUTHENTICATE == true
 			char cfg_pass[17];
+		#endif
+		#if NEXT_OTA == true
+			char next_md5[33];
 		#endif
 		const char magicBytes[4];
 	} ;
@@ -161,7 +152,7 @@
 	const char HTTP_AP_CSS[] PROGMEM      = "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#m,#m a{color:#000}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:14px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc}input:focus{border-color:#fcbc12}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;float:right;background:#fcbc12;border-radius:4px;border:0;font-size:16px;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}table{width:100%}table tr:nth-child(2n-1){background:#1A1A1A}table td{padding:3px 4px}table td:nth-child(3):not([data-e=\"7\"]){width:20px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAABFElEQVQ4je2Pu07DUBBEz/oGBAUPG3dpEEI0CApEjSIlvIrwP6Hj9TN8QmxACKhIgeySHtFgRAMKvvZSxJFIcIoISqZZaWdnZ0YoQRr4NSFvIWwUq47mejqx83o3fCs/xKF7Jkir4N6KOQtkAkemkZx8v3cGxd6eIIfAs8K+qSeuuU1c0CbwonCcBn6tLDUA2YUX29DTtL1QH+bspX9gQ09t6N2XVtCbOTfrmkQgNo1kvczABu4jIkvmY2pGmk/vAxXsp6wBqEg8MqIjEeCk093V/qoCoOdMZrmz3M+jV/OLpRUztOear2iHB9kkFQAbetfA1kjnMijtynayW1SQ6lhiQIRqL80v8f/g7x5oNK5QlQjgCxBXWhCbZi53AAAAAElFTkSuQmCC) right center no-repeat;background-width:16px}table td:nth-child(3)[data-e=\"7\"]{background:0 0}</style>";
 
 	const char HTTP_WIFI_SCAN[] PROGMEM   = "<tr><td onclick=\"c(this);\">{s}</td><td>{q} dBm</td><td data-e=\"{e}\"></td></tr>";
-	const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=50 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
+	const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
 
 	const char HTTP_APP_INFO[] PROGMEM    = "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
 
@@ -221,10 +212,6 @@
 			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
 		*/
 
-		#ifndef ESP32
-			//rtcMemDef rtcMem;
-		#endif
-
 		int bootTimes;
 		char boardMode = 'N';                    // Normal operation or Configuration mode?
 
@@ -242,6 +229,9 @@
 			#endif
 			#if CFG_AUTHENTICATE == true
 				"admin",
+			#endif
+			#if NEXT_OTA == true
+				"00000000000000000000000000000000",
 			#endif
 			"CFG"  // Magic Bytes
 		};
@@ -295,7 +285,6 @@
 		void iotUpdater(int command = U_FLASH);
 		void addField(char* &defaultVal,const char *fieldLabel, int length, char type = 'L');
 		//void iasLog(String msg = "");
-		///void runConfigServer();
 		int dPinConv(String orgVal);
 
 		void onFirstBoot(THandlerFunction fn);              // called at the end of firstBoot
@@ -314,15 +303,8 @@
 
 		void onConfigMode(THandlerFunction fn);             // called when the app is about to enter in configuration mode
 
-		
-		//friend class configServer;
 
 		private:
-		#if defined ESP8266 || defined ESP32
-			//std::unique_ptr<DNSServer>        dnsServer;
-			//std::unique_ptr<AsyncWebServer> 	server;
-			//std::unique_ptr<Preferences> 			preferences;
-		#endif
 		
 		#if WIFI_MULTI == true
 			#ifdef ESP32
@@ -334,16 +316,7 @@
 
 		const char *_compDate;
 		const int _modeButton;
-		unsigned int _nrXF                   = 0;                         // nr of extra fields required in the config manager
-
-		/*
-		const char* _updateHost              = "iotappstory.com";         // ota update host
-		#if defined  ESP8266
-			const char* _updateFile          	= "/ota/esp8266-v2.0.1.php"; // loc1, file at host that handles 8266 updates
-		#elif defined ESP32
-			const char* _updateFile          	= "/ota/esp32-v1.php";       // loc1, file at host that handles 32 updates
-		#endif
-		*/
+		unsigned int _nrXF                   = 0;       // nr of extra fields required in the config manager
 
 		bool _updateOnBoot                   = true;    // update on boot? (end of begin();)
 		bool _automaticConfig                = true;    // automaticly go to config on boot if there is no wifi connection present
@@ -351,14 +324,11 @@
 		bool _setPreSet                      = false;   // ;) have there been any preSets set?
 		bool _setDeviceName                  = false;   // is the device name set?
 		bool _configReaded                   = false;   // has the config already been read?
-		//const static bool _boolDefaulValue   = false;
 		bool _callHome                       = false;
 
 		bool _tryToConn                      = false;   // try to connect to wifi bool
 		bool _tryToConnFail                  = false;   // try to connect to wifi bool
 		bool _connected                      = false;   // wifi connection status bool
-		//bool _tryToConf                      = false;   // try to confirm device registration bool
-		//int _confirmed                       = false;   // confirmed status bool
 		bool _writeConfig                    = false;
 		bool _changeMode                     = false;
 
@@ -375,7 +345,6 @@
 		THandlerFunction _firstBootCallback;
 		//THandlerFunction _wifiConnectedCallback;
 		//THandlerFunction _wifiDisonnectedCallback;
-
 
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
@@ -395,12 +364,9 @@
 		*/
 
 		void firstBoot(char ea);
-
-		//void readPref();
-		//void writePref();
 		void printBoardInfo();
 		void processField();
-		//void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
+
 
 		String strWifiScan();
 		String servHdlRoot();
@@ -409,8 +375,6 @@
 		#if defined  ESP8266
 			String servHdlFngPrintSave(String fngprint);
 		#endif
-
-		//String servHdlWifiScan();
 		String servHdlWifiSave(String newSSID, String newPass, int apNr=0);
 		String servHdlAppSave(AsyncWebServerRequest *request);
 		String servHdlactcodeSave(String actcode="");

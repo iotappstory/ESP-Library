@@ -1,8 +1,5 @@
 #ifdef  ESP8266
 	#include "otaUpdate.h"
-	#include <IOTAppStory.h>								// IAS.com library
-	#include <WiFiClientSecure.h>
-	#include <StreamString.h>
 	
 	otaUpdate::otaUpdate(strConfig &config, int command){
 		_config = &config;
@@ -10,6 +7,7 @@
 	}
 
 
+	
 	bool otaUpdate::getUpdate(){
 		
 		#if DEBUG_LVL >= 2
@@ -38,13 +36,20 @@
 			return false;
 		}
 		
-		String mode;
+		String mode, md5;
 		if(_command == U_FLASH){
 			mode = "sketch";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_SPIFFS){
 			mode = "spiffs";
+			md5 = ESP.getSketchMD5();
 		}else if(_command == U_NEXTION){
 			mode = "nextion";
+			if(_config->next_md5 == ""){
+				md5 = "00000000000000000000000000000000";
+			}else{
+				md5 = _config->next_md5;
+			}
 		}	
 	
 		
@@ -59,7 +64,7 @@
 				   F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
 
 
-				   F("\r\nx-ESP-SKETCH-MD5: ") + ESP.getSketchMD5() +
+				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
 				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
 				   F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getCoreVersion() +
@@ -133,7 +138,6 @@
 				_xmd5 = line;
 
 			}else if(line == "\r") {
-				line.trim();
 				break;
 			} 
 		}
@@ -162,7 +166,6 @@
 
 
 	
-	
 	bool otaUpdate::install(){
 		
 		DEBUG_PRINT(SER_INSTALLING);
@@ -182,23 +185,13 @@
 			// current SPIFFS free space
 			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
 			
-		}else if(_command == U_NEXTION){
-			// mount SPIFFS and get free space
-			if (!SPIFFS.begin()) {
-				error = F("Error: Could not mount SPIFFS");
-				return false;
-			}
-			
-			FSInfo fs_info;
-			SPIFFS.info(fs_info);
-			freeSpace = fs_info.totalBytes - fs_info.usedBytes;
 		}
 
 
 		/**
 			Check if there is enough free space for the received sketch / SPIFFS "file"
 		*/
-		if(_totalSize > freeSpace){
+		if(_command != U_NEXTION && _totalSize > freeSpace){
 			#if DEBUG_LVL >= 3
 				DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, _totalSize);
 			#endif
@@ -209,95 +202,58 @@
 		  return false;
 		}
 		
-		if(_command == U_NEXTION){
-			return installNEXTION();
-		}else{
+		#if NEXT_OTA == true
+			if(_command == U_NEXTION){
+				return installNEXTION();
+			}else{
+				return installESP();
+			}
+		#else
 			return installESP();
-		}
-
+		#endif
 	}
 
-
 	
-	
-	
-	
-	
-	
-	/* ----------------------------------------------------------------------------------------- */
 	
 	bool otaUpdate::installNEXTION(){
 		
-		// Using always same name for updates
-		String updateFileName 	= F("/update.tft");
+		ESPNexUpload nextion(NEXT_BAUD);
 		
-		File fsUploadFile = SPIFFS.open(updateFileName, "w");            // Open the file for writing in SPIFFS (create if it doesn't exist)
-		
-		if (!fsUploadFile) {
-			error = F("Could not write file to SPIFFS");
-			return false;
-		}
-		
-		while (_client.available()) {
-			char c = _client.read();
-			fsUploadFile.write(c);
-		}
-
-		fsUploadFile.close();
-		_client.stop();
-		
-		
-		SoftwareSerial softSerial(NEXT_RX, NEXT_TX); /* For Wemos D1 mini RX:D1/5, TX:D2/4 */
-		ESPNexUpload nex_download(updateFileName.c_str(), NEXT_BAUD, &softSerial);
-
-		// get nextion update status
-		String status = "";
-		bool result = nex_download.upload(status);
-		
-		// soft reset nextion device
-		softSerial.print("rest");
-		softSerial.write(0xFF);
-		softSerial.write(0xFF);
-		softSerial.write(0xFF);
-		
-		// end softSerial connection
-		softSerial.end();
-		
-		// remove temp file from SPIFFS
-		SPIFFS.remove(updateFileName);
-		SPIFFS.end();
+		// what to do during update progress *optional!
+		nextion.setUpdateProgressCallback([](){
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(F("."));
+			#endif
+		});
 
 		// if nextion update failed return false & error
-		if(!result){
-			error = F("Error: ");
-			error += status;					 
+		if(!nextion.prepairUpload(_totalSize)){
+			error = "Error: " + nextion.statusMessage;
 	 
 			return false;
 		}
-		
-		// hard reset nextion device
-		//delay(800);
-		//digitalWrite(NEXT_RES, LOW);
-		//delay(300);
-		//digitalWrite(NEXT_RES, HIGH);
 
+		// if nextion update failed return false & error
+		if(!nextion.upload(_client)){
+			error = "Error: " + nextion.statusMessage;
+	 
+			return false;
+		}
+
+		nextion.end();
 		
 		// on succesfull firmware installation
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINT(F(" Updated Nextion to: "));
 			DEBUG_PRINTLN(_xname+" v"+ _xver);
 		#endif
+		
+		// update nextion md5
+		_xmd5.toCharArray(_config->next_md5, 33);
 
 		return true;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	
 	bool otaUpdate::installESP(){

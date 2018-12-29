@@ -25,7 +25,6 @@
 	
 	#define HTTPS         					true	// Use HTTPS for OTA updates
 
-
 	// Nextion display
 	#define NEXT_OTA					true	// Do you want to OTA update your Nextion display? | true / false
 	
@@ -33,9 +32,12 @@
 		#define NEXT_RES				5	// Nextion reset pin | Default 5 / D1 | Use this pin to control a transistor or relay to "hard" reset your display(power) after updates
 		#define NEXT_RX					14	// Nextion RX pin | Default 14 / D5
 		#define NEXT_TX					12	// Nextion TX pin | Default 12 / D6
-		#define NEXT_BAUD				57600	// Nextion baudrate | 115200 / 57600 <- seems more stable
+		#define NEXT_BAUD				115200	// Nextion baudrate | 115200 / 57600
 	#elif defined ESP32
-		
+		#define NEXT_RES				5	// Nextion reset pin | Default 5 / D1 | Use this pin to control a transistor or relay to "hard" reset your display(power) after updates
+		#define NEXT_RX					16	// Nextion RX pin | Default 14 / D5
+		#define NEXT_TX					17	// Nextion TX pin | Default 12 / D6
+		#define NEXT_BAUD				115200	// Nextion baudrate | 115200 / 57600
 	#endif
  
 	// EERPOM & max nr of addable fields
