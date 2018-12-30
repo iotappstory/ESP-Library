@@ -55,15 +55,15 @@
 		
 		String mode, md5;
 		if(_command == U_FLASH){
-			mode = "sketch";
-			md5 = ESP.getSketchMD5();
+			mode = F("sketch");
+			//md5 = ESP.getSketchMD5();
 		}else if(_command == U_SPIFFS){
-			mode = "spiffs";
-			md5 = ESP.getSketchMD5();
+			mode = F("spiffs");
+			//md5 = ESP.getSketchMD5();
 		}else if(_command == U_NEXTION){
-			mode = "nextion";
+			mode = F("nextion");
 			if(_config->next_md5 == ""){
-				md5 = "00000000000000000000000000000000";
+				md5 = F("00000000000000000000000000000000");
 			}else{
 				md5 = _config->next_md5;
 			}
@@ -76,8 +76,8 @@
 				   F("\r\nx-ESP-STA-MAC: ") + WiFi.macAddress() +
 				   F("\r\nx-ESP-ACT-ID: ") + _config->actCode +
 				   F("\r\nx-ESP-LOCIP: ") + WiFi.localIP().toString() +
-				   F("\r\nx-ESP-FREE-SPACE: ") + ESP.getFreeSketchSpace() +
-				   F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
+				   //F("\r\nx-ESP-FREE-SPACE: ") + ESP.getFreeSketchSpace() +
+				   //F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
 
 
 				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
@@ -193,15 +193,14 @@
 		/**
 			Get free sketch / SPIFFS space
 		*/
+		/* this will come with the next esp32 core release
 		int freeSpace;
 		
 		if(_command == U_FLASH){
 			// current FreeSketchSpace
 			freeSpace = ESP.getFreeSketchSpace();
-			
-			/**
-				Check if there is enough free space for the received sketch / SPIFFS "file"
-			*/
+				
+			//Check if there is enough free space for the received sketch / SPIFFS "file"
 			if(_totalSize > freeSpace){
 				#if DEBUG_LVL >= 3
 					DEBUG_PRINTF_P(PSTR(" Error: Not enough space (%d) update size: %d"), freeSpace, _totalSize);
@@ -215,7 +214,7 @@
 		}
 		
 		
-		/* this will come with the next esp32 core release
+		
 		else if(_command == U_SPIFFS){ not yet supported for the ESP32 
 			// current SPIFFS free space
 			freeSpace = ((size_t) &_SPIFFS_end - (size_t) &_SPIFFS_start);
@@ -274,7 +273,7 @@
 		
 		// on succesfull firmware installation
 		#if DEBUG_LVL >= 2
-			DEBUG_PRINT(F(" Updated Nextion to: "));
+			DEBUG_PRINT(F("\n Updated Nextion to: "));
 			DEBUG_PRINTLN(_xname+" v"+ _xver);
 		#endif
 		
