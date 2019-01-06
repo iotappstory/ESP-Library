@@ -1,8 +1,8 @@
 This is a beta for testing OTA updates to Nextion Displays using the IOTAppStory.com infrastructure.</br></br>
 
 ## Prerequisites
-[ESPNexUpload](https://github.com/Onno-Dirkzwager/ESPNexUpload)
-This is a heavily modified fork of [Nredor](https://github.com/Nredor)'s library and with a bit of luck he might accept my [pullrequest](https://github.com/Nredor/ESPNexUpload/pull/2) and make it available in the Arduino Library Manager.
+[ESPNexUpload](https://github.com/Nredor/ESPNexUpload/releases)
+(Available in the Arduino Library Manager)
 </br></br>
 
 
