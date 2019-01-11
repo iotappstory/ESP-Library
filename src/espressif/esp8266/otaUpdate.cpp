@@ -227,7 +227,7 @@
 		});
 
 		// if nextion update failed return false & error
-		if(!nextion.prepairUpload(_totalSize)){
+		if(!nextion.prepareUpload(_totalSize)){
 			error = "Error: " + nextion.statusMessage;
 	 
 			return false;
