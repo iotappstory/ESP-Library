@@ -5,7 +5,7 @@
 	#include <ESPmDNS.h>
 
 	#include "espressif/esp32/boardInfo.h"
-	#include "espressif/esp32/callServer_WifiClient.h"
+	#include "espressif/esp32/callServer_WiFiClientSecure.h"
 	#include "espressif/configServer.h"
 	
 	#include "espressif/UpdateClassVirt.h"
