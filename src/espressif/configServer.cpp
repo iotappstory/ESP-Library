@@ -10,16 +10,15 @@
 
 /** config server */
 void configServer::run() {
-	//IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IOTAppStory
 	
 	bool exitConfig = false;
 
 	#if CFG_STORAGE == SPIFSS
-	if(!SPIFFS.begin()){
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(F(" SPIFFS Mount Failed"));
-		#endif
-	}
+		if(!SPIFFS.begin()){
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(F(" SPIFFS Mount Failed"));
+			#endif
+		}
 	#endif
 
 	#if DEBUG_LVL >= 1
@@ -32,18 +31,13 @@ void configServer::run() {
 		
 		// when there is no wifi setup server in AP mode
 		IPAddress apIP(192, 168, 4, 1);
-		//dnsServer.reset(new DNSServer());
-		//server.reset(new AsyncWebServer(80));
 		
-
 		WiFi.mode(WIFI_AP_STA);
 		#if SMARTCONFIG == true
 			WiFi.beginSmartConfig();
 		#endif
 		WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 		WiFi.softAP(_ias->config.deviceName);
-		
-		//dnsServer->start(DNS_PORT, "*", apIP);
 		
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _ias->config.deviceName);
@@ -52,11 +46,9 @@ void configServer::run() {
 	}else{
 		
 		// notifi IAS & enduser this device went to config mode (also sends localIP)
-		//iasLog("1");
+		_ias->iasLog("1");
 		
 		// when there is wifi setup server in STA mode
-		//server.reset(new AsyncWebServer(80));
-		//AsyncWebServer server(80);
 		WiFi.mode(WIFI_STA);
 		
 		#if DEBUG_LVL >= 2
@@ -67,8 +59,6 @@ void configServer::run() {
 	}
 	
 
-	
-	
 	#if CFG_STORAGE == SPIFSS
 		// serv SPIFFS files from the /www/ directory
 		server.serveStatic("/", SPIFFS, "/www/");
@@ -202,7 +192,7 @@ void configServer::run() {
 				_ias->_changeMode = false;
 				
 				// notifi IAS & enduser this device went to config mode (also sends localIP)
-				//iasLog("1");
+				_ias->iasLog("1");
 				
 				#if DEBUG_LVL >= 2
 					//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
@@ -221,14 +211,12 @@ void configServer::run() {
 	#endif
 	
 	// notifi IAS & enduser this device has left config mode (also sends localIP)
-	//iasLog("0");
+	_ias->iasLog("0");
 				
 	// Return to Normal Operation
 	_ias->espRestart('N');
 
 }
-
-
 
 
 
