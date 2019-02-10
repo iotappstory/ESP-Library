@@ -1,6 +1,5 @@
 #include "IOTAppStory.h"
 
-
 IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 : _compDate(compDate)
 , _modeButton(modeButton)
@@ -110,7 +109,6 @@ void IOTAppStory::preSetDeviceName(String deviceName){
 	_setDeviceName = true;
 	SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, _setPreSet);
 }
-
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate){
 	_updateOnBoot = automaticUpdate;
 }
@@ -128,7 +126,6 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	SetConfigValueCharArray(config.ssid[0], ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.password[0], password, STRUCT_PASSWORD_SIZE, _setPreSet);
 }
-
 /*
 void IOTAppStory::preSetServer(String HOST1, String FILE1){
 	if (!_configReaded) {
@@ -140,13 +137,15 @@ void IOTAppStory::preSetServer(String HOST1, String FILE1){
 */
 
 
+
 void IOTAppStory::setCallHome(bool callHome) {
 	_callHome = callHome;
 }
-
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
 	_callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
+
+
 
 void IOTAppStory::begin(char ea){
 	
@@ -197,7 +196,6 @@ void IOTAppStory::begin(char ea){
 	#endif
 
 	// Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
-	//readPref();
 	boardInfo boardInfo(bootTimes, boardMode);
 	boardInfo.read();
 	
@@ -209,7 +207,6 @@ void IOTAppStory::begin(char ea){
 	// BOOT STATISTICS read and increase boot statistics (optional)
 	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
-		//writePref();
 		boardInfo.write();
 		
 		#if DEBUG_LVL >= 1
@@ -240,13 +237,6 @@ void IOTAppStory::begin(char ea){
 		}
 	#endif
 	
-	// --------- READ FULL CONFIG --------------------------
-	//readConfig();
-	
-
-
-
-
 	// --------- if automaticUpdate Update --------------------------
 	if(_updateOnBoot == true){
 		callHome();
@@ -259,12 +249,12 @@ void IOTAppStory::begin(char ea){
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINT(F("\n\n\n\n\n"));
 	#endif
-/*	*/
 }
 
 
-#if DEBUG_LVL >= 1
+
 /** print BoardInfo */
+#if DEBUG_LVL >= 1
 void IOTAppStory::printBoardInfo(){
 	DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -272,32 +262,26 @@ void IOTAppStory::printBoardInfo(){
 #endif
 
 
-/** send msg to iasLog 
+
+/** send msg to iasLog */
 void IOTAppStory::iasLog(String msg) {
-		// notifi IAS & enduser about the localIP
-		String url = F("https://");
-		//url += _updateHost;
-		url += F("/ota/cfg-sta.php");
-		url += "?msg=";
-		url += msg;
-
-		HTTPClient http;
-		httpClientSetup(http, url, false);
-
+	// notifi IAS & enduser about the localIP
+	callServer		callServer(config, U_LOGGER);
+	callServer.sm(&statusMessage);
+	msg.replace(" ", "_");
+	msg = "msg="+msg;
+	
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(F(" Send log to: "));
+	#endif
+	
+	if(!callServer.get("/ota/cfg-sta.php", msg)){
 		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN(SER_UPDATE_IASLOG);
+			DEBUG_PRINTLN(SER_FAILED_COLON);
+			DEBUG_PRINTLN(" " + statusMessage);
 		#endif
-
-		if(http.GET() != HTTP_CODE_OK){
-			#if DEBUG_LVL >= 3
-				DEBUG_PRINTLN(SER_FAILED_COLON);
-				DEBUG_PRINTLN(http.getString());
-			#endif
-		}
-		http.end();
+	}
 }
-*/
-
 
 
 
@@ -317,31 +301,27 @@ void IOTAppStory::connectNetwork() {
 	#endif
 	
 
-	
-	//if(WiFi.status() != WL_CONNECTED) {
 	if(!isNetworkConnected()) {
 		
-
-			if(_automaticConfig || boardMode == 'C'){
-				
-				if(boardMode == 'N'){
-					boardMode = 'C';
-					//writePref();
-					boardInfo boardInfo(bootTimes, boardMode);
-					boardInfo.write();
-				}
-				
-				#if DEBUG_LVL >= 1
-					DEBUG_PRINT(SER_CONN_NONE_GO_CFG);
-				#endif
-				
-			}else{
-				
-				#if DEBUG_LVL >= 1
-					// this point is only reached if _automaticConfig = false
-					DEBUG_PRINT(SER_CONN_NONE_CONTINU);
-				#endif
+		if(_automaticConfig || boardMode == 'C'){
+			
+			if(boardMode == 'N'){
+				boardMode = 'C';
+				boardInfo boardInfo(bootTimes, boardMode);
+				boardInfo.write();
 			}
+			
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(SER_CONN_NONE_GO_CFG);
+			#endif
+			
+		}else{
+			
+			#if DEBUG_LVL >= 1
+				// this point is only reached if _automaticConfig = false
+				DEBUG_PRINT(SER_CONN_NONE_CONTINU);
+			#endif
+		}
 
 	}else{
 		#if DEBUG_LVL >= 1
@@ -395,6 +375,7 @@ void IOTAppStory::connectNetwork() {
 }
 
 
+
 /**
 	Wait until network is connected. 
 	Returns false if not connected after MAX_WIFI_RETRIES retries 
@@ -441,13 +422,13 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 }
 
 
+
 /**
 	call home and check for updates
 */
 void IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	// update from IOTappStory.com
-
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(SER_CALLING_HOME);
 	#endif
@@ -456,13 +437,15 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 		_firmwareUpdateCheckCallback();
 	}
 
-	// try to update from IOTAppStory
+	// try to update sketch from IOTAppStory
 	iotUpdater();
 
 	// try to update spiffs from IOTAppStory
-	if(spiffs){
-		iotUpdater(U_SPIFFS);
-	}
+	#if SPIFFS_OTA == true
+		if(spiffs){
+			iotUpdater(U_SPIFFS);
+		}
+	#endif
 	
 	#if NEXT_OTA == true
 		iotUpdater(U_NEXTION);
@@ -477,11 +460,13 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 }
 
 
+
 /**
 	IOT updater
 */
-void IOTAppStory::iotUpdater(int command) {
-	
+bool IOTAppStory::iotUpdater(int command) {
+
+
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(F("\n"));
 	#endif
@@ -490,15 +475,17 @@ void IOTAppStory::iotUpdater(int command) {
 	#endif
 	#if DEBUG_LVL >= 1
 		if(command == U_FLASH){
-			// type = sketch
 			DEBUG_PRINT(SER_APP_SKETCH);
+			
 		}else if(command == U_SPIFFS){
-			// type = spiffs
 			DEBUG_PRINT(SER_SPIFFS);
-		}else if(command == U_NEXTION){
-			// type = spiffs
-			DEBUG_PRINT(F("Nextion screen"));
+			
 		}
+		#if NEXT_OTA == true
+			else if(command == U_NEXTION){
+				DEBUG_PRINT(F("Nextion screen"));
+			}
+		#endif
 	#endif
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(SER_UPDATES_FROM);
@@ -507,43 +494,155 @@ void IOTAppStory::iotUpdater(int command) {
 		DEBUG_PRINT(SER_UPDATES);
 	#endif
 
+	firmwareStruct	firmwareStruct;
+	callServer		callServer(config, command);
+	callServer.sm(&statusMessage);
 	
-	otaUpdate updater(config, command);
-	if(!updater.getUpdate()){
+	
+	Stream &clientStream = callServer.getStream(&firmwareStruct);
+	
+	if(!firmwareStruct.success){
 		#if DEBUG_LVL >= 2
-			DEBUG_PRINTLN(" " + updater.error);
+			DEBUG_PRINTLN(" " + statusMessage);
+		#endif
+		
+		return false;
+	}
+	
+	
+	if (_firmwareUpdateDownloadCallback){
+		_firmwareUpdateDownloadCallback();
+	}
+
+	
+	if(command == U_FLASH || command == U_SPIFFS){
+		// sketch / spiffs
+		espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
+	}
+	#if NEXT_OTA == true
+		if(command == U_NEXTION){
+			// nextion display
+			espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
+		}
+	#endif
+	
+	return true;
+}
+
+
+
+/**
+	espInstaller
+*/
+void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
+	devObj.sm(&statusMessage);
+	bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
+
+	if(!result){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN("Error: " + statusMessage);
 		#endif
 	}else{
-		if (_firmwareUpdateDownloadCallback){
-			_firmwareUpdateDownloadCallback();
-		}
 		
-		if(!updater.install()){
-			#if DEBUG_LVL >= 2
-				DEBUG_PRINTLN(" " + updater.error);
-			#endif
-			if(_firmwareUpdateErrorCallback){
-				_firmwareUpdateErrorCallback();
-			}
-		}else{
-			
-			// succesfull update
-			#if DEBUG_LVL >= 1
-				DEBUG_PRINTLN(SER_REBOOT_NEC);
-			#endif
-			
-			// store received appName & appVersion
-			writeConfig();
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(SER_INSTALLING);
+		#endif
+		
 
-			if (_firmwareUpdateSuccessCallback){
-				_firmwareUpdateSuccessCallback();
-			}
+		// create buffer for read
+		uint8_t buff[2048] = { 0 };
+		
+		// to do counter
+		uint32_t updTodo = (*firmwareStruct).xlength;
+		
+		// Upload the received byte Stream to the device
+		while(updTodo > 0 || updTodo == -1){
 			
-			// reboot
-			ESP.restart();
+			// get available data size
+			size_t size = streamPtr.available();
+
+			if(size){
+				// read up to 2048 byte into the buffer
+				size_t c = streamPtr.readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+
+				// Write the buffered bytes to the esp. If this fails, return false.
+				result = devObj.update(buff, c);
+				
+				if(updTodo > 0) {
+					updTodo -= c;
+				}
+
+				if (_firmwareUpdateProgressCallback){
+					_firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
+				}
+			}
+			delay(1);
+		}
+
+
+
+	  
+		if(!result){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN("\nError updating device: " + statusMessage);
+			#endif
+		}else{
+
+			// end: wait(delay) for the nextion to finish the update process, send nextion reset command and end the serial connection to the nextion
+			result = devObj.end();
+
+			if(result){
+				// on succesfull firmware installation
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINT(F("\n Updated to: "));
+					DEBUG_PRINTLN((*firmwareStruct).xname+" v"+ (*firmwareStruct).xver);
+				#endif
+				
+
+				if(command == U_FLASH){
+					// write received appName & appVersion to config
+					(*firmwareStruct).xname.toCharArray(config.appName, 33);
+					(*firmwareStruct).xver.toCharArray(config.appVersion, 12);
+				}
+				
+				#if NEXT_OTA == true
+					if(command == U_NEXTION){
+						// update nextion md5
+						(*firmwareStruct).xmd5.toCharArray(config.next_md5, 33);
+					}
+				#endif
+				
+				if(command == U_FLASH || command == U_NEXTION){
+					// write changes to config
+					writeConfig();
+				}
+
+				if (_firmwareUpdateSuccessCallback){
+					_firmwareUpdateSuccessCallback();
+				}
+				
+				if(command == U_FLASH){
+					// succesfull update
+					#if DEBUG_LVL >= 1
+						DEBUG_PRINTLN(SER_REBOOT_NEC);
+					#endif
+					
+					// reboot to start the new updated firmware
+					ESP.restart();
+				}
+			}else{
+				// update failed
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTLN(" " + statusMessage);
+				#endif
+				if(_firmwareUpdateErrorCallback){
+					_firmwareUpdateErrorCallback();
+				}
+			}
 		}
 	}
 }
+
 
 
 /** 
@@ -558,6 +657,7 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length,
 	fieldStruct[_nrXF-1].length = length+1;
 	fieldStruct[_nrXF-1].type = type;
 }
+
 
 
 /** 
@@ -680,6 +780,7 @@ void IOTAppStory::processField(){
 }
 
 
+
 /** 
 	convert dpins to int
 */
@@ -761,6 +862,7 @@ int IOTAppStory::dPinConv(String orgVal){
 
 	#endif
 }
+
 
 
 /** 
@@ -924,6 +1026,7 @@ void IOTAppStory::readConfig() {
 }
 
 
+
 void IOTAppStory::loop() {
 	if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
 		this->callHome();
@@ -934,14 +1037,17 @@ void IOTAppStory::loop() {
 }
 
 
+
 ModeButtonState IOTAppStory::buttonLoop() {
 	return getModeButtonState();
 }
 
 
+
 bool IOTAppStory::isModeButtonPressed() {
 	return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
 }
+
 
 
 ModeButtonState IOTAppStory::getModeButtonState() {
@@ -1053,6 +1159,9 @@ void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
 }
 void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
 	_firmwareUpdateDownloadCallback = value;
+}
+void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
+	_firmwareUpdateProgressCallback = value;
 }
 void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
 	_firmwareUpdateErrorCallback = value;
