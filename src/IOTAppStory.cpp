@@ -648,14 +648,22 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 /** 
 	Add fields to the fieldStruct
 */
-void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length, char type){
-	_nrXF++;
+void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type){
 	
-	// add values to the fieldstruct
-	fieldStruct[_nrXF-1].fieldLabel = fieldLabel;
-	fieldStruct[_nrXF-1].varPointer = &defaultVal;
-	fieldStruct[_nrXF-1].length = length+1;
-	fieldStruct[_nrXF-1].type = type;
+	
+	if(_nrXF <= MAXNUMEXTRAFIELDS){
+		// add values to the fieldstruct
+		fieldStruct[_nrXF].fieldLabel 	= fieldLabel;
+		fieldStruct[_nrXF].varPointer 	= &defaultVal;
+		fieldStruct[_nrXF].length 		= length+1;
+		fieldStruct[_nrXF].type 		= type;
+		
+		_nrXF++;
+	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F("To many fields! Change MAXNUMEXTRAFIELDS define in config.h;"));
+		#endif
+	}
 }
 
 
@@ -670,7 +678,7 @@ void IOTAppStory::processField(){
 	// to prevent longer then default values overwriting each other
 	// temp save value, overwrite variable with longest value posible
 	// and then resave the temp value to the original variable
-	if(_nrXF > 0){
+	if(_nrXF > 0 && _nrXF <= MAXNUMEXTRAFIELDS){
 		char* tempValue[_nrXF];
 		
 		for(unsigned int nr = 0; nr < _nrXF; nr++){
@@ -685,13 +693,10 @@ void IOTAppStory::processField(){
 		}
 		
 		for(unsigned int nr = 0; nr < _nrXF; nr++){
-			//String().toCharArray(, fieldStruct[nr].length);
-			
 			strcpy((*fieldStruct[nr].varPointer), tempValue[nr]);
 		}
-	}
+
 		
-	if(_nrXF > 0){
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(SER_PROC_FIELDS);
 		#endif
