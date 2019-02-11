@@ -46,7 +46,7 @@
 	**/
 	
 	typedef struct eFields{
-		const char *fieldLabel;
+		const char* fieldLabel;
 		char* (*varPointer);
 		int length;
 		char type;
@@ -246,7 +246,7 @@
 		bool iotUpdater(int command = U_FLASH);
 		void espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
 		
-		void addField(char* &defaultVal,const char *fieldLabel, int length, char type = 'L');
+		void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
 		void iasLog(String msg);
 		int dPinConv(String orgVal);
 
