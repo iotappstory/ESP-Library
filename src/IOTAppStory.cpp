@@ -18,7 +18,7 @@ IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 /**
 	THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS)
 */
-void IOTAppStory::firstBoot(char ea){
+void IOTAppStory::firstBoot(const char ea){
 
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
@@ -147,7 +147,7 @@ void IOTAppStory::setCallHomeInterval(unsigned long interval) {
 
 
 
-void IOTAppStory::begin(char ea){
+void IOTAppStory::begin(const char ea){
 	
 	// if deviceName is not set, set it to the appName
 	if(_setDeviceName == false){
@@ -271,8 +271,8 @@ void IOTAppStory::iasLog(String msg) {
 	msg.replace(" ", "_");
 	msg = "msg="+msg;
 	
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(F(" Send log to: "));
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINT(SER_UPDATE_IASLOG);
 	#endif
 	
 	if(!callServer.get("/ota/cfg-sta.php", msg)){
@@ -483,7 +483,7 @@ bool IOTAppStory::iotUpdater(int command) {
 		}
 		#if NEXT_OTA == true
 			else if(command == U_NEXTION){
-				DEBUG_PRINT(F("Nextion screen"));
+				DEBUG_PRINT(SER_NEXTION);
 			}
 		#endif
 	#endif
@@ -540,7 +540,7 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 
 	if(!result){
 		#if DEBUG_LVL >= 2
-			DEBUG_PRINTLN("Error: " + statusMessage);
+			DEBUG_PRINTLN(statusMessage);
 		#endif
 	}else{
 		
@@ -584,7 +584,8 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 	  
 		if(!result){
 			#if DEBUG_LVL >= 2
-				DEBUG_PRINTLN("\nError updating device: " + statusMessage);
+				DEBUG_PRINT(SER_UPDATEDERROR);
+				DEBUG_PRINTLN(statusMessage);
 			#endif
 		}else{
 
@@ -594,7 +595,7 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 			if(result){
 				// on succesfull firmware installation
 				#if DEBUG_LVL >= 2
-					DEBUG_PRINT(F("\n Updated to: "));
+					DEBUG_PRINT(SER_UPDATEDTO);
 					DEBUG_PRINTLN((*firmwareStruct).xname+" v"+ (*firmwareStruct).xver);
 				#endif
 				
@@ -661,7 +662,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 		_nrXF++;
 	}else{
 		#if DEBUG_LVL >= 1
-			DEBUG_PRINTLN(F("To many fields! Change MAXNUMEXTRAFIELDS define in config.h;"));
+			DEBUG_PRINTLN(SER_PROC_ERROR);
 		#endif
 	}
 }
@@ -1308,12 +1309,15 @@ String IOTAppStory::servHdlWifiSave(String newSSID, String newPass, int apNr) {
 					newSSID.toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
 					newPass.toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
 						
-					#if DEBUG_LVL == 2
-						DEBUG_PRINTLN(SER_CONN_REC_CRED);
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINT(SER_CONN_REC_CRED);
 					#endif
 					
 					#if DEBUG_LVL == 3
-						DEBUG_PRINTF_P(SER_CONN_REC_CRED_DB3, newSSID, newPass);
+						DEBUG_PRINT(F(": "));
+						DEBUG_PRINT(newSSID);
+						DEBUG_PRINT(F(" - "));
+						DEBUG_PRINTLN(newPass);
 					#endif
 					
 					_tryToConn = true;
