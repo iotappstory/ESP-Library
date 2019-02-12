@@ -9,9 +9,10 @@
 	
 
 	// config 
-	#define CFG_STORAGE					CLOUD	// CLOUD / SPIFSS / HYBRID
 	#define INC_CONFIG 					true  	// include Config mode (Wifimanager!!!)
-	#define CFG_AUTHENTICATE			false	// Set authentication | Default: admin - admin | Password can be changed when in config mode | max 16 char
+	#define CFG_STORAGE					CLOUD	// CLOUD / SPIFSS / HYBRID
+	#define CFG_AUTHENTICATE			false	// Set authentication
+	#define CFG_PASS					"admin"	// initial authentication password. You edit & change this in config mode. | max 16 char
 	#define CFG_PAGE_INFO				true	// include the info page in Config mode
 	#define CFG_PAGE_IAS 				true  	// include the IAS page in Config mode
 	
@@ -25,9 +26,13 @@
 	#define UDP_PORT      				514
 	
 	
-	// OTA defines
+	// HTTPS defines
 	#define HTTPS         				true	// Use HTTPS for OTA updates
-	#define SPIFFS_OTA					true	// Do you want to OTA update SPIFFS? | true / false
+	#define FNGPRINT					"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You edit & change this in config mode.
+	
+	
+	// OTA defines
+	#define SPIFFS_OTA					false	// Do you want to OTA update SPIFFS? | true / false
 	#define NEXT_OTA					false	// Do you want to OTA update your Nextion display? | true / false
 
 	
@@ -46,6 +51,10 @@
  
  
 	// EERPOM & max nr of addable fields
+	#define DEBUG_EEPROM_CONFIG			false
+	#define MAGICBYTES    				"CFG"
+	#define MAGICEEP      				"%"
+	
 	#if defined  ESP8266
 		#define EEPROM_SIZE 			4096	// EEPROM_SIZE depending on device
 		#define MAXNUMEXTRAFIELDS 		8		// wifimanger | max num of fields that can be added
@@ -57,19 +66,14 @@
 		#define MAXNUMEXTRAFIELDS 		8
 	#endif
 
-	#define MAGICBYTES    				"CFG" 
-	#define MAGICEEP      				"%"
-	#define MAGICBYTE     				85
-	#define RTCMEMBEGIN   				68
-
 	
 	// length of config variables
-	#define STRUCT_CHAR_ARRAY_SIZE  50
-	#define STRUCT_PASSWORD_SIZE	64		// Thankyou reibuehl
-	#define STRUCT_COMPDATE_SIZE    20
-	#define STRUCT_BNAME_SIZE       30
-	#define STRUCT_HOST_SIZE        24
-	#define STRUCT_FILE_SIZE        31
+	#define STRUCT_CHAR_ARRAY_SIZE  	50
+	#define STRUCT_PASSWORD_SIZE		64		// Thankyou reibuehl
+	#define STRUCT_COMPDATE_SIZE    	20
+	#define STRUCT_BNAME_SIZE       	30
+	#define STRUCT_HOST_SIZE        	24
+	#define STRUCT_FILE_SIZE        	31
 
 	
 	// constants used to define the status of the mode button based on the time it was pressed. (miliseconds)
