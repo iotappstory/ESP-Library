@@ -186,10 +186,10 @@
 			"yourESP",
 			"",
 			#if defined  ESP8266
-				"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1",
+				FNGPRINT,
 			#endif
 			#if CFG_AUTHENTICATE == true
-				"admin",
+				CFG_PASS,
 			#endif
 			#if NEXT_OTA == true
 				"00000000000000000000000000000000",
@@ -229,7 +229,7 @@
 		void setCallHome(bool callHome);
 		void setCallHomeInterval(unsigned long interval);
 
-		void begin(char ea);
+		void begin(const char ea);
 
 		void loop();
 
@@ -328,7 +328,7 @@
 			------ ------ ------ ------ ------ ------ FUNCTION DEFINITIONS ------ ------ ------ ------ ------ ------
 		*/
 
-		void firstBoot(char ea);
+		void firstBoot(const char ea);
 		void printBoardInfo();
 		void processField();
 
