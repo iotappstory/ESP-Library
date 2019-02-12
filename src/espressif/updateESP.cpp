@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "updateESP.h"
+#include "../serialFeedback_EN.h"
 
 
 #ifdef DEBUG_SERIAL_ENABLE
@@ -29,7 +30,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 		#ifdef ESP32
 			const esp_partition_t* _partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
 			if(!_partition){
-				(*_statusMessage) = F("Partition Could Not be Found");
+				(*_statusMessage) = SER_SPIFFS_PART_NOT_FOUND;
 				return false;
 			}
 
@@ -38,7 +39,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 					dbSerialPrintf("SPIFFS update to large! (%d) free: %d\n", _upd_size, _partition->size);
 				#endif
 				
-				(*_statusMessage) = F("SPIFFS update to large!");
+				(*_statusMessage) = SER_UPD_SPIFFS_TO_LARGE;
 				return false;
 			}
 		#elif defined ESP8266
@@ -48,7 +49,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 					dbSerialPrintf("SPIFFS update to large! (%d) free: %d\n", _upd_size, spiffsSize);
 				#endif
 				
-				(*_statusMessage) = F("SPIFFS update to large!");
+				(*_statusMessage) = SER_UPD_SPIFFS_TO_LARGE;
 				return false;
 			}
 		#endif
@@ -58,7 +59,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 				dbSerialPrintf("Sketch update to large! (%d) free: %d\n", _upd_size, ESP.getFreeSketchSpace());
 			#endif
 			
-			(*_statusMessage) = F("Sketch update to large!");
+			(*_statusMessage) = SER_UPD_SKETCH_TO_LARGE;
 			return false;
 		}
 	}
@@ -77,7 +78,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 			dbSerialPrintln(stError.c_str());
 		#endif
 
-		(*_statusMessage) = F("Update.begin failed! ");
+		(*_statusMessage) = SER_UPD_BEGIN_FAILED;
 		return false;
 	}
 	//Update.runAsync(true);
@@ -95,7 +96,7 @@ bool UpdateESPClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t 
 				dbSerialPrintln(_upd_md5->c_str());
 			#endif
 			
-			(*_statusMessage) = F("Update.setMD5 failed!");
+			(*_statusMessage) = SER_UPD_MD5_FAILED;
 		
 			return false;
 		}
@@ -110,7 +111,7 @@ bool UpdateESPClass::update(uint8_t *file_buf, size_t buf_size){
 	
 	// Write the buffered bytes to the esp. If this fails, return false.
 	if(!Update.write(file_buf, buf_size)){
-		(*_statusMessage) = F("Update.write failed!");
+		(*_statusMessage) = SER_UPD_WRITE_FAILED;
 		return false;
 	}
 	
@@ -138,7 +139,7 @@ bool UpdateESPClass::end(){
 		  dbSerialPrintln(stError.c_str());
 		#endif
 		
-		(*_statusMessage) = F("Update.end failed!");
+		(*_statusMessage) = SER_UPD_END_FAILED;
 		
 		return false;
 	}
