@@ -27,12 +27,13 @@
 	
 	
 	// HTTPS defines
-	#define HTTPS         				true	// Use HTTPS for OTA updates
+	#define HTTPS         				true		// Use HTTPS for OTA updates
 	#define FNGPRINT					"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You edit & change this in config mode.
+	#define CERT_STORAGE				ST_SPIFFS	// ST_SPIFFS / ST_PROGMEM
 	
 	
 	// OTA defines
-	#define SPIFFS_OTA					false	// Do you want to OTA update SPIFFS? | true / false
+	#define SPIFFS_OTA					true	// Do you want to OTA update SPIFFS? | true / false
 	#define NEXT_OTA					false	// Do you want to OTA update your Nextion display? | true / false
 
 	
