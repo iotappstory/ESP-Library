@@ -3,15 +3,19 @@
 		#define callServer_h
 
 		#include <IOTAppStory.h>
-		#include <WiFiClientSecure.h>
+		
+		#if HTTPS == true
+			#include <WiFiClientSecure.h>
+		#endif
 
 		#if NEXT_OTA == true
 			#define U_NEXTION 300
 		#endif
 		
-		#define U_FLASH   0
-		#define U_SPIFFS  100
-		#define U_AUTH    200
+		#define U_FLASH		0
+		#define U_SPIFFS	100
+		#define U_AUTH		200
+		#define U_LOGGER	400
 		
 		struct strConfig;
 		struct firmwareStruct;
@@ -21,11 +25,18 @@
 			
 			public:
 				callServer(strConfig &config, int command = U_FLASH);
-				Stream &get(firmwareStruct *firmwareStruct);
+				Stream &getStream(firmwareStruct *firmwareStruct);
+				
+				bool get(const char* url, String args);
+				
 				void sm(String *statusMessage);
 				
 			private:
-				WiFiClientSecure _client;
+				#if HTTPS == true
+					WiFiClientSecure _client;
+				#else
+					WiFiClient _client;
+				#endif
 				String *_statusMessage;
 				
 				strConfig* _config;
