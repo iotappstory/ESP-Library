@@ -2,27 +2,65 @@
 		------ ------ ------ ------ ------ ------ DEFINES for library ------ ------ ------ ------ ------ ------ 
 	*/
 	#include "serialFeedback_EN.h"				// language file for serial feedback
-	
-	#define DEBUG_LVL 							2			// Debug level: 0 - 3 | none - max
-	#define SERIAL_SPEED						115200
-	#define BOOTSTATISTICS					true
-	
-	// config 
-	#define INC_CONFIG 							true  // include Config mode (Wifimanager!!!)
-	#define CFG_AUTHENTICATE				false	// Set authentication | Default: admin - admin | Password can be changed when in config mode | max 16 char
-	#define CFG_PAGE_INFO						true	// include the info page in Config mode
-	#define CFG_PAGE_IAS 						true  // include the IAS page in Config mode
-	
-	// Wifi defines
-	#define SMARTCONFIG							false	// Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (2%) of program storage space and 1%) of dynamic memory
-	#define WIFI_MULTI							true	// false: only 1 ssid & pass will be used | true: 3 sets of ssid & pass will be used
-	#define MAX_WIFI_RETRIES 				20		// sets the maximum number of retries when trying to connect to the wifi
-	#define USEMDNS 								true  // include MDNS responder http://yourboard.local
-	#define DNS_PORT								53
-	#define UDP_PORT      					514
-	
-	#define HTTPS         					true	// Use HTTPS for OTA updates
 
+	#ifndef DEBUG_LVL
+	#define DEBUG_LVL 2  // Debug level: 0 - 3 | none - max
+	#endif
+
+	#ifndef SERIAL_SPEED
+	#define SERIAL_SPEED 115200
+	#endif
+
+	#ifndef BOOTSTATISTICS
+	#define BOOTSTATISTICS true
+	#endif
+
+	// config 
+	#ifndef INC_CONFIG
+	#define INC_CONFIG 							true  // include Config mode (Wifimanager!!!)
+	#endif
+
+	#ifndef CFG_AUTHENTICATE
+	#define CFG_AUTHENTICATE				false	// Set authentication | Default: admin - admin | Password can be changed when in config mode | max 16 char
+	#endif
+
+	#ifndef CFG_PAGE_INFO
+	#define CFG_PAGE_INFO						true	// include the info page in Config mode
+	#endif
+
+	#ifndef CFG_PAGE_IAS
+	#define CFG_PAGE_IAS 						true  // include the IAS page in Config mode
+	#endif
+
+	// Wifi defines
+	#ifndef SMARTCONFIG
+	#define SMARTCONFIG							false	// Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (2%) of program storage space and 1%) of dynamic memory
+	#endif
+
+	#ifndef WIFI_MULTI
+	#define WIFI_MULTI							true	// false: only 1 ssid & pass will be used | true: 3 sets of ssid & pass will be used
+	#endif
+
+	#ifndef MAX_WIFI_RETRIES
+	#define MAX_WIFI_RETRIES 				20		// sets the maximum number of retries when trying to connect to the wifi
+	#endif
+
+	#ifndef USEMDNS
+	#define USEMDNS 								true  // include MDNS responder http://yourboard.local
+	#endif
+
+	#ifndef DNS_PORT
+	#define DNS_PORT								53
+	#endif
+
+	#ifndef UDP_PORT
+	#define UDP_PORT      					514
+	#endif
+
+	#ifndef HTTPS
+	#define HTTPS         					true	// Use HTTPS for OTA updates
+	#endif
+	
 	#if defined  ESP8266
 		#define EEPROM_SIZE 					4096	// EEPROM_SIZE depending on device
 		#define MAXNUMEXTRAFIELDS 		8			// wifimanger | max num of fields that can be added
