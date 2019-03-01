@@ -1488,9 +1488,15 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		if(i > 0){
 			retHtml += F(",");
 		}
+		
+		// urlencode " in value | replace " with %22
+		String value = (*fieldStruct[i].varPointer);
+		value.replace("\"", "%22");
+		
+		// get PROGMEM json string and replace {*} with values
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
-		retHtml.replace(F("{v}"), String((*fieldStruct[i].varPointer)));
+		retHtml.replace(F("{v}"), value);
 		retHtml.replace(F("{n}"), String(i));
 		retHtml.replace(F("{m}"), String(fieldStruct[i].length));
 		retHtml.replace(F("{t}"), String(fieldStruct[i].type));
