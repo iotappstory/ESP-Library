@@ -1489,10 +1489,8 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 			retHtml += F(",");
 		}
 		
-		// urlencode " in value | replace " with %22
+		// add slashed where necessary  to prevent the json repsons from being broken
 		String value = (*fieldStruct[i].varPointer);
-		value.replace("\"", "%22");
-		
 		value.replace("\\", "\\\\");
 		value.replace("\"", "\\\"");
 		value.replace("\n", "\\n");
@@ -1500,6 +1498,7 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		value.replace("\t", "\\t");
 		value.replace("\b", "\\b");
 		value.replace("\f", "\\f");
+		
 		// get PROGMEM json string and replace {*} with values
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
