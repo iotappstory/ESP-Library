@@ -23,18 +23,18 @@ void IOTAppStory::firstBoot(char ea){
 
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
-
+		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(SER_ERASE_FULL);
 		#endif
-
+		
 		// Wipe out WiFi credentials.
 		WiFi.disconnect();
 		delay(200);
-
+		
 		// erase full eeprom
 		eraseFlash(0,EEPROM_SIZE);
-
+		
 
 		String emty = F("000000");
 		emty.toCharArray(config.actCode, 7);
@@ -47,15 +47,15 @@ void IOTAppStory::firstBoot(char ea){
 		emty.toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
 
 	}else if(ea == 'P'){
-
+		
 		#if DEBUG_LVL == 1
 			DEBUG_PRINTLN(SER_ERASE_PART);
 		#endif
-
+		
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINTLN(SER_ERASE_PART_EXT);
 		#endif
-
+		
 		// erase eeprom but leave the config settings
 		eraseFlash((sizeof(config)+2),EEPROM_SIZE);
 	}
@@ -64,12 +64,12 @@ void IOTAppStory::firstBoot(char ea){
 		DEBUG_PRINTLN(SER_ERASE_NONE);
 	}
 	#endif
-
+	
 	boardMode = 'N';
 	bootTimes = 0;
 	boardInfo boardInfo(bootTimes, boardMode);
 	boardInfo.write();
-
+	
 	// update first boot config flag (date)
 	strcpy(config.compDate, _compDate);
 	writeConfig();
@@ -77,9 +77,9 @@ void IOTAppStory::firstBoot(char ea){
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
-
+	
 	if (_firstBootCallback){
-
+		
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(SER_CALLBACK_FIRST_BOOT);
 		#endif
@@ -149,22 +149,22 @@ void IOTAppStory::setCallHomeInterval(unsigned long interval) {
 }
 
 void IOTAppStory::begin(char ea){
-
+	
 	// if deviceName is not set, set it to the appName
 	if(_setDeviceName == false){
 		preSetDeviceName("yourESP");
 	}
-
+	
 	// read config if needed
 	if (!_configReaded) {
 		readConfig();
 	}
-
-
+	
+	
 	// write config if detected changes
 	if(_setPreSet == true){
 		writeConfig();
-
+		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(SER_SAVE_CONFIG);
 		#endif
@@ -172,7 +172,7 @@ void IOTAppStory::begin(char ea){
 
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
-
+		
 		DEBUG_PRINT(SER_START);
 		DEBUG_PRINT(config.appName);
 		DEBUG_PRINT(F(" v"));
@@ -185,7 +185,7 @@ void IOTAppStory::begin(char ea){
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
-
+	
 	// set the input pin for Config/Update mode selection
 	pinMode(_modeButton, INPUT_PULLUP);
 
@@ -193,18 +193,18 @@ void IOTAppStory::begin(char ea){
 	//readPref();
 	boardInfo boardInfo(bootTimes, boardMode);
 	boardInfo.read();
-
+	
 	// on first boot of the app run the firstBoot() function
 	if(strcmp(config.compDate,_compDate) != 0){
 		firstBoot(ea);
 	}
-
+	
 	// BOOT STATISTICS read and increase boot statistics (optional)
 	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
 		//writePref();
 		boardInfo.write();
-
+		
 		#if DEBUG_LVL >= 1
 			printBoardInfo();
 		#endif
@@ -212,21 +212,21 @@ void IOTAppStory::begin(char ea){
 
 	// process added fields
 	processField();
-
-
+	
+	
 	// --------- START WIFI --------------------------
 	connectNetwork();
-
+	
 	//---------- SELECT BOARD MODE -----------------------------
 	#if INC_CONFIG == true
 		if(boardMode == 'C'){
 			runConfigServer();
 		}
 	#endif
-
+	
 	// --------- READ FULL CONFIG --------------------------
 	//readConfig();
-
+	
 
 
 
@@ -284,7 +284,7 @@ void IOTAppStory::iasLog(String msg) {
 
 /** config server */
 void IOTAppStory::runConfigServer() {
-
+	
 	bool exitConfig = false;
 
 	// callback entered config mode
@@ -297,7 +297,7 @@ void IOTAppStory::runConfigServer() {
 	#endif
 
 	if(WiFi.status() != WL_CONNECTED){
-
+		
 		// when there is no wifi setup server in AP mode
 		IPAddress apIP(192, 168, 4, 1);
 		dnsServer.reset(new DNSServer());
