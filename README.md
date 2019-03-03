@@ -3,7 +3,7 @@
 Wifi & OTA update manager for IOT devices (ESP8266 and ESP32). ESP8266's need at least 1MB flash. You will need a free account at IOTAppStory.com
 </br></br>
 
-## Latest stable release 2.0.1
+## Latest stable release 2.0.2
 https://github.com/iotappstory/ESP-Library/releases/latest
 </br></br>
 
