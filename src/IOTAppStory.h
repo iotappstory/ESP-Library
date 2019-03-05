@@ -24,6 +24,7 @@
 		#include <StreamString.h>
 		#include <ESPAsyncTCP.h>                 // https://github.com/me-no-dev/ESPAsyncTCP
 		#include <ESP8266HTTPClient.h>
+		#include <WiFiClientSecureBearSSL.h>
 	#endif
 
 	#include <DNSServer.h> 
@@ -343,7 +344,7 @@
 		void firstBoot(char ea);
 		void printBoardInfo();
 		void processField();
-		void httpClientSetup(HTTPClient& http, String url, bool spiffs=false);
+		void httpClientSetup(HTTPClient& http, bool spiffs=false);
 
 		String strWifiScan();
 

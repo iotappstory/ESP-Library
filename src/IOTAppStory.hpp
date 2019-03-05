@@ -263,7 +263,22 @@ void IOTAppStory::iasLog(String msg) {
 		url += msg;
 
 		HTTPClient http;
-		httpClientSetup(http, url, false);
+
+		#if HTTPS == true
+	
+			#if defined  ESP8266
+				std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+				client->setFingerprint(config.sha1);
+				http.begin(*client, url);
+			#elif defined ESP32
+				http.begin(url, ROOT_CA);
+			#endif
+			
+		#else
+			http.begin(url);
+		#endif
+
+		httpClientSetup(http, false);
 
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(SER_UPDATE_IASLOG);
@@ -683,7 +698,22 @@ void IOTAppStory::iotUpdater(bool spiffs) {
 	#endif
 
 	HTTPClient http;
-	httpClientSetup(http, url, spiffs);
+
+	#if HTTPS == true
+	
+		#if defined  ESP8266
+			std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+			client->setFingerprint(config.sha1);
+			http.begin(*client, url);
+	#elif defined ESP32
+			http.begin(url, ROOT_CA);
+		#endif
+		
+	#else
+		http.begin(url);
+	#endif
+
+	httpClientSetup(http, spiffs);
 
 	// track these headers for later use
 	const char * headerkeys[] = { "x-MD5", "x-name", "x-ver"};
@@ -1554,19 +1584,7 @@ void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 
 
 /** default httpclient */
-void IOTAppStory::httpClientSetup(HTTPClient& http, String url, bool spiffs) {
-	#if HTTPS == true
-	
-		#if defined  ESP8266
-			http.begin(url, config.sha1);
-		#elif defined ESP32
-			http.begin(url, ROOT_CA);
-		#endif
-		
-	#else
-		http.begin(url);
-	#endif
-	
+void IOTAppStory::httpClientSetup(HTTPClient& http, bool spiffs) {
 	// use HTTP/1.0 the update handler does not support transfer encoding
 	http.useHTTP10(true);
 	http.setTimeout(8000);
