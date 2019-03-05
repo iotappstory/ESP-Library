@@ -1,5 +1,5 @@
 #ifdef  ESP32
-	#include "boardInfo.h"
+	// #include "boardInfo.h"
 
 	boardInfo::boardInfo(int &bootTimes, char &boardMode){
 		_bootTimes = &bootTimes;

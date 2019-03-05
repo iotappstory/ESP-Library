@@ -18,5 +18,7 @@
 				char* _boardMode;
 				
 		};
+
+		#include "boardInfo.hpp"
 	#endif
 #endif

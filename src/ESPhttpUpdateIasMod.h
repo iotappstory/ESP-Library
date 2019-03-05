@@ -73,4 +73,6 @@
 		
 	};
 
+	#include "ESPhttpUpdateIasMod.hpp"
+
 #endif

@@ -1,6 +1,3 @@
-#include "IOTAppStory.h"
-
-
 IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 : _compDate(compDate)
 , _modeButton(modeButton)
@@ -1488,9 +1485,21 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		if(i > 0){
 			retHtml += F(",");
 		}
+		
+		// add slashed where necessary  to prevent the json repsons from being broken
+		String value = (*fieldStruct[i].varPointer);
+		value.replace("\\", "\\\\");
+		value.replace("\"", "\\\"");
+		value.replace("\n", "\\n");
+		value.replace("\r", "\\r");
+		value.replace("\t", "\\t");
+		value.replace("\b", "\\b");
+		value.replace("\f", "\\f");
+		
+		// get PROGMEM json string and replace {*} with values
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
-		retHtml.replace(F("{v}"), String((*fieldStruct[i].varPointer)));
+		retHtml.replace(F("{v}"), value);
 		retHtml.replace(F("{n}"), String(i));
 		retHtml.replace(F("{m}"), String(fieldStruct[i].length));
 		retHtml.replace(F("{t}"), String(fieldStruct[i].type));

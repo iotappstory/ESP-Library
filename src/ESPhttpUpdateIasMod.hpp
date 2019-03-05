@@ -26,7 +26,6 @@
  *
  */
 
-#include "ESPhttpUpdateIasMod.h"
 #include <StreamString.h>
 
 extern "C" uint32_t _SPIFFS_start;
