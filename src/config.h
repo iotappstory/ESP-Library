@@ -1,40 +1,44 @@
 	/**
-		------ ------ ------ ------ ------ ------ DEFINES for library ------ ------ ------ ------ ------ ------ 
+		------ ------ ------ ------ ------ ------ user DEFINES for library ------ ------ ------ ------ ------ ------ 
 	*/
-	#include "serialFeedback_EN.h"				// language file for serial feedback
+	#include "serialFeedback_EN.h"					// language file for serial feedback
 	
-	#define DEBUG_LVL					2		// Debug level: 0 - 3 | none - max
+	#define DEBUG_LVL					2			// Debug level: 0 - 3 | none - max
+	#define DEBUG_EEPROM_CONFIG			false
 	#define SERIAL_SPEED				115200
 	#define BOOTSTATISTICS				true
-	
+		
 
 	// config 
-	#define INC_CONFIG 					true  	// include Config mode (Wifimanager!!!)
-	#define CFG_STORAGE					CLOUD	// CLOUD / SPIFSS / HYBRID
-	#define CFG_AUTHENTICATE			false	// Set authentication
-	#define CFG_PASS					"admin"	// initial authentication password. You edit & change this in config mode. | max 16 char
-	#define CFG_PAGE_INFO				true	// include the info page in Config mode
-	#define CFG_PAGE_IAS 				true  	// include the IAS page in Config mode
+	#define CFG_INCLUDE 				true  		// include Config mode (Wifimanager!!!)
+	#define CFG_STORAGE					ST_CLOUD	// ST_CLOUD / ST_SPIFSS / ST_HYBRID
+	#define CFG_AUTHENTICATE			false		// Set authentication
+	#define CFG_PASS					"admin"		// initial authentication password. You edit & change this in config mode. | max 16 char
+	#define CFG_PAGE_INFO				true		// include the info page in Config mode
+	#define CFG_PAGE_IAS 				true  		// include the IAS page in Config mode
 	
 
 	// Wifi defines
-	#define SMARTCONFIG					false	// Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (2%) of program storage space and 1%) of dynamic memory
-	#define WIFI_MULTI					true	// false: only 1 ssid & pass will be used | true: 3 sets of ssid & pass will be used
-	#define MAX_WIFI_RETRIES 			20		// sets the maximum number of retries when trying to connect to the wifi
-	#define USEMDNS 					true  	// include MDNS responder http://yourboard.local
-	#define DNS_PORT					53
-	#define UDP_PORT      				514
+	#define WIFI_SMARTCONFIG			false		// Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (+/- 2%) of program storage space and +/- 1%) of dynamic memory
+	#define WIFI_MULTI					true		// false: only 1 ssid & pass will be used | true: 3 sets of ssid & pass will be used
+	#define WIFI_CONN_MAX_RETRIES 		20			// sets the maximum number of retries when trying to connect to the wifi
+	#define WIFI_USE_MDNS 				true  		// include MDNS responder http://yourboard.local
+	//#define DNS_PORT					53
+	//#define UDP_PORT      			514
 	
 	
 	// HTTPS defines
 	#define HTTPS         				true		// Use HTTPS for OTA updates
-	#define FNGPRINT					"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You edit & change this in config mode.
-	#define CERT_STORAGE				ST_SPIFFS	// ST_SPIFFS / ST_PROGMEM
+	#define HTTPS_FNGPRINT				"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You edit & change this in config mode.
+	#define HTTPS_CERT_STORAGE			ST_SPIFFS	// ST_SPIFFS / ST_PROGMEM
 	
 	
 	// OTA defines
-	#define SPIFFS_OTA					true	// Do you want to OTA update SPIFFS? | true / false
-	#define NEXT_OTA					false	// Do you want to OTA update your Nextion display? | true / false
+	#define OTA_HOST 					"iotappstory.com"   // OTA update host
+	#define OTA_UPD_FILE 				"/ota/updates.php" 	// file at host that handles 8266 updates
+	#define OTA_LOG_FILE 				"/ota/logs.php" 	// file at host that handles 8266 updates
+	#define OTA_UPD_CHECK_SPIFFS		true				// Do you want to OTA update SPIFFS? | true / false
+	#define OTA_UPD_CHECK_NEXTION		false				// Do you want to OTA update your Nextion display? | true / false
 
 	
 	// Nextion display defines
@@ -52,10 +56,6 @@
  
  
 	// EERPOM & max nr of addable fields
-	#define DEBUG_EEPROM_CONFIG			false
-	#define MAGICBYTES    				"CFG"
-	#define MAGICEEP      				"%"
-	
 	#if defined  ESP8266
 		#define EEPROM_SIZE 			4096	// EEPROM_SIZE depending on device
 		#define MAXNUMEXTRAFIELDS 		8		// wifimanger | max num of fields that can be added
@@ -66,6 +66,11 @@
 		#define EEPROM_SIZE 			1024
 		#define MAXNUMEXTRAFIELDS 		8
 	#endif
+	
+	
+	/**
+		------ ------ ------ ------ ------ ------ internal DEFINES for library ------ ------ ------ ------ ------ ------ 
+	*/
 
 	
 	// length of config variables
@@ -81,3 +86,24 @@
 	#define MODE_BUTTON_SHORT_PRESS       500
 	#define MODE_BUTTON_LONG_PRESS        4000
 	#define MODE_BUTTON_VERY_LONG_PRESS   10000
+	
+	
+	// define storage types (internal use)
+	#define ST_SPIFFS	0
+	#define ST_SD		1
+	#define ST_PROGMEM	2
+	#define ST_CLOUD	3
+	#define ST_HYBRID	4
+	
+	
+	// used for storing the config struct to eeprom
+	#define MAGICBYTES    				"CFG"
+	#define MAGICEEP      				"%"
+	
+	
+	// define for get chip id
+	#if defined  ESP8266
+		#define ESP_GETCHIPID ESP.getChipId()
+	#elif defined ESP32
+		#define ESP_GETCHIPID (uint32_t)ESP.getEfuseMac()
+	#endif
