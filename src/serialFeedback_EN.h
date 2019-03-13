@@ -43,7 +43,7 @@
 	
 	#define SER_CALLING_HOME				" Calling Home"
 	#define SER_CALLHOME_FAILED				" Error: connection failed"
-	#define SER_CALLHOME_TIMEOUT			" Error: connection timeout"
+	#define SER_CALLHOME_TIMEOUT			"Error: connection timeout"
 	#define SER_CALLHOME_CERT_FAILED		" ERROR: certificate verification failed!"
 	#define SER_CALLHOME_HDR_FAILED			" ERROR: file header verification failed!"
 	#define SER_RET_FROM_IAS				"\n Returning from IOTAppStory.com"
@@ -70,7 +70,9 @@
 	#define SER_EEPROM_FOUND				" EEPROM Configuration found"
 	#define SER_EEPROM_NOT_FOUND			" EEPROM Configuration NOT FOUND!!!!"
 	
-	#define SER_SPIFFS_PART_NOT_FOUND		"SPIFFS Partition Not be Found"
+	#define SER_SPIFFS_MOUNTING				"Mounting SPIFFS..."
+	#define SER_SPIFFS_PART_NOT_FOUND		"SPIFFS Partition Not Found"
+	#define SER_CERTIFICATE_NOT_FOUND		"Certificate Not Found"
 	
 	#define SER_UPD_SPIFFS_TO_LARGE			"SPIFFS update to large!"
 	#define SER_UPD_SKETCH_TO_LARGE			"Sketch update to large!"
@@ -82,6 +84,7 @@
 	
 	#define SER_SERV_DEV_INFO				" Serving device info"
 	#define SER_SERV_WIFI_SCAN_RES			" Serving results of Wifiscan"
+	#define SER_SERV_CERT_SCAN_RES			" Serving results of certificate scan"
 	#define SER_SERV_APP_SETTINGS			" Serving App Settings"
 	
 	#define SER_SAVE_APP_SETTINGS			" Saving App Settings"
