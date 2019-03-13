@@ -38,9 +38,9 @@
 				String *_statusMessage;
 				
 				strConfig* _config;
-				int _command;													// total size of received update
-				const char* _updateHost		= "iotappstory.com";         	// ota update host
-				const char* _updateFile		= "/ota/esp8266-v2.1.0.php"; 	// file at host that handles 8266 updates
+				int _command;
+				const char* _callHost		= OTA_HOST;         // ota update host | Set in config.h
+				const char* _callFile		= OTA_UPD_FILE; 	// file at host that handles esp updates
 		};
 	#endif
 #endif
