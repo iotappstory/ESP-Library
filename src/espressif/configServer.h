@@ -13,6 +13,8 @@
 		#endif
 		#include <ESPAsyncWebServer.h>					// https://github.com/me-no-dev/ESPAsyncWebServer
 		
+		#define TEMPLATE_PLACEHOLDER '`'
+		
 		struct strConfig;
 		class IOTAppStory;
 		
@@ -21,10 +23,10 @@
 			public:
 				configServer(IOTAppStory &ias);
 				void run();
-			
 			private:
 				IOTAppStory* _ias;
 				
+				void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 				void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
 				
 		};
