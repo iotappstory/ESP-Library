@@ -12,8 +12,8 @@
 void configServer::run() {
 	
 	bool exitConfig = false;
-
-	#if CFG_STORAGE == SPIFSS
+	
+	#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
 		if(!SPIFFS.begin()){
 			#if DEBUG_LVL >= 1
 				DEBUG_PRINT(F(" SPIFFS Mount Failed"));
@@ -26,6 +26,7 @@ void configServer::run() {
 	#endif
 	
 	AsyncWebServer server(80);
+	AsyncEventSource events("/events");
 	
 	if(WiFi.status() != WL_CONNECTED){
 		
@@ -33,7 +34,7 @@ void configServer::run() {
 		IPAddress apIP(192, 168, 4, 1);
 		
 		WiFi.mode(WIFI_AP_STA);
-		#if SMARTCONFIG == true
+		#if WIFI_SMARTCONFIG == true
 			WiFi.beginSmartConfig();
 		#endif
 		WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
@@ -59,11 +60,11 @@ void configServer::run() {
 	}
 	
 
-	#if CFG_STORAGE == SPIFSS
+	#if CFG_STORAGE == ST_SPIFFS
 		// serv SPIFFS files from the /www/ directory
 		server.serveStatic("/", SPIFFS, "/www/");
 	#endif
-	#if CFG_STORAGE == CLOUD || CFG_STORAGE == HYBRID
+	#if CFG_STORAGE == ST_CLOUD || CFG_STORAGE == ST_HYBRID
 		// serv the index page or force wifi setup
 		server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->servHdlRoot()); });
 	#endif
@@ -76,15 +77,84 @@ void configServer::run() {
 	// serv the wifi scan results
 	server.on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
 
-	// serv the app fields in json format
-	server.on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
-
 	
 	
 	// save the received fingerprint and serv results
 	#if defined  ESP8266
 		server.on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
 	#endif
+	
+	
+	// ESP32 certificate pages
+	#if defined  ESP32
+	
+		// serv cert scan in json format
+		server.on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request){
+			if(request->hasParam("d")){
+				hdlReturn(request, _ias->strCertScan(request->getParam("d")->value()), F("text/json")); 
+			}else{
+				hdlReturn(request, _ias->strCertScan(), F("text/json")); 
+			}
+		});
+				
+		// upload a file to /certupl
+		server.on("/certupl", HTTP_POST, [&](AsyncWebServerRequest *request){
+			request->send(200);
+		}, 
+			[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+
+				File fsUploadFile;
+				
+				// First step: check file extension & open new SPIFFS file
+				if(!index){
+					/// Check if file has a valid extension .cer
+					if(!filename.endsWith(".cer")){
+						request->send(500, F("text/plain"), F("ONLY .cer files allowed\n"));
+					}
+					
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINTF(" UploadStart: %s\n", filename.c_str());
+					#endif
+					
+					/// open new SPIFFS file for writing data
+					fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_WRITE);            // Open the file for writing in SPIFFS (create if it doesn't exist)
+					
+				}else{
+					/// open existing SPIFFS file for appending data
+					fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_APPEND);
+				}
+				
+				// Second step: write received buffer to SPIFFS file
+				if(len){
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT(F(" Writing:\t"));
+						DEBUG_PRINTLN(len);
+					#endif
+					
+					/// write data
+					if(fsUploadFile.write(data, len) != len){
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTLN(F(" Write error!"));
+						#endif
+						
+						/// if write failed return error
+						request->send(500, F("text/plain"), F("Write error!\n"));
+					}
+				}
+				
+				// Last step: close file
+				if(final){
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINTF(" UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+					#endif
+					
+					/// close file
+					fsUploadFile.close();
+				}
+			}
+		);
+	#endif
+	
 	
 	// save the received ssid & pass for the received APnr(i) ans serv results
 	server.on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ 
@@ -93,7 +163,7 @@ void configServer::run() {
 		if(request->hasParam("i", true)){
 			postAPnr = atoi(request->getParam("i", true)->value().c_str());
 		}
-
+		
 		hdlReturn(
 			request, 
 			_ias->servHdlWifiSave(
@@ -104,6 +174,9 @@ void configServer::run() {
 		);
 	});
 	
+	// serv the app fields in json format
+	server.on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
+
 	// save the received app fields and serv results
 	server.on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlAppSave(request)); });
 
@@ -119,7 +192,7 @@ void configServer::run() {
 		request->send(404);
 	});
 	
-	
+	//server.onFileUpload(onUpload);
 	
 	// start the server
 	server.begin();
@@ -135,7 +208,7 @@ void configServer::run() {
 			//dnsServer->processNextRequest();
 			
 			// smartconfig default false / off
-			#if SMARTCONFIG == true
+			#if WIFI_SMARTCONFIG == true
 				if(WiFi.smartConfigDone()){
 					WiFi.mode(WIFI_AP_STA);
 					isNetworkConnected();
@@ -216,6 +289,21 @@ void configServer::run() {
 	// Return to Normal Operation
 	_ias->espRestart('N');
 
+}
+
+
+
+/** Handle uploads */
+void configServer::onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+	if(!index){
+		Serial.printf("UploadStart: %s\n", filename.c_str());
+	}
+	for(size_t i=0; i<len; i++){
+		Serial.write(data[i]);
+	}
+	if(final){
+		Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+	}
 }
 
 
