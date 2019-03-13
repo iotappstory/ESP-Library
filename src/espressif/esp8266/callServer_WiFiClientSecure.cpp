@@ -11,7 +11,7 @@
 	Stream &callServer::getStream(firmwareStruct *firmwareStruct){
 
 	
-		if(!this->get(_updateFile, "")){
+		if(!this->get(_callFile, "")){
 			(*firmwareStruct).success = false;
 			return _client;
 		}
@@ -103,25 +103,11 @@
 	
 	bool callServer::get(const char* url, String args){
 		
-		#if DEBUG_LVL >= 2
-			#if HTTPS == true
-				DEBUG_PRINT(F("https://"));
-			#else
-				DEBUG_PRINT(F("http://"));
-			#endif
-			DEBUG_PRINT(_updateHost);
-			DEBUG_PRINTLN(url);
-		#endif
-		
-		#if DEBUG_LVL == 1
-			DEBUG_PRINTLN("");
-		#endif
-		
 		#if HTTPS == true
 			_client.setFingerprint(_config->sha1);
-			if (!_client.connect(_updateHost, 443)) {
+			if (!_client.connect(_callHost, 443)) {
 		#else
-			if (!_client.connect(_updateHost, 80)) {
+			if (!_client.connect(_callHost, 80)) {
 		#endif
 		
 			// Error: connection failed
@@ -130,7 +116,7 @@
 		}
 		
 		#if HTTPS == true
-			if(!_client.verify(_config->sha1, _updateHost)){
+			if(!_client.verify(_config->sha1, _callHost)){
 				//ERROR: certificate verification failed!
 				(*_statusMessage) = SER_CALLHOME_CERT_FAILED;
 				return false;
@@ -157,7 +143,7 @@
 		
 		// This will send the request to the server
 		_client.print(String("GET ") + url + "?" + args + F(" HTTP/1.1\r\n") +
-				   F("Host: ") + _updateHost + 
+				   F("Host: ") + _callHost + 
 				   
 				   F("\r\nUser-Agent: ESP-http-Update") +
 
@@ -170,7 +156,7 @@
 
 				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
 				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
-				   F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
+				   F("\r\nx-ESP-CHIP-ID: ") + ESP_GETCHIPID +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getCoreVersion() +
 				   
 				   F("\r\nx-ESP-FLASHCHIP-SIZE: ") + ESP.getFlashChipSize() +
