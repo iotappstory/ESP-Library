@@ -190,7 +190,7 @@ void IOTAppStory::begin(const char ea){
 	
 	// set the "hard" reset(power) pin for the Nextion display
 	// and turn the display on
-	#if NEXT_OTA == true
+	#if OTA_UPD_CHECK_NEXTION == true
 		pinMode(NEXT_RES, OUTPUT);
 		digitalWrite(NEXT_RES, HIGH);
 	#endif
@@ -222,7 +222,7 @@ void IOTAppStory::begin(const char ea){
 	connectNetwork();
 	
 	//---------- SELECT BOARD MODE -----------------------------
-	#if INC_CONFIG == true
+	#if CFG_INCLUDE == true
 		if(boardMode == 'C'){
 
 			// callback entered config mode
@@ -275,7 +275,7 @@ void IOTAppStory::iasLog(String msg) {
 		DEBUG_PRINT(SER_UPDATE_IASLOG);
 	#endif
 	
-	if(!callServer.get("/ota/cfg-sta.php", msg)){
+	if(!callServer.get(OTA_LOG_FILE, msg)){
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(SER_FAILED_COLON);
 			DEBUG_PRINTLN(" " + statusMessage);
@@ -338,7 +338,7 @@ void IOTAppStory::connectNetwork() {
 			DEBUG_PRINTLN(WiFi.localIP());
 		#endif
 
-		#if USEMDNS == true
+		#if WIFI_USE_MDNS == true
 			// Register host name in WiFi and mDNS
 			String hostNameWifi = config.deviceName;
 			hostNameWifi += ".local";
@@ -378,13 +378,13 @@ void IOTAppStory::connectNetwork() {
 
 /**
 	Wait until network is connected. 
-	Returns false if not connected after MAX_WIFI_RETRIES retries 
+	Returns false if not connected after WIFI_CONN_MAX_RETRIES retries 
 */
 bool IOTAppStory::isNetworkConnected(bool multi) {
 	#if defined  ESP8266
-		int retries = MAX_WIFI_RETRIES;
+		int retries = WIFI_CONN_MAX_RETRIES;
 	#elif defined ESP32
-		int retries = (MAX_WIFI_RETRIES/2);
+		int retries = (WIFI_CONN_MAX_RETRIES/2);
 	#endif
 
 	#if DEBUG_LVL >= 1
@@ -441,13 +441,13 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 	iotUpdater();
 
 	// try to update spiffs from IOTAppStory
-	#if SPIFFS_OTA == true
+	#if OTA_UPD_CHECK_SPIFFS == true
 		if(spiffs){
 			iotUpdater(U_SPIFFS);
 		}
 	#endif
 	
-	#if NEXT_OTA == true
+	#if OTA_UPD_CHECK_NEXTION == true
 		iotUpdater(U_NEXTION);
 	#endif
 
@@ -481,7 +481,7 @@ bool IOTAppStory::iotUpdater(int command) {
 			DEBUG_PRINT(SER_SPIFFS);
 			
 		}
-		#if NEXT_OTA == true
+		#if OTA_UPD_CHECK_NEXTION == true
 			else if(command == U_NEXTION){
 				DEBUG_PRINT(SER_NEXTION);
 			}
@@ -492,6 +492,18 @@ bool IOTAppStory::iotUpdater(int command) {
 	#endif
 	#if DEBUG_LVL == 1
 		DEBUG_PRINT(SER_UPDATES);
+	#endif
+	#if DEBUG_LVL >= 2
+		#if HTTPS == true
+			DEBUG_PRINT(F("https://"));
+		#else
+			DEBUG_PRINT(F("http://"));
+		#endif
+		DEBUG_PRINT(OTA_HOST);
+		DEBUG_PRINTLN(OTA_UPD_FILE);
+	#endif
+	#if DEBUG_LVL == 1
+		DEBUG_PRINTLN("");
 	#endif
 
 	firmwareStruct	firmwareStruct;
@@ -519,7 +531,7 @@ bool IOTAppStory::iotUpdater(int command) {
 		// sketch / spiffs
 		espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
 	}
-	#if NEXT_OTA == true
+	#if OTA_UPD_CHECK_NEXTION == true
 		if(command == U_NEXTION){
 			// nextion display
 			espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
@@ -606,7 +618,7 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 					(*firmwareStruct).xver.toCharArray(config.appVersion, 12);
 				}
 				
-				#if NEXT_OTA == true
+				#if OTA_UPD_CHECK_NEXTION == true
 					if(command == U_NEXTION){
 						// update nextion md5
 						(*firmwareStruct).xmd5.toCharArray(config.next_md5, 33);
@@ -1103,7 +1115,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 					_veryLongPressCallback();
 				continue;
 			}
-#if INC_CONFIG == true
+#if CFG_INCLUDE == true
 			if (!isModeButtonPressed()) {
 				_appState = AppStateConfigMode;
 				continue;
@@ -1124,7 +1136,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 			_appState = AppStateNoPress;
 			callHome();
 			continue;
-#if INC_CONFIG == true	
+#if CFG_INCLUDE == true	
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
 			#if DEBUG_LVL >= 1
@@ -1217,18 +1229,19 @@ String IOTAppStory::servHdlDevInfo(){
 	retHtml.replace(F("{s1}"), config.ssid[0]);
 	retHtml.replace(F("{s2}"), config.ssid[1]);
 	retHtml.replace(F("{s3}"), config.ssid[2]);
+	
+	retHtml.replace(F("{cid}"), String(ESP_GETCHIPID));
 
 	#if defined  ESP8266
-		retHtml.replace(F("{cid}"), String(ESP.getChipId()));
 		retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
-		retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
-		retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
 		retHtml.replace(F("{f}"), config.sha1);
 	#elif defined ESP32
-		retHtml.replace(F("{cid}"), "");				// not available yet
 		retHtml.replace(F("{fid}"), "");				// not available yet
 	#endif
 
+	retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
+	retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
+		
 	retHtml.replace(F("{fs}"), String(ESP.getFlashChipSize()));
 	retHtml.replace(F("{ab}"), ARDUINO_BOARD);
 	retHtml.replace(F("{mc}"), WiFi.macAddress());
@@ -1377,25 +1390,38 @@ String IOTAppStory::servHdlAppInfo(){
 	#endif
 
 	String retHtml = F("[");
-
 	for (unsigned int i = 0; i < _nrXF; ++i) {
 
 		// return html results from the wifi scan
 		if(i > 0){
 			retHtml += F(",");
 		}
+		
+		// add slashed to values where necessary to prevent the json repsons from being broken
+		String value = (*fieldStruct[i].varPointer);
+		value.replace("\\", "\\\\");
+		value.replace("\"", "\\\"");
+		value.replace("\n", "\\n");
+		value.replace("\r", "\\r");
+		value.replace("\t", "\\t");
+		value.replace("\b", "\\b");
+		value.replace("\f", "\\f");
+
+		// get PROGMEM json string and replace {*} with values		
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
-		retHtml.replace(F("{v}"), String((*fieldStruct[i].varPointer)));
+		retHtml.replace(F("{v}"), value);
 		retHtml.replace(F("{n}"), String(i));
 		retHtml.replace(F("{m}"), String(fieldStruct[i].length));
 		retHtml.replace(F("{t}"), String(fieldStruct[i].type));
 		delay(10);
 	}
 	retHtml += F("]");
+	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(retHtml);
 	#endif
+	
 	return retHtml;
 }
 
@@ -1418,13 +1444,63 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 
 
 
+/** Get all root certificates */
+String IOTAppStory::strCertScan(String path){
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
+	#endif
+	
+	// open SPIFFS certificate directory
+    File root = SPIFFS.open("/cert");
+    if(!root || !root.isDirectory()){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(" Failed to open directory");
+		#endif
+		
+        return "0";
+    }
+	
+	// delete requested file
+	if(path != ""){
+		if(!SPIFFS.remove(path)){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN(" Failed to delete file!");
+			#endif
+		}
+	}
+	
+	// return all the files found in this directory and return them as a json string
+    File file = root.openNextFile();
+	String retHtml = "[";
+	bool pastOne = false;
+	
+    while(file){
+        if(!file.isDirectory()){
+			if(pastOne == true){
+				retHtml += F(",");
+			}
+			retHtml += "{";
+			retHtml += "\"n\":\"" + String(file.name()) + "\"";
+			retHtml += ",\"s\":" + String(file.size());
+			retHtml += "}";
+			pastOne = true;
+        }
+        file = root.openNextFile();
+    }
+	retHtml += "]";
+
+	// return json string
+	return retHtml;
+}
+
+
+
 /** Save App Settings */
 String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
 	#endif
-	
-	String retHtml = F("0");
 	
 	if(_nrXF){
 		for(unsigned int i = 0; i < _nrXF; i++){
@@ -1432,10 +1508,12 @@ String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 				strcpy((*fieldStruct[i].varPointer), request->getParam(String(i), true)->value().c_str());
 			}
 		}
-		retHtml = F("1");
+		
 		writeConfig(true);
+		return F("1");
 	}
-	return retHtml;
+	
+	return F("0");
 }
 
 
@@ -1446,15 +1524,13 @@ String IOTAppStory::servHdlactcodeSave(String actcode) {
 		DEBUG_PRINT(SER_REC_ACT_CODE);
 	#endif
 	
-	String retHtml = F("0");
-	
 	if(actcode != ""){
 		
-		actcode.toCharArray(config.actCode, 7); //???
+		actcode.toCharArray(config.actCode, 7);
 		
-		retHtml = F("1");
 		writeConfig(true);
+		return F("1");
 	}
 
-	return retHtml;
+	return F("0");
 }
