@@ -11,7 +11,7 @@
 	Stream &callServer::getStream(firmwareStruct *firmwareStruct){
 
 	
-		if(!this->get(_updateFile, "")){
+		if(!this->get(_callFile, "")){
 			(*firmwareStruct).success = false;
 			return _client;
 		}
@@ -102,23 +102,13 @@
 	
 	bool callServer::get(const char* url, String args){
 
-		#if DEBUG_LVL >= 2
-			#if HTTPS == true
-				DEBUG_PRINT(F("https://"));
-			#else
-				DEBUG_PRINT(F("http://"));
-			#endif
-			DEBUG_PRINT(_updateHost);
-			DEBUG_PRINTLN(url);
-		#endif
-		
-		#if DEBUG_LVL == 1
-			DEBUG_PRINTLN("");
-		#endif
-
 		#if HTTPS == true
+		
+			// set fingerprint (saves in eeprom) 
+			//  SHA1 fingerprint is broken now!
+			// _client.setFingerprint(_config->sha1);
 			
-			#if CERT_STORAGE == ST_SPIFFS
+			#if HTTPS_CERT_STORAGE == ST_SPIFFS
 				#if DEBUG_LVL >= 3
 					DEBUG_PRINT(SER_SPIFFS_MOUNTING);
 				#endif
@@ -130,7 +120,7 @@
 				} 
 
 				// Get root certificate file from SPIFFS
-				File file = SPIFFS.open("/iasRootCa.cer", "r");
+				File file = SPIFFS.open("/cert/iasRootCa.cer", "r");
 				if(!file){
 				   (*_statusMessage) = SER_CERTIFICATE_NOT_FOUND;
 					return false;
@@ -151,24 +141,26 @@
 			
 			
 			// connect to host
-			if (!_client.connect(_updateHost, 443)) {
+			if (!_client.connect(_callHost, 443)) {
 		#else
-			if (!_client.connect(_updateHost, 80)) {
+			if (!_client.connect(_callHost, 80)) {
 		#endif
 		
-				// Error: connection failed
-				(*_statusMessage) = SER_CALLHOME_FAILED;
-				return false;
-			}
-		
-		/*
-		// Verify validity of server's certificate
-		if (!_client.verifyCertChain(_updateHost)) {
-			// (*_statusMessage): certificate verification failed!
-			(*_statusMessage) = F(" Certificate verification failed!");
+			// Error: connection failed
+			(*_statusMessage) = SER_CALLHOME_FAILED;
 			return false;
 		}
+
+		/* SHA1 fingerprint is broken now!
+		#if HTTPS == true
+			if(!_client.verify(_config->sha1, _callHost)){
+				//ERROR: certificate verification failed!
+				(*_statusMessage) = SER_CALLHOME_CERT_FAILED;
+				return false;
+			}
+		#endif
 		*/
+		
 		
 		String mode, md5;
 		if(_command == U_LOGGER){
@@ -191,7 +183,7 @@
 		
 		// This will send the request to the server
 		_client.print(String("GET ") + url + "?" + args + F(" HTTP/1.1\r\n") +
-				   F("Host: ") + _updateHost + 
+				   F("Host: ") + _callHost + 
 				   
 				   F("\r\nUser-Agent: ESP-http-Update") +
 
@@ -204,7 +196,7 @@
 
 				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
 				   //F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +			// <--- not available yet for ESP32
-				   //F("\r\nx-ESP-CHIP-ID: ") + ESP.getChipId() +
+				   F("\r\nx-ESP-CHIP-ID: ") + ESP_GETCHIPID +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getSdkVersion() +
 				   
 				   F("\r\nx-ESP-FLASHCHIP-SIZE: ") + ESP.getFlashChipSize() +
