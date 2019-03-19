@@ -42,7 +42,7 @@
 	#define SER_DEV_MDNS_FAIL				" MDNS responder failed to start"
 	
 	#define SER_CALLING_HOME				" Calling Home"
-	#define SER_CALLHOME_FAILED				" Error: connection failed"
+	#define SER_CALLHOME_FAILED				"Error: connection failed"
 	#define SER_CALLHOME_TIMEOUT			"Error: connection timeout"
 	#define SER_CALLHOME_CERT_FAILED		" ERROR: certificate verification failed!"
 	#define SER_CALLHOME_HDR_FAILED			" ERROR: file header verification failed!"
@@ -72,7 +72,8 @@
 	
 	#define SER_SPIFFS_MOUNTING				"Mounting SPIFFS..."
 	#define SER_SPIFFS_PART_NOT_FOUND		"SPIFFS Partition Not Found"
-	#define SER_CERTIFICATE_NOT_FOUND		"Certificate Not Found"
+	#define SER_CERTIFICATE_NOT_FOUND		"Certificate Not Found!"
+	#define SER_CERTIFICATE_NOT_LOADED		"Could not load Certificate!"
 	
 	#define SER_UPD_SPIFFS_TO_LARGE			"SPIFFS update to large!"
 	#define SER_UPD_SKETCH_TO_LARGE			"Sketch update to large!"
