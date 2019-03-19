@@ -1,4 +1,4 @@
-#ifdef  ESP8266
+#if defined ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 	#include "callServer_WiFiClientSecure.h"
 	
 	callServer::callServer(strConfig &config, int command){
