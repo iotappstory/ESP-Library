@@ -127,12 +127,15 @@
 				}
 				
 				#if DEBUG_LVL >= 3
-					DEBUG_PRINT("File size: ");
+					DEBUG_PRINT("Certificate file size: ");
 					DEBUG_PRINTLN(file.size());
 				#endif
 
 				// Load root certificate (from SPIFFS)
-				_client.loadCACert(file, file.size());
+				if(!_client.loadCACert(file, file.size()) || file.size() == 0){
+				   (*_statusMessage) = SER_CERTIFICATE_NOT_LOADED;
+					return false;
+				}
 			
 			#else
 				// Set root certificate (from const char ROOT_CA[] PROGMEM)
