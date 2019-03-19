@@ -221,6 +221,12 @@ void IOTAppStory::begin(const char ea){
 	// --------- START WIFI --------------------------
 	connectNetwork();
 	
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	#if defined ESP8266 && HTTPS_8266_TYPE == CERTIFICATE
+		setClock();
+	#endif
+	
 	//---------- SELECT BOARD MODE -----------------------------
 	#if CFG_INCLUDE == true
 		if(boardMode == 'C'){
@@ -353,10 +359,10 @@ void IOTAppStory::connectNetwork() {
 					DEBUG_PRINT(hostNameWifi);
 				#endif
 
-				#if DEBUG_LVL >= 2
+				#if DEBUG_LVL >= 3
 					DEBUG_PRINTLN(SER_DEV_MDNS_INFO);
 				#endif
-				#if DEBUG_LVL == 1
+				#if DEBUG_LVL == 2
 					DEBUG_PRINTLN(F(""));
 				#endif
 
@@ -424,6 +430,40 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 
 
 /**
+	// Set time via NTP, as required for x.509 validation
+*/
+void IOTAppStory::setClock(){
+	configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(F(" Waiting for NTP time sync\n "));
+	#endif
+	
+	time_t now = time(nullptr);
+	while (now < 8 * 3600 * 2){
+		delay(500);
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("."));
+		#endif
+		now = time(nullptr);
+	}
+
+	struct tm timeinfo;
+	gmtime_r(&now, &timeinfo);
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINT(F("\n Current time: "));
+		DEBUG_PRINT(asctime(&timeinfo));
+	#endif	
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(F(""));
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
+}
+
+
+
+/**
 	call home and check for updates
 */
 void IOTAppStory::callHome(bool spiffs /*= true*/) {
@@ -466,77 +506,94 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 */
 bool IOTAppStory::iotUpdater(int command) {
 
+	bool result;
+	{
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("\n"));
+		#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(SER_CHECK_FOR);
+		#endif
+		#if DEBUG_LVL >= 1
+			if(command == U_FLASH){
+				DEBUG_PRINT(SER_APP_SKETCH);
+				
+			}else if(command == U_SPIFFS){
+				DEBUG_PRINT(SER_SPIFFS);
+				
+			}
+			#if OTA_UPD_CHECK_NEXTION == true
+				else if(command == U_NEXTION){
+					DEBUG_PRINT(SER_NEXTION);
+				}
+			#endif
+		#endif
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(SER_UPDATES_FROM);
+		#endif
+		#if DEBUG_LVL == 1
+			DEBUG_PRINT(SER_UPDATES);
+		#endif
+		#if DEBUG_LVL >= 2
+			#if HTTPS == true
+				DEBUG_PRINT(F("https://"));
+			#else
+				DEBUG_PRINT(F("http://"));
+			#endif
+			DEBUG_PRINT(OTA_HOST);
+			DEBUG_PRINTLN(OTA_UPD_FILE);
+		#endif
+		#if DEBUG_LVL == 1
+			DEBUG_PRINTLN("");
+		#endif
 
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(F("\n"));
-	#endif
-	#if DEBUG_LVL >= 1
-		DEBUG_PRINT(SER_CHECK_FOR);
-	#endif
-	#if DEBUG_LVL >= 1
-		if(command == U_FLASH){
-			DEBUG_PRINT(SER_APP_SKETCH);
+		firmwareStruct	firmwareStruct;
+		callServer		callServer(config, command);
+		callServer.sm(&statusMessage);
+		
+		
+		Stream &clientStream = callServer.getStream(&firmwareStruct);
+		
+		if(!firmwareStruct.success){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN(" " + statusMessage);
+			#endif
 			
-		}else if(command == U_SPIFFS){
-			DEBUG_PRINT(SER_SPIFFS);
-			
+			return false;
+		}
+		
+		
+		if (_firmwareUpdateDownloadCallback){
+			_firmwareUpdateDownloadCallback();
+		}
+
+		
+		
+		if(command == U_FLASH || command == U_SPIFFS){
+			// sketch / spiffs
+			result = espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
 		}
 		#if OTA_UPD_CHECK_NEXTION == true
-			else if(command == U_NEXTION){
-				DEBUG_PRINT(SER_NEXTION);
+			if(command == U_NEXTION){
+				// nextion display
+				espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
 			}
 		#endif
-	#endif
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(SER_UPDATES_FROM);
-	#endif
-	#if DEBUG_LVL == 1
-		DEBUG_PRINT(SER_UPDATES);
-	#endif
-	#if DEBUG_LVL >= 2
-		#if HTTPS == true
-			DEBUG_PRINT(F("https://"));
-		#else
-			DEBUG_PRINT(F("http://"));
-		#endif
-		DEBUG_PRINT(OTA_HOST);
-		DEBUG_PRINTLN(OTA_UPD_FILE);
-	#endif
-	#if DEBUG_LVL == 1
-		DEBUG_PRINTLN("");
-	#endif
+	}
+	
+	if(result && (command == U_FLASH || command == U_NEXTION)){
 
-	firmwareStruct	firmwareStruct;
-	callServer		callServer(config, command);
-	callServer.sm(&statusMessage);
-	
-	
-	Stream &clientStream = callServer.getStream(&firmwareStruct);
-	
-	if(!firmwareStruct.success){
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINTLN(" " + statusMessage);
+		// write changes to config
+		writeConfig();
+
+		// succesfull update
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_REBOOT_NEC);
 		#endif
 		
-		return false;
+		// reboot to start the new updated firmware
+		ESP.restart();
 	}
-	
-	
-	if (_firmwareUpdateDownloadCallback){
-		_firmwareUpdateDownloadCallback();
-	}
-
-	
-	if(command == U_FLASH || command == U_SPIFFS){
-		// sketch / spiffs
-		espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
-	}
-	#if OTA_UPD_CHECK_NEXTION == true
-		if(command == U_NEXTION){
-			// nextion display
-			espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
-		}
-	#endif
 	
 	return true;
 }
@@ -546,7 +603,7 @@ bool IOTAppStory::iotUpdater(int command) {
 /**
 	espInstaller
 */
-void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
+bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
 	devObj.sm(&statusMessage);
 	bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
 
@@ -560,35 +617,36 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 			DEBUG_PRINT(SER_INSTALLING);
 		#endif
 		
-
-		// create buffer for read
-		uint8_t buff[2048] = { 0 };
-		
-		// to do counter
-		uint32_t updTodo = (*firmwareStruct).xlength;
-		
-		// Upload the received byte Stream to the device
-		while(updTodo > 0 || updTodo == -1){
+		{
+			// create buffer for read uint8_t *mybuffer = new uint8_t[100];
+			uint8_t buff[2048] = { 0 };
 			
-			// get available data size
-			size_t size = streamPtr.available();
-
-			if(size){
-				// read up to 2048 byte into the buffer
-				size_t c = streamPtr.readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
-
-				// Write the buffered bytes to the esp. If this fails, return false.
-				result = devObj.update(buff, c);
+			// to do counter
+			uint32_t updTodo = (*firmwareStruct).xlength;
+			
+			// Upload the received byte Stream to the device
+			while(updTodo > 0 || updTodo == -1){
 				
-				if(updTodo > 0) {
-					updTodo -= c;
-				}
+				// get available data size
+				size_t size = streamPtr.available();
 
-				if (_firmwareUpdateProgressCallback){
-					_firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
+				if(size){
+					// read up to 2048 byte into the buffer
+					size_t c = streamPtr.readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+
+					// Write the buffered bytes to the esp. If this fails, return false.
+					result = devObj.update(buff, c);
+					
+					if(updTodo > 0) {
+						updTodo -= c;
+					}
+
+					if (_firmwareUpdateProgressCallback){
+						_firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
+					}
 				}
+				delay(1);
 			}
-			delay(1);
 		}
 
 
@@ -625,24 +683,13 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 					}
 				#endif
 				
-				if(command == U_FLASH || command == U_NEXTION){
-					// write changes to config
-					writeConfig();
-				}
+				
 
 				if (_firmwareUpdateSuccessCallback){
 					_firmwareUpdateSuccessCallback();
 				}
 				
-				if(command == U_FLASH){
-					// succesfull update
-					#if DEBUG_LVL >= 1
-						DEBUG_PRINTLN(SER_REBOOT_NEC);
-					#endif
-					
-					// reboot to start the new updated firmware
-					ESP.restart();
-				}
+
 			}else{
 				// update failed
 				#if DEBUG_LVL >= 2
@@ -653,7 +700,10 @@ void IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 				}
 			}
 		}
+		
+		
 	}
+	return result;
 }
 
 
@@ -1232,11 +1282,11 @@ String IOTAppStory::servHdlDevInfo(){
 	
 	retHtml.replace(F("{cid}"), String(ESP_GETCHIPID));
 
-	#if defined  ESP8266
-		retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
+	#if HTTPS_8266_TYPE == FNGPRINT
 		retHtml.replace(F("{f}"), config.sha1);
-	#elif defined ESP32
-		retHtml.replace(F("{fid}"), "");				// not available yet
+	#endif
+	#if defined ESP32
+		//retHtml.replace(F("{fid}"), "");				// not available yet
 	#endif
 
 	retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
@@ -1428,7 +1478,7 @@ String IOTAppStory::servHdlAppInfo(){
 
 
 #if defined  ESP8266
-/** Save new fingerprint */
+/** Save new fingerprint 
 String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_FINGERPRINT);
@@ -1439,11 +1489,11 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	
 	writeConfig();
 	return F("1");
-}
+}*/
 #endif
 
 
-
+#if defined  ESP32
 /** Get all root certificates */
 String IOTAppStory::strCertScan(String path){
 	
@@ -1454,7 +1504,7 @@ String IOTAppStory::strCertScan(String path){
 	// open SPIFFS certificate directory
     File root = SPIFFS.open("/cert");
     if(!root || !root.isDirectory()){
-		#if DEBUG_LVL >= 2
+		#if DEBUG_LVL >= 3
 			DEBUG_PRINTLN(" Failed to open directory");
 		#endif
 		
@@ -1464,7 +1514,7 @@ String IOTAppStory::strCertScan(String path){
 	// delete requested file
 	if(path != ""){
 		if(!SPIFFS.remove(path)){
-			#if DEBUG_LVL >= 2
+			#if DEBUG_LVL >= 3
 				DEBUG_PRINTLN(" Failed to delete file!");
 			#endif
 		}
@@ -1493,7 +1543,64 @@ String IOTAppStory::strCertScan(String path){
 	// return json string
 	return retHtml;
 }
+#else
+String IOTAppStory::strCertScan(String path){
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
+	#endif
+	
+	//Initialize File System
+	if(!SPIFFS.begin()){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F(" SPIFFS Mount Failed"));
+		#endif
+	}
+	
+	/* <-- always fails
+    // check if SPIFFS certificate directory exists
+    if(!SPIFFS.exists("/cert")){  // || !root.isDirectory()
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F(" Failed to open directory"));
+		#endif
+		
+        //return "0";
+    }*/
+	
+	// open SPIFFS certificate directory
+	Dir dir = SPIFFS.openDir("/cert/");
+	
+	// delete requested file
+	if(path != ""){
+		if(!SPIFFS.remove(path)){
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(F(" Failed to delete file!"));
+			#endif
+		}
+	}
+	
+	// return all the files found in this directory and return them as a json string
+	String retHtml = "[";
+    while(dir.next()){
+		
+		if(dir.fileSize()) {
+			File file = dir.openFile("r");
+			
+			if(retHtml != "["){
+				retHtml += F(",");
+			}
+			retHtml += "{";
+			retHtml += "\"n\":\"" + String(file.name()) + "\"";
+			retHtml += ",\"s\":" + String(file.size());
+			retHtml += "}";
+		}
+    }
+	retHtml += "]";
 
+	// return json string
+	return retHtml;
+}
+#endif
 
 
 /** Save App Settings */
