@@ -1,5 +1,4 @@
 #ifdef ESP32
-
 	#include <WiFi.h>
 	#include <WiFiMulti.h>
 	#include <ESPmDNS.h>
@@ -30,7 +29,8 @@
 	#include <ESP8266mDNS.h>
 
 	#include "espressif/esp8266/boardInfo.h"
-	#include "espressif/esp8266/callServer_WifiClientSecure.h"
+	//#include "espressif/esp8266/callServer_WifiClientSecure.h"
+	#include "espressif/esp8266/callServer_WifiClientBearSSLCACert.h"
 	#include "espressif/configServer.h"
 	
 	#include "espressif/UpdateClassVirt.h"
