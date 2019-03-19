@@ -5,6 +5,7 @@
 	
 	#define DEBUG_LVL					2			// Debug level: 0 - 3 | none - max
 	#define DEBUG_EEPROM_CONFIG			false
+	#define DEBUG_FREE_HEAP				false
 	#define SERIAL_SPEED				115200
 	#define BOOTSTATISTICS				true
 		
@@ -29,8 +30,9 @@
 	
 	// HTTPS defines
 	#define HTTPS         				true		// Use HTTPS for OTA updates
-	#define HTTPS_FNGPRINT				"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You edit & change this in config mode.
+	#define HTTPS_8266_TYPE				CERTIFICATE	// FNGPRINT / CERTIFICATE
 	#define HTTPS_CERT_STORAGE			ST_SPIFFS	// ST_SPIFFS / ST_PROGMEM
+	#define HTTPS_FNGPRINT				"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You can edit & change later in config mode.
 	
 	
 	// OTA defines
@@ -94,6 +96,10 @@
 	#define ST_PROGMEM	2
 	#define ST_CLOUD	3
 	#define ST_HYBRID	4
+	
+	
+	#define FNGPRINT	0
+	#define CERTIFICATE	1
 	
 	
 	// used for storing the config struct to eeprom
