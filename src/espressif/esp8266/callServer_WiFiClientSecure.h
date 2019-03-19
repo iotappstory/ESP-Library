@@ -1,4 +1,4 @@
-#ifdef  ESP8266
+#if defined ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 	#ifndef callServer_h
 		#define callServer_h
 
