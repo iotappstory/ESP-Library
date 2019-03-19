@@ -10,285 +10,285 @@
 
 /** config server */
 void configServer::run() {
-	
-	bool exitConfig = false;
-	
-	#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
-		if(!SPIFFS.begin()){
-			#if DEBUG_LVL >= 1
-				DEBUG_PRINT(F(" SPIFFS Mount Failed"));
-			#endif
-		}
-	#endif
-
-	#if DEBUG_LVL >= 1
-		DEBUG_PRINT(SER_CONFIG_MODE);
-	#endif
-	
-	AsyncWebServer server(80);
-	AsyncEventSource events("/events");
-	
-	if(WiFi.status() != WL_CONNECTED){
+	{	
+		bool exitConfig = false;
 		
-		// when there is no wifi setup server in AP mode
-		IPAddress apIP(192, 168, 4, 1);
-		
-		WiFi.mode(WIFI_AP_STA);
-		#if WIFI_SMARTCONFIG == true
-			WiFi.beginSmartConfig();
-		#endif
-		WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-		WiFi.softAP(_ias->config.deviceName);
-		
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _ias->config.deviceName);
-		#endif
-		
-	}else{
-		
-		// notifi IAS & enduser this device went to config mode (also sends localIP)
-		_ias->iasLog("1");
-		
-		// when there is wifi setup server in STA mode
-		WiFi.mode(WIFI_STA);
-		
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINT(SER_CONFIG_STA_MODE);
-			DEBUG_PRINTLN(WiFi.localIP());
-		#endif
-		
-	}
-	
-
-	#if CFG_STORAGE == ST_SPIFFS
-		// serv SPIFFS files from the /www/ directory
-		server.serveStatic("/", SPIFFS, "/www/");
-	#endif
-	#if CFG_STORAGE == ST_CLOUD || CFG_STORAGE == ST_HYBRID
-		// serv the index page or force wifi setup
-		server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->servHdlRoot()); });
-	#endif
-	
-	#if CFG_PAGE_INFO == true
-		// serv this device information in json format (first page in config)
-		server.on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlDevInfo(), F("text/json")); });
-	#endif
-	
-	// serv the wifi scan results
-	server.on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
-
-	
-	
-	// save the received fingerprint and serv results
-	#if defined  ESP8266
-		server.on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
-	#endif
-	
-	
-	// ESP32 certificate pages
-	#if defined  ESP32
-	
-		// serv cert scan in json format
-		server.on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request){
-			if(request->hasParam("d")){
-				hdlReturn(request, _ias->strCertScan(request->getParam("d")->value()), F("text/json")); 
-			}else{
-				hdlReturn(request, _ias->strCertScan(), F("text/json")); 
+		#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
+			if(!SPIFFS.begin()){
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINT(F(" SPIFFS Mount Failed"));
+				#endif
 			}
-		});
-				
-		// upload a file to /certupl
-		server.on("/certupl", HTTP_POST, [&](AsyncWebServerRequest *request){
-			request->send(200);
-		}, 
-			[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+		#endif
 
-				File fsUploadFile;
-				
-				// First step: check file extension & open new SPIFFS file
-				if(!index){
-					/// Check if file has a valid extension .cer
-					if(!filename.endsWith(".cer")){
-						request->send(500, F("text/plain"), F("ONLY .cer files allowed\n"));
-					}
-					
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINTF(" UploadStart: %s\n", filename.c_str());
-					#endif
-					
-					/// open new SPIFFS file for writing data
-					fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_WRITE);            // Open the file for writing in SPIFFS (create if it doesn't exist)
-					
-				}else{
-					/// open existing SPIFFS file for appending data
-					fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_APPEND);
-				}
-				
-				// Second step: write received buffer to SPIFFS file
-				if(len){
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINT(F(" Writing:\t"));
-						DEBUG_PRINTLN(len);
-					#endif
-					
-					/// write data
-					if(fsUploadFile.write(data, len) != len){
-						#if DEBUG_LVL >= 3
-							DEBUG_PRINTLN(F(" Write error!"));
-						#endif
-						
-						/// if write failed return error
-						request->send(500, F("text/plain"), F("Write error!\n"));
-					}
-				}
-				
-				// Last step: close file
-				if(final){
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINTF(" UploadEnd: %s, %u B\n", filename.c_str(), index+len);
-					#endif
-					
-					/// close file
-					fsUploadFile.close();
-				}
-			}
-		);
-	#endif
-	
-	
-	// save the received ssid & pass for the received APnr(i) ans serv results
-	server.on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ 
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(SER_CONFIG_MODE);
+		#endif
 		
-		int postAPnr = 0;
-		if(request->hasParam("i", true)){
-			postAPnr = atoi(request->getParam("i", true)->value().c_str());
-		}
-		
-		hdlReturn(
-			request, 
-			_ias->servHdlWifiSave(
-				request->getParam("s", true)->value(), 
-				request->getParam("p", true)->value(), 
-				postAPnr
-			)
-		);
-	});
-	
-	// serv the app fields in json format
-	server.on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
-
-	// save the received app fields and serv results
-	server.on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlAppSave(request)); });
-
-	// save the received device activation code
-	server.on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlactcodeSave(request->getParam("ac", true)->value())); });
-	
-	// close and exit the web server
-	server.on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
-	
-	
-	// serv 404 page
-	server.onNotFound([](AsyncWebServerRequest *request){
-		request->send(404);
-	});
-	
-	//server.onFileUpload(onUpload);
-	
-	// start the server
-	server.begin();
-
-	// server loop
-	while(exitConfig == false){
-		
-		yield();
+		AsyncWebServer server(80);
+		//AsyncEventSource events("/events");
 		
 		if(WiFi.status() != WL_CONNECTED){
 			
-			//DNS
-			//dnsServer->processNextRequest();
+			// when there is no wifi setup server in AP mode
+			IPAddress apIP(192, 168, 4, 1);
 			
-			// smartconfig default false / off
+			WiFi.mode(WIFI_AP_STA);
 			#if WIFI_SMARTCONFIG == true
-				if(WiFi.smartConfigDone()){
-					WiFi.mode(WIFI_AP_STA);
-					isNetworkConnected();
-				}
+				WiFi.beginSmartConfig();
+			#endif
+			WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+			WiFi.softAP(_ias->config.deviceName);
+			
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _ias->config.deviceName);
 			#endif
 			
-			// wifi connect when asked
-			if(_ias->_tryToConn == true){
-				#if DEBUG_LVL >= 3
-					DEBUG_PRINT(SER_REC_CREDENTIALS);
-					DEBUG_PRINT(_ias->config.ssid[0]);
-					DEBUG_PRINT(F(" - "));
-					DEBUG_PRINTLN(_ias->config.password[0]);
-				#endif
-				
-
-				WiFi.begin(_ias->config.ssid[0], _ias->config.password[0]);
-				_ias->_connected = _ias->isNetworkConnected(false);
-				yield();
-				
-				if(_ias->_connected){
-					
-					// Saving config to eeprom
-					_ias->_writeConfig = true;
-					
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINT(SER_CONN_SAVE_EEPROM);
-					#endif
-				}else{
-					_ias->readConfig();
-					#if DEBUG_LVL >= 1
-						DEBUG_PRINTLN(SER_FAILED_TRYAGAIN);
-					#endif
-					_ias->_tryToConnFail = true;
-				}
-				
-				_ias->_tryToConn = false;
-			}
-			
 		}else{
-
-			// write EEPROM
-			if(_ias->_writeConfig){
-				_ias->writeConfig();
-				yield();
-				_ias->_writeConfig = false;
-			}
 			
-			// when succesfully added wifi cred in AP mode change to STA mode
-			if(_ias->_changeMode){
-				delay(1000);
-				WiFi.mode(WIFI_STA);
-				delay(100);
-				_ias->_changeMode = false;
-				
-				// notifi IAS & enduser this device went to config mode (also sends localIP)
-				_ias->iasLog("1");
-				
-				#if DEBUG_LVL >= 2
-					//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
-					
-					DEBUG_PRINT(SER_CONFIG_STA_MODE_CHANGE);
-					DEBUG_PRINTLN(WiFi.localIP());
-					DEBUG_PRINTLN();
-				#endif
-			}
+			// notifi IAS & enduser this device went to config mode (also sends localIP)
+			_ias->iasLog("1");
+			
+			// when there is wifi setup server in STA mode
+			WiFi.mode(WIFI_STA);
+			
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINT(SER_CONFIG_STA_MODE);
+				DEBUG_PRINTLN(WiFi.localIP());
+			#endif
 			
 		}
+		
+
+		#if CFG_STORAGE == ST_SPIFFS
+			// serv SPIFFS files from the /www/ directory
+			server.serveStatic("/", SPIFFS, "/www/");
+		#endif
+		#if CFG_STORAGE == ST_CLOUD || CFG_STORAGE == ST_HYBRID
+			// serv the index page or force wifi setup
+			server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->servHdlRoot()); });
+		#endif
+		
+		#if CFG_PAGE_INFO == true
+			// serv this device information in json format (first page in config)
+			server.on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlDevInfo(), F("text/json")); });
+		#endif
+		
+		// serv the wifi scan results
+		server.on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
+
+		
+		
+		// save the received fingerprint and serv results
+		/*#if defined  ESP8266
+			server.on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
+		#endif*/
+		
+		
+		// ESP32 certificate pages
+		//#if defined  ESP32
+		
+			// serv cert scan in json format
+			server.on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request){
+				if(request->hasParam("d")){
+					hdlReturn(request, _ias->strCertScan(request->getParam("d")->value()), F("text/json")); 
+				}else{
+					hdlReturn(request, _ias->strCertScan(), F("text/json")); 
+				}
+			});
+					
+			// upload a file to /certupl
+			server.on("/certupl", HTTP_POST, [&](AsyncWebServerRequest *request){
+				request->send(200);
+			}, 
+				[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+
+					File fsUploadFile;
+					
+					// First step: check file extension & open new SPIFFS file
+					if(!index){
+						/// Check if file has a valid extension .cer
+						if(!filename.endsWith(".cer")){
+							request->send(500, F("text/plain"), F("ONLY .cer files allowed\n"));
+						}
+						
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTF(" UploadStart: %s\n", filename.c_str());
+						#endif
+						
+						/// open new SPIFFS file for writing data
+						fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_WRITE);            // Open the file for writing in SPIFFS (create if it doesn't exist)
+						
+					}else{
+						/// open existing SPIFFS file for appending data
+						fsUploadFile = SPIFFS.open("/cert/" + filename, FILE_APPEND);
+					}
+					
+					// Second step: write received buffer to SPIFFS file
+					if(len){
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINT(F(" Writing:\t"));
+							DEBUG_PRINTLN(len);
+						#endif
+						
+						/// write data
+						if(fsUploadFile.write(data, len) != len){
+							#if DEBUG_LVL >= 3
+								DEBUG_PRINTLN(F(" Write error!"));
+							#endif
+							
+							/// if write failed return error
+							request->send(500, F("text/plain"), F("Write error!\n"));
+						}
+					}
+					
+					// Last step: close file
+					if(final){
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTF(" UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+						#endif
+						
+						/// close file
+						fsUploadFile.close();
+					}
+				}
+			);
+		//#endif
+		
+		
+		// save the received ssid & pass for the received APnr(i) ans serv results
+		server.on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ 
+			
+			int postAPnr = 0;
+			if(request->hasParam("i", true)){
+				postAPnr = atoi(request->getParam("i", true)->value().c_str());
+			}
+			
+			hdlReturn(
+				request, 
+				_ias->servHdlWifiSave(
+					request->getParam("s", true)->value(), 
+					request->getParam("p", true)->value(), 
+					postAPnr
+				)
+			);
+		});
+		
+		// serv the app fields in json format
+		server.on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
+
+		// save the received app fields and serv results
+		server.on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlAppSave(request)); });
+
+		// save the received device activation code
+		server.on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlactcodeSave(request->getParam("ac", true)->value())); });
+		
+		// close and exit the web server
+		server.on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
+		
+		
+		// serv 404 page
+		server.onNotFound([](AsyncWebServerRequest *request){
+			request->send(404);
+		});
+		
+		//server.onFileUpload(onUpload);
+		
+		// start the server
+		server.begin();
+
+		// server loop
+		while(exitConfig == false){
+			
+			yield();
+			
+			if(WiFi.status() != WL_CONNECTED){
+				
+				//DNS
+				//dnsServer->processNextRequest();
+				
+				// smartconfig default false / off
+				#if WIFI_SMARTCONFIG == true
+					if(WiFi.smartConfigDone()){
+						WiFi.mode(WIFI_AP_STA);
+						isNetworkConnected();
+					}
+				#endif
+				
+				// wifi connect when asked
+				if(_ias->_tryToConn == true){
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT(SER_REC_CREDENTIALS);
+						DEBUG_PRINT(_ias->config.ssid[0]);
+						DEBUG_PRINT(F(" - "));
+						DEBUG_PRINTLN(_ias->config.password[0]);
+					#endif
+					
+
+					WiFi.begin(_ias->config.ssid[0], _ias->config.password[0]);
+					_ias->_connected = _ias->isNetworkConnected(false);
+					yield();
+					
+					if(_ias->_connected){
+						
+						// Saving config to eeprom
+						_ias->_writeConfig = true;
+						
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINT(SER_CONN_SAVE_EEPROM);
+						#endif
+					}else{
+						_ias->readConfig();
+						#if DEBUG_LVL >= 1
+							DEBUG_PRINTLN(SER_FAILED_TRYAGAIN);
+						#endif
+						_ias->_tryToConnFail = true;
+					}
+					
+					_ias->_tryToConn = false;
+				}
+				
+			}else{
+
+				// write EEPROM
+				if(_ias->_writeConfig){
+					_ias->writeConfig();
+					yield();
+					_ias->_writeConfig = false;
+				}
+				
+				// when succesfully added wifi cred in AP mode change to STA mode
+				if(_ias->_changeMode){
+					delay(1000);
+					WiFi.mode(WIFI_STA);
+					delay(100);
+					_ias->_changeMode = false;
+					
+					// notifi IAS & enduser this device went to config mode (also sends localIP)
+					_ias->iasLog("1");
+					
+					#if DEBUG_LVL >= 2
+						//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
+						
+						DEBUG_PRINT(SER_CONFIG_STA_MODE_CHANGE);
+						DEBUG_PRINTLN(WiFi.localIP());
+						DEBUG_PRINTLN();
+					#endif
+				}
+				
+			}
+		}
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(SER_CONFIG_EXIT);
+		#endif
 	}
-	
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINTLN(SER_CONFIG_EXIT);
-	#endif
 	
 	// notifi IAS & enduser this device has left config mode (also sends localIP)
 	_ias->iasLog("0");
-				
-	// Return to Normal Operation
-	_ias->espRestart('N');
-
+	
+	// give the iasLog https connection time to finish background processes
+	delay(50);
 }
 
 
