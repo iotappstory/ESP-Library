@@ -37,6 +37,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IOTApp
 // ================================================ EXAMPLE VARS =========================================
 // used in this example to blink (LEDpin) every (blinkTime) miliseconds
 unsigned long blinkEntry;
+String deviceName = "iasblink";
+String chipId;
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported. (Keep in mind that html form fields always return Strings)
@@ -50,7 +52,13 @@ char* blinkTime = "1000";
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.preSetDeviceName("iasblink");                         // preset deviceName this is also your MDNS responder: http://iasblink.local
+	
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+	
+  IAS.preSetDeviceName(deviceName);                         // preset deviceName this is also your MDNS responder: http://iasblink.local
 
 
   IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
@@ -67,6 +75,10 @@ void setup() {
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+      Serial.print(".");
   });
 
   
