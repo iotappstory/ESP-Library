@@ -37,21 +37,21 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);    // Initialize IOTAppStory
 
 // ================================================ VARS =================================================
 String deviceName = "initloader";
+String chipId;
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
   
-  #if defined  ESP8266
-    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
-    chipId         = "-"+chipId.substring(chipId.length()-3);
-    deviceName    += chipId;
-  #endif
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
   
   IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName.local
   IAS.preSetAppName(F("INITLoader"));     // preset appName
-  IAS.preSetAppVersion(F("1.2.0"));       // preset appVersion
+  IAS.preSetAppVersion(F("1.3.0"));       // preset appVersion
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
@@ -65,6 +65,10 @@ void setup() {
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+      Serial.print(".");
   });
   
   #ifdef  ESP8266
