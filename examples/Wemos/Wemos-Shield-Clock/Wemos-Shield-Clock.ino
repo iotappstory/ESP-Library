@@ -42,8 +42,8 @@ SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 // ================================================ VARS =================================================
 strDateTime dateTime;
-
 String deviceName = "wemosclock";
+String chipId;
 
 int screenW       = 64;
 int screenH       = 48;
@@ -77,11 +77,10 @@ void setup() {
   display.display();
 
 
-  #if defined  ESP8266
-    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
-    chipId         = "-"+chipId.substring(chipId.length()-3);
-    deviceName    += chipId;
-  #endif
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
 
@@ -117,6 +116,11 @@ void setup() {
 
   IAS.onFirmwareUpdateDownload([]() {
     dispTemplate_threeLineV2(F("Download"), F("&"), F("Install App"));
+  });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+    String perc = String(written / (total / 100)) + "%";
+    dispTemplate_threeLineV2(F("Installing"), perc, F("Done"));
   });
 
   IAS.onFirmwareUpdateError([]() {
