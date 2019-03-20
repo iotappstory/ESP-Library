@@ -30,7 +30,7 @@
 	Don't forget to upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
 	or you can upload it to IOTAppStory.com
 
-  WebAppToggleBtn V3.0.0
+  WebAppToggleBtn V3.0.1
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -61,6 +61,9 @@ void onRequest(AsyncWebServerRequest *request){
 
 
 // ================================================ VARS =================================================
+String deviceName = "webtoggle";
+String chipId;
+
 // Variables will change:
 int ledState = LOW;					// the current state of the output pin
 int buttonState;						// the current reading from the input pin
@@ -85,7 +88,13 @@ char* updInt      = "60";                                 // every x sec
 
 // ================================================ SETUP ================================================
 void setup() {
-	IAS.preSetDeviceName("webtoggle");											// preset deviceName this is also your MDNS responder: http://webtoggle.local
+  
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+	
+	IAS.preSetDeviceName(deviceName);											// preset deviceName this is also your MDNS responder: http://webtoggle.local
   IAS.preSetAutoUpdate(true);                             // automaticUpdate (true, false)
 
 
@@ -106,6 +115,10 @@ void setup() {
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
+  });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+    Serial.print(".");
   });
 
 	
