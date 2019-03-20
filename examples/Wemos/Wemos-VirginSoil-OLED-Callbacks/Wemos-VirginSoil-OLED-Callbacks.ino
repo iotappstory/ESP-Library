@@ -88,6 +88,11 @@ void setup() {
     dispTemplate_threeLineV2(F("Download"), F("&"), F("Install App"));
   });
 
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+    String perc = String(written / (total / 100)) + "%";
+    dispTemplate_threeLineV2(F("Installing"), perc, F("Done"));
+  });
+
   IAS.onFirmwareUpdateError([]() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
