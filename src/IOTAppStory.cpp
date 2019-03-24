@@ -1511,7 +1511,7 @@ String IOTAppStory::servHdlAppInfo(){
 		value.replace("\b", "\\b");
 		value.replace("\f", "\\f");
 
-		// get PROGMEM json string and replace {*} with values		
+		// get PROGMEM json string and replace {*} with values
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
 		retHtml.replace(F("{v}"), value);

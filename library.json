@@ -15,5 +15,5 @@
     "platforms": ["espressif8266", "espressif32"],
     "authors": "Hristo Gochkov"
   },
-  "version": "2.0.1"
+  "version": "2.0.2"
 }
