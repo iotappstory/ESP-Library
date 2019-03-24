@@ -78,7 +78,7 @@ void setup() {
   delay(100);
   
 
-  IAS.preSetDeviceName("ws2812b-vs");                        // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
+  IAS.preSetDeviceName("ws2812b-vs");                     // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -127,9 +127,7 @@ void setup() {
   
 
   IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-
-  IAS.setCallHome(true);                                  // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.setCallHomeInterval(60);                            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
   //-------- Your Setup starts from here ---------------
 
@@ -140,13 +138,13 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                                        // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();                                             // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
 
   //-------- Your Sketch starts from here ---------------
 
   
-  if(digitalRead(MODEBUTTON) == HIGH) {                    // if the button is not being pressed set the neopixel to green and blink every 5 seconds
+  if(digitalRead(MODEBUTTON) == HIGH) {                   // if the button is not being pressed set the neopixel to green and blink every 5 seconds
     if(millis() - printEntry > 5000) {
       printEntry = millis();
   
