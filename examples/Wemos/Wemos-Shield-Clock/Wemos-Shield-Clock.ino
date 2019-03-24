@@ -121,6 +121,7 @@ void setup() {
   IAS.onFirmwareUpdateProgress([](int written, int total){
     String perc = String(written / (total / 100)) + "%";
     dispTemplate_threeLineV2(F("Installing"), perc, F("Done"));
+    Serial.print(".");
   });
 
   IAS.onFirmwareUpdateError([]() {
@@ -128,11 +129,11 @@ void setup() {
   });
   
 
-  IAS.begin('L');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-
-  IAS.setCallHome(atoi(updTimer));                        // Set to true to enable calling home frequently (disabled by default)
-  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds, use 60s only for development. Please change it to at least 2 hours in production
-
+  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  if(atoi(updTimer) == 1){                                // If the update interval is turned on in the config pages
+    IAS.setCallHomeInterval(atoi(updInt));                // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
+  }
+  
   
   //-------- Your Setup starts from here ---------------
 
