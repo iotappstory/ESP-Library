@@ -126,11 +126,9 @@
 
 
 	class IOTAppStory {
-		
-		
 
 		public:
-		
+			
 		/** 
 			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
 		*/
@@ -186,9 +184,8 @@
 		void preSetAutoUpdate(bool automaticUpdate);
 		void preSetAutoConfig(bool automaticConfig);
 		void preSetWifi(String ssid, String password);
-		//void preSetServer(String HOST1, String FILE1);
 
-		void setCallHome(bool callHome);
+		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. Remove with version 3.0.0
 		void setCallHomeInterval(unsigned long interval);
 
 		void begin(const char ea);
@@ -201,8 +198,8 @@
 		void espRestart(char mmode);
 		void eraseFlash(int eepFrom, int eepTo);
 
-		void connectNetwork();
-		bool isNetworkConnected(bool multi = true);
+		void WiFiSetupAndConnect();
+		bool WiFiConnectToAP(bool multi = true);
 		void setClock();
 		
 		void callHome(bool spiffs = true);
@@ -214,21 +211,17 @@
 		int dPinConv(String orgVal);
 
 		void onFirstBoot(THandlerFunction fn);              	// called at the end of firstBoot
-		//void onWifiConnected(THandlerFunction fn);        	// called on succesfull Wifi connection SYSTEM_EVENT_STA_GOT_IP
-		//void onWifiDisonnected(THandlerFunction fn);      	// called when Wifi is dissconnected SYSTEM_EVENT_STA_DISCONNECTED
-
 		void onModeButtonNoPress(THandlerFunction fn);      	// called when state is changed to idle (mode button is not pressed)
 		void onModeButtonShortPress(THandlerFunction fn);   	// called when state is changed to short press
 		void onModeButtonLongPress(THandlerFunction fn);    	// called when state is changed to long press
 		void onModeButtonVeryLongPress(THandlerFunction fn); 	// called when state is changed to very long press
+		void onConfigMode(THandlerFunction fn);             	// called when the app is about to enter in configuration mode
 
 		void onFirmwareUpdateCheck(THandlerFunction fn);    	// called when the app checks for firmware updates
 		void onFirmwareUpdateDownload(THandlerFunction fn); 	// called when firmware download starts
 		void onFirmwareUpdateProgress(THandlerFunctionArg fn); 	// called during update process
 		void onFirmwareUpdateError(THandlerFunction fn);    	// called when firmware update ends in an error
 		void onFirmwareUpdateSuccess(THandlerFunction fn);  	// called when firmware update ends in success
-
-		void onConfigMode(THandlerFunction fn);             	// called when the app is about to enter in configuration mode
 
 		private:
 		
@@ -241,25 +234,27 @@
 		#endif
 
 		const char *_compDate;
-		const int _modeButton;
-		unsigned int _nrXF                   = 0;       // nr of extra fields required in the config manager
+		const int _modeButton;							// which gpio is used for selecting modes
+		unsigned int _nrXF					= 0;		// nr of extra fields required in the config manager
 
-		bool _updateOnBoot                   = true;    // update on boot? (end of begin();)
-		bool _automaticConfig                = true;    // automaticly go to config on boot if there is no wifi connection present
+		bool _updateOnBoot					= true;		// update on boot? (end of begin();)
+		bool _automaticConfig				= true;		// automaticly go to config on boot if there is no wifi connection present
 
-		bool _setPreSet                      = false;   // ;) have there been any preSets set?
-		bool _setDeviceName                  = false;   // is the device name set?
-		bool _configReaded                   = false;   // has the config already been read?
-		bool _callHome                       = false;
-
-		bool _tryToConn                      = false;   // try to connect to wifi bool
-		bool _tryToConnFail                  = false;   // try to connect to wifi bool
-		bool _connected                      = false;   // wifi connection status bool
-		bool _writeConfig                    = false;
-		bool _changeMode                     = false;
-
-		unsigned long _lastCallHomeTime      = 0;       // Time when we last called home
-		unsigned long _callHomeInterval      = 7200000; // Interval we want to call home at in milliseconds, default start at 2hrs
+		bool _setPreSet						= false;	// ;) have there been any preSets set?
+		bool _setDeviceName					= false;	// is the device name set?
+		bool _configReaded					= false;	// has the config already been read?
+		bool _writeConfig					= false;	// flag to notify the loop to write the config settings
+		
+		bool _connected						= false;	// wifi connection status bool
+		bool _tryToConn						= false;	// is the wifi connector busy? (trying to connect)
+		bool _connFail						= false;	// did the last connection attempt faile
+		bool _connChangeMode				= false;	// flag to notify the loop to change from AP to STA mode
+		
+		
+		bool _timeSet						= false;	// maby?<---------------
+		unsigned long _lastTimeSet			= 0;
+		unsigned long _lastCallHomeTime		= 0;       	// Time when we last called home
+		unsigned long _callHomeInterval		= 0; 		// Interval we want to call home at in milliseconds. 0 = off
 
 		unsigned long _buttonEntry;
 		unsigned long _debugEntry;
@@ -267,24 +262,18 @@
 
 		eFields fieldStruct[MAXNUMEXTRAFIELDS];
 
-
 		THandlerFunction _firstBootCallback;
-		//THandlerFunction _wifiConnectedCallback;
-		//THandlerFunction _wifiDisonnectedCallback;
-
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
 		THandlerFunction _longPressCallback;
 		THandlerFunction _veryLongPressCallback;
-
-		THandlerFunction _firmwareUpdateCheckCallback;
-		THandlerFunction _firmwareUpdateDownloadCallback;
-		
-		THandlerFunctionArg _firmwareUpdateProgressCallback;
-		
-		THandlerFunction _firmwareUpdateErrorCallback;
-		THandlerFunction _firmwareUpdateSuccessCallback;
 		THandlerFunction _configModeCallback;
+
+		THandlerFunction 	_firmwareUpdateCheckCallback;
+		THandlerFunction 	_firmwareUpdateDownloadCallback;
+		THandlerFunctionArg _firmwareUpdateProgressCallback;
+		THandlerFunction 	_firmwareUpdateErrorCallback;
+		THandlerFunction 	_firmwareUpdateSuccessCallback;
 
 
 		/**
@@ -301,9 +290,9 @@
 		String servHdlRoot();
 		String servHdlDevInfo();
 		String servHdlAppInfo();
-		/*#if defined  ESP8266
+		#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT
 			String servHdlFngPrintSave(String fngprint);
-		#endif*/
+		#endif
 		String servHdlWifiSave(String newSSID, String newPass, int apNr=0);
 		String servHdlAppSave(AsyncWebServerRequest *request);
 		String servHdlactcodeSave(String actcode="");
