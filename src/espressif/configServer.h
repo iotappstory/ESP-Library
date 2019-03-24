@@ -10,6 +10,9 @@
 		#elif defined  ESP8266
 			#include <ESPAsyncTCP.h>					// https://github.com/me-no-dev/ESPAsyncTCP
 			#include <FS.h>								// esp8266 core SPIFFS library
+			#define FILE_WRITE 	"w"
+			#define FILE_APPEND "a"
+			
 		#endif
 		#include <ESPAsyncWebServer.h>					// https://github.com/me-no-dev/ESPAsyncWebServer
 		
@@ -25,6 +28,7 @@
 				void run();
 			private:
 				IOTAppStory* _ias;
+				std::unique_ptr<AsyncWebServer> 	server;
 				
 				void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 				void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
