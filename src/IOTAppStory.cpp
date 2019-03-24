@@ -126,21 +126,11 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	SetConfigValueCharArray(config.ssid[0], ssid, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
 	SetConfigValueCharArray(config.password[0], password, STRUCT_PASSWORD_SIZE, _setPreSet);
 }
-/*
-void IOTAppStory::preSetServer(String HOST1, String FILE1){
-	if (!_configReaded) {
-		readConfig();
-	}
-	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-}
-*/
 
 
 
-void IOTAppStory::setCallHome(bool callHome) {
-	_callHome = callHome;
-}
+void IOTAppStory::setCallHome(bool callHome) {} // <----- deprecated left for compatibility. Remove with version 3.0.0
+
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
 	_callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
@@ -219,12 +209,16 @@ void IOTAppStory::begin(const char ea){
 	
 	
 	// --------- START WIFI --------------------------
-	connectNetwork();
+	// Setup wifi with cred etc connect to AP
+	WiFiSetupAndConnect();
 	
+
 	// Synchronize time useing SNTP. This is necessary to verify that
 	// the TLS certificates offered by servers are currently valid.
-	#if defined ESP8266 && HTTPS_8266_TYPE == CERTIFICATE
-		setClock();
+	#if SNTP_INT_CLOCK_UPD == true
+		if(_connected){
+			this->setClock();
+		}
 	#endif
 	
 	//---------- SELECT BOARD MODE -----------------------------
@@ -235,16 +229,28 @@ void IOTAppStory::begin(const char ea){
 			if(_configModeCallback){
 				_configModeCallback();
 			}
+			
+			// notifi IAS & enduser this device went to config mode (also sends localIP)
+			if(_connected){
+				this->iasLog("1");
+			}
+			
+			// run config server
 			configServer configServer(*this);
 			configServer.run();
-				
-			// Return to Normal Operation
-			espRestart('N');
+			
+			// notifi IAS & enduser this device has left config mode (also sends localIP)
+			if(_connected){
+				this->iasLog("0");
+			}
+			
+			// Restart & return to Normal Operation
+			this->espRestart('N');
 		}
 	#endif
 	
-	// --------- if automaticUpdate Update --------------------------
-	if(_updateOnBoot == true){
+	// --------- if connection & automaticUpdate Update --------------------------
+	if(_connected && _updateOnBoot == true){
 		callHome();
 	}
 
@@ -292,23 +298,27 @@ void IOTAppStory::iasLog(String msg) {
 
 
 /** Connect to Wifi AP */
-void IOTAppStory::connectNetwork() {
+void IOTAppStory::WiFiSetupAndConnect() {
 	
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(SER_CONNECTING);
 	#endif
 	
+	// setup wifi credentials
 	#if WIFI_MULTI == true
+		// add multiple credentials
 		wifiMulti.addAP(config.ssid[0], config.password[0]);
 		wifiMulti.addAP(config.ssid[1], config.password[1]);
 		wifiMulti.addAP(config.ssid[2], config.password[2]);
 	#else
+		// add single credential
 		WiFi.begin(config.ssid[0], config.password[0]);
 	#endif
 	
-
-	if(!isNetworkConnected()) {
-		
+	// connect to access point
+	if(!WiFiConnectToAP()){
+		// FAILED
+		// if conditions are met, set to config mode (C)
 		if(_automaticConfig || boardMode == 'C'){
 			
 			if(boardMode == 'N'){
@@ -330,25 +340,17 @@ void IOTAppStory::connectNetwork() {
 		}
 
 	}else{
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINTLN(SER_CONNECTED);
-		#endif
+		// SUCCES
+		// Show connection details if debug level is set
 
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINT(SER_DEV_MAC);
 			DEBUG_PRINTLN(WiFi.macAddress());
 		#endif
 
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(SER_DEV_IP);
-			DEBUG_PRINTLN(WiFi.localIP());
-		#endif
-
+		// Register host name in WiFi and mDNS
 		#if WIFI_USE_MDNS == true
-			// Register host name in WiFi and mDNS
-			String hostNameWifi = config.deviceName;
-			hostNameWifi += ".local";
-
+			
 			// wifi_station_set_hostname(config.deviceName);
 			// WiFi.hostname(hostNameWifi);
 
@@ -356,7 +358,8 @@ void IOTAppStory::connectNetwork() {
 
 				#if DEBUG_LVL >= 1
 					DEBUG_PRINT(SER_DEV_MDNS);
-					DEBUG_PRINT(hostNameWifi);
+					DEBUG_PRINT(config.deviceName);
+					DEBUG_PRINT(".local");
 				#endif
 
 				#if DEBUG_LVL >= 3
@@ -386,7 +389,7 @@ void IOTAppStory::connectNetwork() {
 	Wait until network is connected. 
 	Returns false if not connected after WIFI_CONN_MAX_RETRIES retries 
 */
-bool IOTAppStory::isNetworkConnected(bool multi) {
+bool IOTAppStory::WiFiConnectToAP(bool multi){
 	#if defined  ESP8266
 		int retries = WIFI_CONN_MAX_RETRIES;
 	#elif defined ESP32
@@ -399,6 +402,8 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 
 	#if WIFI_MULTI == true
 		if(multi){
+			
+			
 			while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
 				delay(500);
 				#if DEBUG_LVL >= 1
@@ -419,10 +424,22 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 		}
 	#endif	
 
-	
 	if(retries > 0){
+
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_CONNECTED);
+		#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(SER_DEV_IP);
+			DEBUG_PRINTLN(WiFi.localIP());
+		#endif
+		_connected = true;
 		return true;
 	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F("\n Failed!"));
+		#endif
+		_connected = false;
 		return false;
 	}
 }
@@ -433,14 +450,20 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 	// Set time via NTP, as required for x.509 validation
 */
 void IOTAppStory::setClock(){
+	#if defined  ESP8266
+		int retries = WIFI_CONN_MAX_RETRIES;
+	#elif defined ESP32
+		int retries = (WIFI_CONN_MAX_RETRIES/2);
+	#endif
+
 	configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 
 	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(F(" Waiting for NTP time sync\n "));
+		DEBUG_PRINT(SER_SYNC_TIME_NTP);
 	#endif
 	
 	time_t now = time(nullptr);
-	while (now < 8 * 3600 * 2){
+	while (now < 8 * 3600 * 2 && retries-- > 0 ){
 		delay(500);
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINT(F("."));
@@ -448,13 +471,24 @@ void IOTAppStory::setClock(){
 		now = time(nullptr);
 	}
 
-	struct tm timeinfo;
-	gmtime_r(&now, &timeinfo);
-	
-	#if DEBUG_LVL >= 3
-		DEBUG_PRINT(F("\n Current time: "));
-		DEBUG_PRINT(asctime(&timeinfo));
-	#endif	
+	if(retries > 0){
+		struct tm timeinfo;
+		gmtime_r(&now, &timeinfo);
+		_timeSet 		= true;
+		_lastTimeSet 	= millis();
+		
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F("\n Current time: "));
+			DEBUG_PRINT(asctime(&timeinfo));
+		#endif
+	}else{
+		_timeSet 		= false;
+		_lastTimeSet 	= 0;
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(SER_FAILED_EXCL);
+		#endif
+	}
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(F(""));
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -1096,11 +1130,41 @@ void IOTAppStory::readConfig() {
 
 
 void IOTAppStory::loop() {
-	if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
+	
+	// wifi connector
+	#if WIFI_MULTI_FORCE_RECONN_ANY == true
+	if(WiFi.status() == WL_NO_SSID_AVAIL){
+		_connected = false;
+		WiFi.disconnect(false);
+		delay(10);
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_CONN_LOST_RECONN);
+		#endif
+
+		this->WiFiConnectToAP(true);
+
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(""));
+			DEBUG_PRINTLN(FPSTR(SER_DEV));
+		#endif
+	}
+	#endif
+	
+	// Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
+	#if SNTP_INT_CLOCK_UPD == true
+		if(_connected && millis() - _lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL){
+			this->setClock();
+		}
+	#endif
+	
+	// Call home and check for updates every _callHomeInterval
+	if (_connected && _callHomeInterval > 0 && millis() - _lastCallHomeTime > _callHomeInterval) {
 		this->callHome();
 		_lastCallHomeTime = millis();
 	}
-
+	
+	// handle button presses: short, long, xlong
 	this->buttonLoop();
 }
 
@@ -1250,7 +1314,7 @@ String IOTAppStory::servHdlRoot() {
 	String retHtml;
 	retHtml += FPSTR(HTTP_TEMP_START);
 
-	if (WiFi.status() == WL_CONNECTED) {
+	if(_connected){
 
 		retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
 
@@ -1352,62 +1416,52 @@ String IOTAppStory::servHdlWifiSave(String newSSID, String newPass, int apNr) {
 	if(newSSID!="" && newPass != ""){
 		
 		if(!apNr){
-			
+			if(_tryToConn == false){
 				//Saved from first screen. When in Wifi AP mode
-				if(_tryToConnFail){
+				if(_connFail){
+					_connFail = false;
 					retHtml = F("3");			// return html Failed
-					_tryToConnFail = false;		// reset for next try
-				}else if(!_connected && !_tryToConn){
+					
+					// read config & reset credentials
+					readConfig();
+					
+				}else if(_connected){
+					_connChangeMode = true;
+						
+					// Saving config to eeprom
+					_writeConfig = true;
+					
+					retHtml = F("1:");	// ok:ip
+					retHtml += WiFi.localIP().toString();
+					delay(100);
+					
+				}else if(!_connected){
 					
 					#if WIFI_MULTI == true
 						// Shift array members to the right
-						String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
-						String(config.password[1]).toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
+						strncpy(config.ssid[2], config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
+						strncpy(config.password[2], config.password[1], STRUCT_PASSWORD_SIZE);
 						
-						String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
-						String(config.password[0]).toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
+						strncpy(config.ssid[1], config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+						strncpy(config.password[1], config.password[0], STRUCT_PASSWORD_SIZE);
 					#endif
 					
 					// Replace the first array member
 					newSSID.toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
 					newPass.toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
-						
-					#if DEBUG_LVL >= 2
-						DEBUG_PRINT(SER_CONN_REC_CRED);
-					#endif
-					
-					#if DEBUG_LVL == 3
-						DEBUG_PRINT(F(": "));
-						DEBUG_PRINT(newSSID);
-						DEBUG_PRINT(F(" - "));
-						DEBUG_PRINTLN(newPass);
-					#endif
 					
 					_tryToConn = true;
 					retHtml = F("2");		// busy
-					
-				}else if(!_connected && _tryToConn){
-					
-					// if server is called while connecting wifi anser busy
-					retHtml = F("2");		// busy
-					
-				}else if(_connected && !_tryToConn){
-					_changeMode = true;
-					
-					#if DEBUG_LVL == 3
-						DEBUG_PRINTLN(SER_CONN_REC_CRED_PROC);
-					#endif
-
-					#if DEBUG_LVL == 3
-						DEBUG_PRINTLN(SER_CONN_SAVE_EEPROM);
-					#endif
-					
-					retHtml = F("1:");	// ok:ip
-					retHtml += WiFi.localIP().toString();
-					delay(100);
 				}
+			}else{
+				
+				// if server is called while connecting wifi anser busy
+				retHtml = F("2");		// busy
+			}
 		
 		}else{
+
+				//DEBUG_PRINTLN("Saved / added from config. When in Wifi STA mode");
 				// Saved / added from config. When in Wifi STA mode
 				_writeConfig = true;
 
@@ -1422,10 +1476,10 @@ String IOTAppStory::servHdlWifiSave(String newSSID, String newPass, int apNr) {
 		}
 
 	}else{
+
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINT(SER_CONN_CRED_MISSING);
 		#endif
-		// failed
 	}
 
 	return retHtml;
@@ -1616,7 +1670,7 @@ String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 			}
 		}
 		
-		writeConfig(true);
+		_writeConfig = true;
 		return F("1");
 	}
 	
