@@ -1,7 +1,7 @@
 	/**
 		------ ------ ------ ------ ------ ------ user DEFINES for library ------ ------ ------ ------ ------ ------ 
 	*/
-	#include "serialFeedback_EN.h"					// language file for serial feedback
+	#include "serialFeedback_EN.h"					// language file for serial feedback currently available EN & NL
 	
 	#define DEBUG_LVL					2			// Debug level: 0 - 3 | none - max
 	#define DEBUG_EEPROM_CONFIG			false
@@ -22,10 +22,19 @@
 	// Wifi defines
 	#define WIFI_SMARTCONFIG			false		// Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (+/- 2%) of program storage space and +/- 1%) of dynamic memory
 	#define WIFI_MULTI					true		// false: only 1 ssid & pass will be used | true: 3 sets of ssid & pass will be used
+	#define WIFI_MULTI_FORCE_RECONN_ANY	false		// By default wifi multi will only try to reconnect to the last AP it was connectected to. Setting this to true will force your esp to connect to any of the available AP's from the list.
 	#define WIFI_CONN_MAX_RETRIES 		20			// sets the maximum number of retries when trying to connect to the wifi
 	#define WIFI_USE_MDNS 				true  		// include MDNS responder http://yourboard.local
-	//#define DNS_PORT					53
-	//#define UDP_PORT      			514
+	
+	
+	// Internal clock
+	#if defined  ESP8266
+	   #define SNTP_INT_CLOCK_UPD			true		// Synchronize the internal clock useing SNTP? BearSSL: This is necessary to verify that the TLS certificates offered by servers are currently valid.
+	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000	// Clock update internal in miliseconds (default 43200000 = 12 hour)
+	#elif defined ESP32
+	   #define SNTP_INT_CLOCK_UPD			false		// The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
+	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000	// Clock update internal in miliseconds (default 43200000 = 12 hour)
+	#endif
 	
 	
 	// HTTPS defines
