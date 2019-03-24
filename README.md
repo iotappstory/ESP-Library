@@ -25,9 +25,6 @@ https://github.com/iotappstory/ESP-Library/releases/latest
 - <a href="https://github.com/me-no-dev/ESPAsyncWebServer" target="_blank">Async Web Server</a>
 </br>
 
-## Develop branch
-If you want to fork or contribute to the library. Please send your pull request to the "develop" branch.</br></br>
-
 ## IAS WIKI
 https://iotappstory.com/wiki/arduino-esp</br></br>
 
