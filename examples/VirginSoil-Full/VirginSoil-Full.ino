@@ -97,6 +97,15 @@ void setup() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
     /* TIP! You can use this callback to put your app on it's own configuration mode */
   });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+      Serial.print(".");
+      
+      //Serial.print(F("\n Written "));
+      //Serial.print(written);
+      //Serial.print(F(" of "));
+      //Serial.print(total);
+  });
   
   /* 
   IAS.onModeButtonNoPress([]() {

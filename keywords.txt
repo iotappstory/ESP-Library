@@ -31,6 +31,7 @@ onModeButtonVeryLongPress	KEYWORD2
 onFirstBoot	KEYWORD2
 onFirmwareUpdateCheck	KEYWORD2
 onFirmwareUpdateDownload	KEYWORD2
+onFirmwareUpdateProgress	KEYWORD2
 onFirmwareUpdateError	KEYWORD2
 onFirmwareUpdateSuccess	KEYWORD2
 onConfigMode	KEYWORD2

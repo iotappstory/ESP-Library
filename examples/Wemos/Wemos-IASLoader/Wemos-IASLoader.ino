@@ -31,7 +31,7 @@
 
 
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
+#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn https://github.com/ThingPulse/esp8266-oled-ssd1306
 
 
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
@@ -40,8 +40,9 @@ SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 // ================================================ VARS =================================================
 unsigned long printEntry;
-
 String deviceName = "wemosloader";
+String chipId;
+
 
 
 // ================================================ SETUP ================================================
@@ -55,15 +56,15 @@ void setup() {
   display.display();
 
 
-  #if defined  ESP8266
-    String chipId  = String(ESP.getChipId());   // creat a unique deviceName for classroom situations (deviceName-123)
-    chipId         = "-"+chipId.substring(chipId.length()-3);
-    deviceName    += chipId;
-  #endif
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
   IAS.preSetAppName(F("WemosLoader"));                    // preset appName
-  IAS.preSetAppVersion(F("1.1.0"));                       // preset appVersion
+  IAS.preSetAppVersion(F("1.2.0"));                       // preset appVersion
   IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
 
 
@@ -96,6 +97,11 @@ void setup() {
 
   IAS.onFirmwareUpdateDownload([]() {
     dispTemplate_threeLineV2(F("Download"), F("&"), F("Install App"));
+  });
+
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+    String perc = String(written / (total / 100)) + "%";
+    dispTemplate_threeLineV2(F("Installing"), perc, F("Done"));
   });
 
   IAS.onFirmwareUpdateError([]() {

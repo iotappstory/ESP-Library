@@ -1,6 +1,5 @@
 #include "IOTAppStory.h"
 
-
 IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 : _compDate(compDate)
 , _modeButton(modeButton)
@@ -19,7 +18,7 @@ IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 /**
 	THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS)
 */
-void IOTAppStory::firstBoot(char ea){
+void IOTAppStory::firstBoot(const char ea){
 
 	// erase eeprom after config (delete extra field data etc.)
 	if(ea == 'F'){
@@ -110,7 +109,6 @@ void IOTAppStory::preSetDeviceName(String deviceName){
 	_setDeviceName = true;
 	SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, _setPreSet);
 }
-
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate){
 	_updateOnBoot = automaticUpdate;
 }
@@ -129,26 +127,17 @@ void IOTAppStory::preSetWifi(String ssid, String password){
 	SetConfigValueCharArray(config.password[0], password, STRUCT_PASSWORD_SIZE, _setPreSet);
 }
 
-/*
-void IOTAppStory::preSetServer(String HOST1, String FILE1){
-	if (!_configReaded) {
-		readConfig();
-	}
-	SetConfigValueCharArray(config.HOST1, HOST1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-	SetConfigValueCharArray(config.FILE1, FILE1, STRUCT_CHAR_ARRAY_SIZE, _setPreSet);
-}
-*/
 
 
-void IOTAppStory::setCallHome(bool callHome) {
-	_callHome = callHome;
-}
+void IOTAppStory::setCallHome(bool callHome) {} // <----- deprecated left for compatibility. Remove with version 3.0.0
 
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
 	_callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
-void IOTAppStory::begin(char ea){
+
+
+void IOTAppStory::begin(const char ea){
 	
 	// if deviceName is not set, set it to the appName
 	if(_setDeviceName == false){
@@ -188,9 +177,15 @@ void IOTAppStory::begin(char ea){
 	
 	// set the input pin for Config/Update mode selection
 	pinMode(_modeButton, INPUT_PULLUP);
+	
+	// set the "hard" reset(power) pin for the Nextion display
+	// and turn the display on
+	#if OTA_UPD_CHECK_NEXTION == true
+		pinMode(NEXT_RES, OUTPUT);
+		digitalWrite(NEXT_RES, HIGH);
+	#endif
 
 	// Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
-	//readPref();
 	boardInfo boardInfo(bootTimes, boardMode);
 	boardInfo.read();
 	
@@ -202,7 +197,6 @@ void IOTAppStory::begin(char ea){
 	// BOOT STATISTICS read and increase boot statistics (optional)
 	#if BOOTSTATISTICS == true && DEBUG_LVL >= 1
 		bootTimes++;
-		//writePref();
 		boardInfo.write();
 		
 		#if DEBUG_LVL >= 1
@@ -215,24 +209,48 @@ void IOTAppStory::begin(char ea){
 	
 	
 	// --------- START WIFI --------------------------
-	connectNetwork();
+	// Setup wifi with cred etc connect to AP
+	WiFiSetupAndConnect();
 	
-	//---------- SELECT BOARD MODE -----------------------------
-	#if INC_CONFIG == true
-		if(boardMode == 'C'){
-			runConfigServer();
+
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	#if SNTP_INT_CLOCK_UPD == true
+		if(_connected){
+			this->setClock();
 		}
 	#endif
 	
-	// --------- READ FULL CONFIG --------------------------
-	//readConfig();
+	//---------- SELECT BOARD MODE -----------------------------
+	#if CFG_INCLUDE == true
+		if(boardMode == 'C'){
+
+			// callback entered config mode
+			if(_configModeCallback){
+				_configModeCallback();
+			}
+			
+			// notifi IAS & enduser this device went to config mode (also sends localIP)
+			if(_connected){
+				this->iasLog("1");
+			}
+			
+			// run config server
+			configServer configServer(*this);
+			configServer.run();
+			
+			// notifi IAS & enduser this device has left config mode (also sends localIP)
+			if(_connected){
+				this->iasLog("0");
+			}
+			
+			// Restart & return to Normal Operation
+			this->espRestart('N');
+		}
+	#endif
 	
-
-
-
-
-	// --------- if automaticUpdate Update --------------------------
-	if(_updateOnBoot == true){
+	// --------- if connection & automaticUpdate Update --------------------------
+	if(_connected && _updateOnBoot == true){
 		callHome();
 	}
 
@@ -243,12 +261,12 @@ void IOTAppStory::begin(char ea){
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINT(F("\n\n\n\n\n"));
 	#endif
-/*	*/
 }
 
 
-#if DEBUG_LVL >= 1
+
 /** print BoardInfo */
+#if DEBUG_LVL >= 1
 void IOTAppStory::printBoardInfo(){
 	DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
 	DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -256,291 +274,98 @@ void IOTAppStory::printBoardInfo(){
 #endif
 
 
+
 /** send msg to iasLog */
 void IOTAppStory::iasLog(String msg) {
-		// notifi IAS & enduser about the localIP
-		String url = F("https://");
-		url += _updateHost;
-		url += F("/ota/cfg-sta.php");
-		url += "?msg=";
-		url += msg;
-
-		HTTPClient http;
-		httpClientSetup(http, url, false);
-
+	// notifi IAS & enduser about the localIP
+	callServer		callServer(config, U_LOGGER);
+	callServer.sm(&statusMessage);
+	msg.replace(" ", "_");
+	msg = "msg="+msg;
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINT(SER_UPDATE_IASLOG);
+	#endif
+	
+	if(!callServer.get(OTA_LOG_FILE, msg)){
 		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN(SER_UPDATE_IASLOG);
+			DEBUG_PRINTLN(SER_FAILED_COLON);
+			DEBUG_PRINTLN(" " + statusMessage);
 		#endif
-
-		if(http.GET() != HTTP_CODE_OK){
-			#if DEBUG_LVL >= 3
-				DEBUG_PRINTLN(SER_FAILED_COLON);
-				DEBUG_PRINTLN(http.getString());
-			#endif
-		}
-		http.end();
+	}
 }
 
-
-/** config server */
-void IOTAppStory::runConfigServer() {
-	
-	bool exitConfig = false;
-
-	// callback entered config mode
-	if (_configModeCallback){
-		_configModeCallback();
-	}
-
-	#if DEBUG_LVL >= 1
-		DEBUG_PRINT(SER_CONFIG_MODE);
-	#endif
-
-	if(WiFi.status() != WL_CONNECTED){
-		
-		// when there is no wifi setup server in AP mode
-		IPAddress apIP(192, 168, 4, 1);
-		dnsServer.reset(new DNSServer());
-		server.reset(new AsyncWebServer(80));
-
-		WiFi.mode(WIFI_AP_STA);
-		#if SMARTCONFIG == true
-			WiFi.beginSmartConfig();
-		#endif
-		WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-		WiFi.softAP(config.deviceName);
-		
-		dnsServer->start(DNS_PORT, "*", apIP);
-		
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, config.deviceName);
-		#endif
-		
-	}else{
-		
-		// notifi IAS & enduser this device went to config mode (also sends localIP)
-		iasLog("1");
-		
-		// when there is wifi setup server in STA mode
-		server.reset(new AsyncWebServer(80));
-		WiFi.mode(WIFI_STA);
-		
-		#if DEBUG_LVL >= 2
-			DEBUG_PRINT(SER_CONFIG_STA_MODE);
-			DEBUG_PRINTLN(WiFi.localIP());
-		#endif
-		
-	}
-
-	
-	server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlRoot(request); });
-	server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlDevInfo(request); });
-	#if defined  ESP8266
-		server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlFngPrintSave(request); });
-	#endif
-	server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlWifiScan(request); });
-	server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlWifiSave(request); });
-	server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ servHdlAppInfo(request); });
-	server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ servHdlAppSave(request); });
-
-	server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){
-		#if DEBUG_LVL >= 3
-			DEBUG_PRINT(SER_REC_ACT_CODE);
-		#endif
-		
-		String retHtml = F("0");
-		
-		if(request->hasParam("ac", true)){
-			
-			request->getParam("ac", true)->value().toCharArray(config.actCode, 7); //???
-			
-			if(!_confirmed && !_tryToConf){
-				_tryToConf = true;
-				retHtml = F("1");
-			}
-		}
-		
-		hdlReturn(request, retHtml);
-	});
-	
-	server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
-	
-	// start the server
-  server->begin();
-
-	// config server loop
-  while(exitConfig == false){
-		
-		yield();
-		
-		if(WiFi.status() != WL_CONNECTED){
-			
-			//DNS
-			dnsServer->processNextRequest();
-			
-			// smartconfig default false / off
-			#if SMARTCONFIG == true
-				if(WiFi.smartConfigDone()){
-					WiFi.mode(WIFI_AP_STA);
-					isNetworkConnected();
-				}
-			#endif
-			
-			// wifi connect when asked
-			if(_tryToConn == true){
-				#if DEBUG_LVL >= 3
-					DEBUG_PRINT(SER_REC_CREDENTIALS);
-					DEBUG_PRINT(config.ssid[0]);
-					DEBUG_PRINT(F(" - "));
-					DEBUG_PRINTLN(config.password[0]);
-				#endif
-				
-
-				WiFi.begin(config.ssid[0], config.password[0]);
-				_connected = isNetworkConnected(false);
-				yield();
-				
-				if(_connected){
-					
-					// Saving config to eeprom
-					_writeConfig = true;
-					
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINT(SER_CONN_SAVE_EEPROM);
-					#endif
-				}else{
-					readConfig();
-					#if DEBUG_LVL >= 1
-						DEBUG_PRINTLN(SER_FAILED_TRYAGAIN);
-					#endif
-					_tryToConnFail = true;
-				}
-				
-				_tryToConn = false;
-			}
-			
-		}else{
-			
-			// write actCode to EEPROM
-			if(!_confirmed && _tryToConf){
-				_confirmed = true;
-				_tryToConf = false;
-				_writeConfig = true;
-			}			
-			
-			// write EEPROM
-			if(_writeConfig){
-				writeConfig();
-				yield();
-				_writeConfig = false;
-			}
-			
-			// when succesfully added wifi cred in AP mode change to STA mode
-			if(_changeMode){
-				delay(1000);
-				WiFi.mode(WIFI_STA);
-				delay(100);
-				_changeMode = false;
-				
-				// notifi IAS & enduser this device went to config mode (also sends localIP)
-				iasLog("1");
-				
-				#if DEBUG_LVL >= 2
-					//DEBUG_PRINTF_P(PSTR(" \n Changed to STA mode. Open %s\n"), WiFi.localIP().toString());
-					
-					DEBUG_PRINT(SER_CONFIG_STA_MODE_CHANGE);
-					DEBUG_PRINTLN(WiFi.localIP());
-					DEBUG_PRINTLN();
-				#endif
-			}
-			
-		}
-  }
-	
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINTLN(SER_CONFIG_EXIT);
-	#endif
-	
-	// notifi IAS & enduser this device has left config mode (also sends localIP)
-	iasLog("0");
-	
-	// Return to Normal Operation
-	espRestart('N');
-}
 
 
 /** Connect to Wifi AP */
-void IOTAppStory::connectNetwork() {
+void IOTAppStory::WiFiSetupAndConnect() {
 	
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(SER_CONNECTING);
 	#endif
 	
+	// setup wifi credentials
 	#if WIFI_MULTI == true
+		// add multiple credentials
 		wifiMulti.addAP(config.ssid[0], config.password[0]);
 		wifiMulti.addAP(config.ssid[1], config.password[1]);
 		wifiMulti.addAP(config.ssid[2], config.password[2]);
 	#else
+		// add single credential
 		WiFi.begin(config.ssid[0], config.password[0]);
 	#endif
 	
-
-
-	if(!isNetworkConnected()) {
-		
-
-			if(_automaticConfig || boardMode == 'C'){
-				
-				if(boardMode == 'N'){
-					boardMode = 'C';
-					//writePref();
-					boardInfo boardInfo(bootTimes, boardMode);
-					boardInfo.write();
-				}
-				
-				#if DEBUG_LVL >= 1
-					DEBUG_PRINT(SER_CONN_NONE_GO_CFG);
-				#endif
-				
-			}else{
-				
-				#if DEBUG_LVL >= 1
-					// this point is only reached if _automaticConfig = false
-					DEBUG_PRINT(SER_CONN_NONE_CONTINU);
-				#endif
+	// connect to access point
+	if(!WiFiConnectToAP()){
+		// FAILED
+		// if conditions are met, set to config mode (C)
+		if(_automaticConfig || boardMode == 'C'){
+			
+			if(boardMode == 'N'){
+				boardMode = 'C';
+				boardInfo boardInfo(bootTimes, boardMode);
+				boardInfo.write();
 			}
+			
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINT(SER_CONN_NONE_GO_CFG);
+			#endif
+			
+		}else{
+			
+			#if DEBUG_LVL >= 1
+				// this point is only reached if _automaticConfig = false
+				DEBUG_PRINT(SER_CONN_NONE_CONTINU);
+			#endif
+		}
 
 	}else{
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINTLN(SER_CONNECTED);
-		#endif
+		// SUCCES
+		// Show connection details if debug level is set
 
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINT(SER_DEV_MAC);
 			DEBUG_PRINTLN(WiFi.macAddress());
 		#endif
 
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(SER_DEV_IP);
-			DEBUG_PRINTLN(WiFi.localIP());
-		#endif
-
-		#if USEMDNS == true
-			// Register host name in WiFi and mDNS
-			String hostNameWifi = config.deviceName;
-			hostNameWifi += ".local";
+		// Register host name in WiFi and mDNS
+		#if WIFI_USE_MDNS == true
+			
+			// wifi_station_set_hostname(config.deviceName);
+			// WiFi.hostname(hostNameWifi);
 
 			if(MDNS.begin(config.deviceName)){
 
 				#if DEBUG_LVL >= 1
 					DEBUG_PRINT(SER_DEV_MDNS);
-					DEBUG_PRINT(hostNameWifi);
+					DEBUG_PRINT(config.deviceName);
+					DEBUG_PRINT(".local");
 				#endif
 
-				#if DEBUG_LVL >= 2
+				#if DEBUG_LVL >= 3
 					DEBUG_PRINTLN(SER_DEV_MDNS_INFO);
 				#endif
-				#if DEBUG_LVL == 1
+				#if DEBUG_LVL == 2
 					DEBUG_PRINTLN(F(""));
 				#endif
 
@@ -559,15 +384,16 @@ void IOTAppStory::connectNetwork() {
 }
 
 
+
 /**
 	Wait until network is connected. 
-	Returns false if not connected after MAX_WIFI_RETRIES retries 
+	Returns false if not connected after WIFI_CONN_MAX_RETRIES retries 
 */
-bool IOTAppStory::isNetworkConnected(bool multi) {
+bool IOTAppStory::WiFiConnectToAP(bool multi){
 	#if defined  ESP8266
-		int retries = MAX_WIFI_RETRIES;
+		int retries = WIFI_CONN_MAX_RETRIES;
 	#elif defined ESP32
-		int retries = (MAX_WIFI_RETRIES/2);
+		int retries = (WIFI_CONN_MAX_RETRIES/2);
 	#endif
 
 	#if DEBUG_LVL >= 1
@@ -576,6 +402,8 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 
 	#if WIFI_MULTI == true
 		if(multi){
+			
+			
 			while (wifiMulti.run() != WL_CONNECTED && retries-- > 0 ) {
 				delay(500);
 				#if DEBUG_LVL >= 1
@@ -596,13 +424,77 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 		}
 	#endif	
 
-	
 	if(retries > 0){
+
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_CONNECTED);
+		#endif
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(SER_DEV_IP);
+			DEBUG_PRINTLN(WiFi.localIP());
+		#endif
+		_connected = true;
 		return true;
 	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT(F("\n Failed!"));
+		#endif
+		_connected = false;
 		return false;
 	}
 }
+
+
+
+/**
+	// Set time via NTP, as required for x.509 validation
+*/
+void IOTAppStory::setClock(){
+	#if defined  ESP8266
+		int retries = WIFI_CONN_MAX_RETRIES;
+	#elif defined ESP32
+		int retries = (WIFI_CONN_MAX_RETRIES/2);
+	#endif
+
+	configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(SER_SYNC_TIME_NTP);
+	#endif
+	
+	time_t now = time(nullptr);
+	while (now < 8 * 3600 * 2 && retries-- > 0 ){
+		delay(500);
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("."));
+		#endif
+		now = time(nullptr);
+	}
+
+	if(retries > 0){
+		struct tm timeinfo;
+		gmtime_r(&now, &timeinfo);
+		_timeSet 		= true;
+		_lastTimeSet 	= millis();
+		
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F("\n Current time: "));
+			DEBUG_PRINT(asctime(&timeinfo));
+		#endif
+	}else{
+		_timeSet 		= false;
+		_lastTimeSet 	= 0;
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(SER_FAILED_EXCL);
+		#endif
+	}
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(F(""));
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
+}
+
 
 
 /**
@@ -611,7 +503,6 @@ bool IOTAppStory::isNetworkConnected(bool multi) {
 void IOTAppStory::callHome(bool spiffs /*= true*/) {
 
 	// update from IOTappStory.com
-
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(SER_CALLING_HOME);
 	#endif
@@ -620,14 +511,19 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 		_firmwareUpdateCheckCallback();
 	}
 
-	// try to update from IOTAppStory
-	iotUpdater(0);
+	// try to update sketch from IOTAppStory
+	iotUpdater();
 
 	// try to update spiffs from IOTAppStory
-	if(spiffs){
-
-		iotUpdater(1);
-	}
+	#if OTA_UPD_CHECK_SPIFFS == true
+		if(spiffs){
+			iotUpdater(U_SPIFFS);
+		}
+	#endif
+	
+	#if OTA_UPD_CHECK_NEXTION == true
+		iotUpdater(U_NEXTION);
+	#endif
 
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(SER_RET_FROM_IAS);
@@ -635,137 +531,238 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN(FPSTR(SER_DEV));
 	#endif
-	
 }
+
 
 
 /**
 	IOT updater
 */
-void IOTAppStory::iotUpdater(bool spiffs) {
-	String url = "";
+bool IOTAppStory::iotUpdater(int command) {
 
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(F("\n"));
-	#endif
-	#if DEBUG_LVL >= 1
-		DEBUG_PRINT(SER_CHECK_FOR);
-	#endif
-	#if DEBUG_LVL >= 1
-		if(spiffs == false){
-			// type = sketch
-			DEBUG_PRINT(SER_APP_SKETCH);
-		}
-		if(spiffs == true){
-			// type = spiffs
-			DEBUG_PRINT(SER_SPIFFS);
-		}
-	#endif
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(SER_UPDATES_FROM);
-	#endif
-	#if DEBUG_LVL == 1
-		DEBUG_PRINT(SER_UPDATES);
-	#endif
-
-	#if HTTPS == true
-		url = F("https://");
-	#else
-		url = F("http://");
-	#endif
-
-	// location 1
-	url += _updateHost;
-	url += _updateFile;
-	
-	#if DEBUG_LVL >= 2
-		DEBUG_PRINTLN(url);
-	#endif
-	#if DEBUG_LVL == 1
-		DEBUG_PRINTLN("");		
-	#endif
-
-	HTTPClient http;
-	httpClientSetup(http, url, spiffs);
-
-	// track these headers for later use
-	const char * headerkeys[] = { "x-MD5", "x-name", "x-ver"};
-	size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
-	http.collectHeaders(headerkeys, headerkeyssize);
-
-	int code = http.GET();
-	int len = http.getSize();
-	
-	if(code == HTTP_CODE_OK){
-
-		ESP8266HTTPUpdate ESPhttpUpdate;
-
+	bool result;
+	{
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(F("\n"));
+		#endif
 		#if DEBUG_LVL >= 1
-			DEBUG_PRINT(SER_DOWN_AND_PROC);
+			DEBUG_PRINT(SER_CHECK_FOR);
+		#endif
+		#if DEBUG_LVL >= 1
+			if(command == U_FLASH){
+				DEBUG_PRINT(SER_APP_SKETCH);
+				
+			}else if(command == U_SPIFFS){
+				DEBUG_PRINT(SER_SPIFFS);
+				
+			}
+			#if OTA_UPD_CHECK_NEXTION == true
+				else if(command == U_NEXTION){
+					DEBUG_PRINT(SER_NEXTION);
+				}
+			#endif
+		#endif
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(SER_UPDATES_FROM);
+		#endif
+		#if DEBUG_LVL == 1
+			DEBUG_PRINT(SER_UPDATES);
+		#endif
+		#if DEBUG_LVL >= 2
+			#if HTTPS == true
+				DEBUG_PRINT(F("https://"));
+			#else
+				DEBUG_PRINT(F("http://"));
+			#endif
+			DEBUG_PRINT(OTA_HOST);
+			DEBUG_PRINTLN(OTA_UPD_FILE);
+		#endif
+		#if DEBUG_LVL == 1
+			DEBUG_PRINTLN("");
 		#endif
 
+		firmwareStruct	firmwareStruct;
+		callServer		callServer(config, command);
+		callServer.sm(&statusMessage);
+		
+		
+		Stream &clientStream = callServer.getStream(&firmwareStruct);
+		
+		if(!firmwareStruct.success){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN(" " + statusMessage);
+			#endif
+			
+			return false;
+		}
+		
+		
 		if (_firmwareUpdateDownloadCallback){
 			_firmwareUpdateDownloadCallback();
 		}
 
-
-		if(ESPhttpUpdate.handleUpdate(http, len, spiffs)) {
-			// succesfull update
-			#if DEBUG_LVL >= 1
-				DEBUG_PRINTLN(SER_REBOOT_NEC);
-			#endif
-			
-			// store received appName & appVersion
-			strcpy(config.appName,  http.header("x-name").c_str());
-			strcpy(config.appVersion,  http.header("x-ver").c_str());
-			writeConfig();
-
-			if (_firmwareUpdateSuccessCallback){
-				_firmwareUpdateSuccessCallback();
+		
+		
+		if(command == U_FLASH || command == U_SPIFFS){
+			// sketch / spiffs
+			result = espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
+		}
+		#if OTA_UPD_CHECK_NEXTION == true
+			if(command == U_NEXTION){
+				// nextion display
+				espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
 			}
+		#endif
+	}
+	
+	if(result && (command == U_FLASH || command == U_NEXTION)){
+
+		// write changes to config
+		writeConfig();
+
+		// succesfull update
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_REBOOT_NEC);
+		#endif
+		
+		// reboot to start the new updated firmware
+		ESP.restart();
+	}
+	
+	return true;
+}
+
+
+
+/**
+	espInstaller
+*/
+bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
+	devObj.sm(&statusMessage);
+	bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
+
+	if(!result){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(statusMessage);
+		#endif
+	}else{
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(SER_INSTALLING);
+		#endif
+		
+		{
+			// create buffer for read uint8_t *mybuffer = new uint8_t[100];
+			uint8_t buff[2048] = { 0 };
 			
-			// reboot
-			ESP.restart();
+			// to do counter
+			uint32_t updTodo = (*firmwareStruct).xlength;
+			
+			// Upload the received byte Stream to the device
+			while(updTodo > 0 || updTodo == -1){
+				
+				// get available data size
+				size_t size = streamPtr.available();
+
+				if(size){
+					// read up to 2048 byte into the buffer
+					size_t c = streamPtr.readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+
+					// Write the buffered bytes to the esp. If this fails, return false.
+					result = devObj.update(buff, c);
+					
+					if(updTodo > 0) {
+						updTodo -= c;
+					}
+
+					if (_firmwareUpdateProgressCallback){
+						_firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
+					}
+				}
+				delay(1);
+			}
 		}
 
-	}else{
-		#if DEBUG_LVL >= 1
-			if(code > 0){
-				DEBUG_PRINTLN(http.getString());
-			}else{
-				// Failed. Server down OR HTTPS problem
-				DEBUG_PRINTLN(SER_CALLHOME_FAILED);
-			}
-		#endif
-		
-		#if defined ESP32
-			if(code != 399 && _firmwareUpdateErrorCallback){
-				_firmwareUpdateErrorCallback();
-			}
 
-		#elif defined ESP8266
-			if(code != HTTP_CODE_NOT_MODIFIED && _firmwareUpdateErrorCallback){
-				_firmwareUpdateErrorCallback();
+
+	  
+		if(!result){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINT(SER_UPDATEDERROR);
+				DEBUG_PRINTLN(statusMessage);
+			#endif
+		}else{
+
+			// end: wait(delay) for the nextion to finish the update process, send nextion reset command and end the serial connection to the nextion
+			result = devObj.end();
+
+			if(result){
+				// on succesfull firmware installation
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINT(SER_UPDATEDTO);
+					DEBUG_PRINTLN((*firmwareStruct).xname+" v"+ (*firmwareStruct).xver);
+				#endif
+				
+
+				if(command == U_FLASH){
+					// write received appName & appVersion to config
+					(*firmwareStruct).xname.toCharArray(config.appName, 33);
+					(*firmwareStruct).xver.toCharArray(config.appVersion, 12);
+				}
+				
+				#if OTA_UPD_CHECK_NEXTION == true
+					if(command == U_NEXTION){
+						// update nextion md5
+						(*firmwareStruct).xmd5.toCharArray(config.next_md5, 33);
+					}
+				#endif
+				
+				
+
+				if (_firmwareUpdateSuccessCallback){
+					_firmwareUpdateSuccessCallback();
+				}
+				
+
+			}else{
+				// update failed
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTLN(" " + statusMessage);
+				#endif
+				if(_firmwareUpdateErrorCallback){
+					_firmwareUpdateErrorCallback();
+				}
 			}
-		#endif
+		}
+		
 		
 	}
-	http.end();
+	return result;
 }
+
 
 
 /** 
 	Add fields to the fieldStruct
 */
-void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length, char type){
-	_nrXF++;
+void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type){
 	
-	// add values to the fieldstruct
-	fieldStruct[_nrXF-1].fieldLabel = fieldLabel;
-	fieldStruct[_nrXF-1].varPointer = &defaultVal;
-	fieldStruct[_nrXF-1].length = length+1;
-	fieldStruct[_nrXF-1].type = type;
+	
+	if(_nrXF <= MAXNUMEXTRAFIELDS){
+		// add values to the fieldstruct
+		fieldStruct[_nrXF].fieldLabel 	= fieldLabel;
+		fieldStruct[_nrXF].varPointer 	= &defaultVal;
+		fieldStruct[_nrXF].length 		= length+1;
+		fieldStruct[_nrXF].type 		= type;
+		
+		_nrXF++;
+	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_PROC_ERROR);
+		#endif
+	}
 }
+
 
 
 /** 
@@ -774,11 +771,11 @@ void IOTAppStory::addField(char* &defaultVal,const char *fieldLabel, int length,
 	- load stored values
 */
 void IOTAppStory::processField(){
-	eepFreeFrom = sizeof(config)+2;
+
 	// to prevent longer then default values overwriting each other
 	// temp save value, overwrite variable with longest value posible
 	// and then resave the temp value to the original variable
-	if(_nrXF > 0){
+	if(_nrXF > 0 && _nrXF <= MAXNUMEXTRAFIELDS){
 		char* tempValue[_nrXF];
 		
 		for(unsigned int nr = 0; nr < _nrXF; nr++){
@@ -793,13 +790,10 @@ void IOTAppStory::processField(){
 		}
 		
 		for(unsigned int nr = 0; nr < _nrXF; nr++){
-			//String().toCharArray(, fieldStruct[nr].length);
-			
 			strcpy((*fieldStruct[nr].varPointer), tempValue[nr]);
 		}
-	}
+
 		
-	if(_nrXF > 0){
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(SER_PROC_FIELDS);
 		#endif
@@ -818,8 +812,9 @@ void IOTAppStory::processField(){
 				prevTotLength += fieldStruct[i].length;
 			}
 			const int sizeOfVal = fieldStruct[nr-1].length;
-			const unsigned int eeBeg = eepFreeFrom+prevTotLength+nr+((nr-1)*2);
-			const unsigned int eeEnd = eepFreeFrom+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
+			const int sizeOfConfig = sizeof(config)+2;
+			const unsigned int eeBeg = sizeOfConfig+prevTotLength+nr+((nr-1)*2);
+			const unsigned int eeEnd = sizeOfConfig+(prevTotLength+sizeOfVal)+nr+1+((nr-1)*2);
 
 			#if DEBUG_LVL >= 2
 				DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), nr, fieldStruct[nr-1].fieldLabel, fieldStruct[nr-1].length-1, eeBeg, eeEnd, (*fieldStruct[nr-1].varPointer));
@@ -878,19 +873,14 @@ void IOTAppStory::processField(){
 			#if DEBUG_LVL >= 2
 				DEBUG_PRINTLN();
 			#endif
-			
-			if(nr == _nrXF){
-				eepFreeFrom = eeEnd+ 2;
-			}
 		}
 		EEPROM.end();
-		
-		
 		#if DEBUG_LVL >= 1
 			DEBUG_PRINTLN(FPSTR(SER_DEV));
 		#endif
 	}
 }
+
 
 
 /** 
@@ -974,6 +964,7 @@ int IOTAppStory::dPinConv(String orgVal){
 
 	#endif
 }
+
 
 
 /** 
@@ -1137,14 +1128,46 @@ void IOTAppStory::readConfig() {
 }
 
 
+
 void IOTAppStory::loop() {
-	if (_callHome && millis() - _lastCallHomeTime > _callHomeInterval) {
+	
+	// wifi connector
+	#if WIFI_MULTI_FORCE_RECONN_ANY == true
+	if(WiFi.status() == WL_NO_SSID_AVAIL){
+		_connected = false;
+		WiFi.disconnect(false);
+		delay(10);
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(SER_CONN_LOST_RECONN);
+		#endif
+
+		this->WiFiConnectToAP(true);
+
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(F(""));
+			DEBUG_PRINTLN(FPSTR(SER_DEV));
+		#endif
+	}
+	#endif
+	
+	// Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
+	#if SNTP_INT_CLOCK_UPD == true
+		if(_connected && millis() - _lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL){
+			this->setClock();
+		}
+	#endif
+	
+	// Call home and check for updates every _callHomeInterval
+	if (_connected && _callHomeInterval > 0 && millis() - _lastCallHomeTime > _callHomeInterval) {
 		this->callHome();
 		_lastCallHomeTime = millis();
 	}
-
+	
+	// handle button presses: short, long, xlong
 	this->buttonLoop();
 }
+
 
 
 ModeButtonState IOTAppStory::buttonLoop() {
@@ -1152,9 +1175,11 @@ ModeButtonState IOTAppStory::buttonLoop() {
 }
 
 
+
 bool IOTAppStory::isModeButtonPressed() {
 	return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
 }
+
 
 
 ModeButtonState IOTAppStory::getModeButtonState() {
@@ -1204,7 +1229,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 					_veryLongPressCallback();
 				continue;
 			}
-#if INC_CONFIG == true
+#if CFG_INCLUDE == true
 			if (!isModeButtonPressed()) {
 				_appState = AppStateConfigMode;
 				continue;
@@ -1225,7 +1250,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 			_appState = AppStateNoPress;
 			callHome();
 			continue;
-#if INC_CONFIG == true	
+#if CFG_INCLUDE == true	
 		case AppStateConfigMode:
 			_appState = AppStateNoPress;
 			#if DEBUG_LVL >= 1
@@ -1267,6 +1292,9 @@ void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
 void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
 	_firmwareUpdateDownloadCallback = value;
 }
+void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
+	_firmwareUpdateProgressCallback = value;
+}
 void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
 	_firmwareUpdateErrorCallback = value;
 }
@@ -1281,12 +1309,12 @@ void IOTAppStory::onConfigMode(THandlerFunction value) {
 
 
 /** Handle root */
-void IOTAppStory::servHdlRoot(AsyncWebServerRequest *request) {
+String IOTAppStory::servHdlRoot() {
 
 	String retHtml;
 	retHtml += FPSTR(HTTP_TEMP_START);
 
-	if (WiFi.status() == WL_CONNECTED) {
+	if(_connected){
 
 		retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
 
@@ -1299,14 +1327,13 @@ void IOTAppStory::servHdlRoot(AsyncWebServerRequest *request) {
 	}
 
 	retHtml += FPSTR(HTTP_TEMP_END);
-
-	hdlReturn(request, retHtml);
+	return retHtml;
 }
 
 
 
 /** Handle device information */
-void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
+String IOTAppStory::servHdlDevInfo(){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_DEV_INFO);
 	#endif
@@ -1316,18 +1343,19 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 	retHtml.replace(F("{s1}"), config.ssid[0]);
 	retHtml.replace(F("{s2}"), config.ssid[1]);
 	retHtml.replace(F("{s3}"), config.ssid[2]);
+	
+	retHtml.replace(F("{cid}"), String(ESP_GETCHIPID));
 
-	#if defined  ESP8266
-		retHtml.replace(F("{cid}"), String(ESP.getChipId()));
-		retHtml.replace(F("{fid}"), String(ESP.getFlashChipId()));
-		retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
-		retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
+	#if HTTPS_8266_TYPE == FNGPRINT
 		retHtml.replace(F("{f}"), config.sha1);
-	#elif defined ESP32
-		retHtml.replace(F("{cid}"), "");				// not available yet
-		retHtml.replace(F("{fid}"), "");				// not available yet
+	#endif
+	#if defined ESP32
+		//retHtml.replace(F("{fid}"), "");				// not available yet
 	#endif
 
+	retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
+	retHtml.replace(F("{ss}"), String(ESP.getSketchSize()));
+		
 	retHtml.replace(F("{fs}"), String(ESP.getFlashChipSize()));
 	retHtml.replace(F("{ab}"), ARDUINO_BOARD);
 	retHtml.replace(F("{mc}"), WiFi.macAddress());
@@ -1338,150 +1366,134 @@ void IOTAppStory::servHdlDevInfo(AsyncWebServerRequest *request){
 	}else{
 		retHtml.replace(F("{ac}"), "1");	
 	}
-
-	hdlReturn(request, retHtml, F("text/json"));
+	
+	return retHtml;
 }
 
 
 
 /** Handle wifi scan */
 String IOTAppStory::strWifiScan(){
-
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SERV_WIFI_SCAN_RES);
+	#endif
+	
     // WiFi.scanNetworks will return the number of networks found	
-		String retHtml;
-		int n = WiFi.scanComplete();
-		if(n == -2){
-			
-			WiFi.scanNetworks(true);
-			
-		}else if(n){
-			
-			for (int i = 0; i < n; ++i) {
-					
-					// return html results from the wifi scan
-					retHtml += FPSTR(HTTP_WIFI_SCAN);
-					retHtml.replace(F("{s}"), WiFi.SSID(i));
-					retHtml.replace(F("{q}"), String(WiFi.RSSI(i)));
-					retHtml.replace(F("{e}"), String(WiFi.encryptionType(i)));             
-					delay(10);
-			}
-			
-			WiFi.scanDelete();
-			if(WiFi.scanComplete() == -2){
-				WiFi.scanNetworks(true);
-			}
-		}
-	return retHtml;
-}
-
-void IOTAppStory::servHdlWifiScan(AsyncWebServerRequest *request){
-		#if DEBUG_LVL >= 3
-			DEBUG_PRINTLN(SER_SERV_WIFI_SCAN_RES);
-		#endif
+	String retHtml;
+	int n = WiFi.scanComplete();
+	if(n == -2){
 		
-		String retHtml = strWifiScan();
-
-    hdlReturn(request, retHtml, F("text/json"));
-		retHtml = String();
+		WiFi.scanNetworks(true);
+		
+	}else if(n){
+		
+		for (int i = 0; i < n; ++i) {
+				
+				// return html results from the wifi scan
+				retHtml += FPSTR(HTTP_WIFI_SCAN);
+				retHtml.replace(F("{s}"), WiFi.SSID(i));
+				retHtml.replace(F("{q}"), String(WiFi.RSSI(i)));
+				retHtml.replace(F("{e}"), String(WiFi.encryptionType(i)));             
+				delay(10);
+		}
+		
+		WiFi.scanDelete();
+		if(WiFi.scanComplete() == -2){
+			WiFi.scanNetworks(true);
+		}
+	}
+	return retHtml;
 }
 
 
 
 /** Handle save wifi credentials */
-void IOTAppStory::servHdlWifiSave(AsyncWebServerRequest *request) {
-
-		String retHtml = F("0");
+String IOTAppStory::servHdlWifiSave(String newSSID, String newPass, int apNr) {
+	String retHtml = F("0");
+	
+	// are both ssid & password sent
+	if(newSSID!="" && newPass != ""){
 		
-		// are both ssid & password sent
-		if(request->hasParam("s", true) && request->hasParam("p", true)){
-			
-			if(!request->hasParam("i", true)){
-				
-					//Saved from first screen. When in Wifi AP mode
-					if(_tryToConnFail){
-						retHtml = F("3");					// return html Failed
-						_tryToConnFail = false;		// reset for next try
-					}else if(!_connected && !_tryToConn){
+		if(!apNr){
+			if(_tryToConn == false){
+				//Saved from first screen. When in Wifi AP mode
+				if(_connFail){
+					_connFail = false;
+					retHtml = F("3");			// return html Failed
+					
+					// read config & reset credentials
+					readConfig();
+					
+				}else if(_connected){
+					_connChangeMode = true;
 						
-						#if WIFI_MULTI == true
-							// Shift array members to the right
-							String(config.ssid[1]).toCharArray(config.ssid[2], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[1]).toCharArray(config.password[2], STRUCT_PASSWORD_SIZE);
-							
-							String(config.ssid[0]).toCharArray(config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
-							String(config.password[0]).toCharArray(config.password[1], STRUCT_PASSWORD_SIZE);
-						#endif
-						
-						// Replace the first array member
-						request->getParam("s", true)->value().toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
-						request->getParam("p", true)->value().toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
-							
-						#if DEBUG_LVL == 2
-							DEBUG_PRINTLN(SER_CONN_REC_CRED);
-						#endif
-						
-						#if DEBUG_LVL == 3
-							DEBUG_PRINTF_P(SER_CONN_REC_CRED_DB3, request->getParam("s", true)->value().c_str(), request->getParam("p", true)->value().c_str());
-						#endif
-						
-						_tryToConn = true;
-						retHtml = F("2");		// busy
-						
-					}else if(!_connected && _tryToConn){
-						
-						// if server is called while connecting wifi anser busy
-						retHtml = F("2");		// busy
-						
-					}else if(_connected && !_tryToConn){
-						_changeMode = true;
-						
-						#if DEBUG_LVL == 3
-							DEBUG_PRINTLN(SER_CONN_REC_CRED_PROC);
-						#endif
-
-						#if DEBUG_LVL == 3
-							DEBUG_PRINTLN(SER_CONN_SAVE_EEPROM);
-						#endif
-						
-						retHtml = F("1:");	// ok:ip
-						retHtml += WiFi.localIP().toString();
-						delay(100);
-					}
-			
-			}else{
-					// Saved / added from config. When in Wifi STA mode
+					// Saving config to eeprom
 					_writeConfig = true;
-
-					int apNr = atoi(request->getParam("i", true)->value().c_str());
-					#if DEBUG_LVL == 3
-						DEBUG_PRINTF_P(SER_CONN_ADDED_AP_CRED,apNr);
+					
+					retHtml = F("1:");	// ok:ip
+					retHtml += WiFi.localIP().toString();
+					delay(100);
+					
+				}else if(!_connected){
+					
+					#if WIFI_MULTI == true
+						// Shift array members to the right
+						strncpy(config.ssid[2], config.ssid[1], STRUCT_CHAR_ARRAY_SIZE);
+						strncpy(config.password[2], config.password[1], STRUCT_PASSWORD_SIZE);
+						
+						strncpy(config.ssid[1], config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+						strncpy(config.password[1], config.password[0], STRUCT_PASSWORD_SIZE);
 					#endif
 					
-					request->getParam("s", true)->value().toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
-					request->getParam("p", true)->value().toCharArray(config.password[apNr-1], STRUCT_PASSWORD_SIZE);
-					retHtml = F("1");		// ok
+					// Replace the first array member
+					newSSID.toCharArray(config.ssid[0], STRUCT_CHAR_ARRAY_SIZE);
+					newPass.toCharArray(config.password[0], STRUCT_PASSWORD_SIZE);
+					
+					_tryToConn = true;
+					retHtml = F("2");		// busy
+				}
+			}else{
+				
+				// if server is called while connecting wifi anser busy
+				retHtml = F("2");		// busy
 			}
-
+		
 		}else{
-			#if DEBUG_LVL >= 2
-				DEBUG_PRINT(SER_CONN_CRED_MISSING);
-			#endif
-			// failed
+
+				//DEBUG_PRINTLN("Saved / added from config. When in Wifi STA mode");
+				// Saved / added from config. When in Wifi STA mode
+				_writeConfig = true;
+
+
+				#if DEBUG_LVL == 3
+					DEBUG_PRINTF_P(SER_CONN_ADDED_AP_CRED,apNr);
+				#endif
+				
+				newSSID.toCharArray(config.ssid[apNr-1], STRUCT_CHAR_ARRAY_SIZE);
+				newPass.toCharArray(config.password[apNr-1], STRUCT_PASSWORD_SIZE);
+				retHtml = F("1");		// ok
 		}
 
-	hdlReturn(request, retHtml);
+	}else{
+
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINT(SER_CONN_CRED_MISSING);
+		#endif
+	}
+
+	return retHtml;
 }
 
 
 
 /** Handle app / firmware information */
-void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
+String IOTAppStory::servHdlAppInfo(){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
 	#endif
 
 	String retHtml = F("[");
-
 	for (unsigned int i = 0; i < _nrXF; ++i) {
 
 		// return html results from the wifi scan
@@ -1489,7 +1501,7 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 			retHtml += F(",");
 		}
 		
-		// add slashed where necessary  to prevent the json repsons from being broken
+		// add slashed to values where necessary to prevent the json repsons from being broken
 		String value = (*fieldStruct[i].varPointer);
 		value.replace("\\", "\\\\");
 		value.replace("\"", "\\\"");
@@ -1498,7 +1510,7 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		value.replace("\t", "\\t");
 		value.replace("\b", "\\b");
 		value.replace("\f", "\\f");
-		
+
 		// get PROGMEM json string and replace {*} with values
 		retHtml += FPSTR(HTTP_APP_INFO);
 		retHtml.replace(F("{l}"), String(fieldStruct[i].fieldLabel));
@@ -1509,38 +1521,147 @@ void IOTAppStory::servHdlAppInfo(AsyncWebServerRequest *request){
 		delay(10);
 	}
 	retHtml += F("]");
+	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(retHtml);
 	#endif
-	hdlReturn(request, retHtml, F("application/json"));
+	
+	return retHtml;
 }
 
 
 
 #if defined  ESP8266
-/** Save new fingerprint */
-void IOTAppStory::servHdlFngPrintSave(AsyncWebServerRequest *request){
+/** Save new fingerprint 
+String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_FINGERPRINT);
 	#endif
 	
-	request->getParam("f", true)->value().toCharArray(config.sha1, 60);
+	fngprint.toCharArray(config.sha1, 60);
 	
-	String retHtml = F("1");
+	
 	writeConfig();
-	hdlReturn(request,  retHtml);
+	return F("1");
+}*/
+#endif
+
+
+#if defined  ESP32
+/** Get all root certificates */
+String IOTAppStory::strCertScan(String path){
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
+	#endif
+	
+	// open SPIFFS certificate directory
+    File root = SPIFFS.open("/cert");
+    if(!root || !root.isDirectory()){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(" Failed to open directory");
+		#endif
+		
+        return "0";
+    }
+	
+	// delete requested file
+	if(path != ""){
+		if(!SPIFFS.remove(path)){
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(" Failed to delete file!");
+			#endif
+		}
+	}
+	
+	// return all the files found in this directory and return them as a json string
+    File file = root.openNextFile();
+	String retHtml = "[";
+	bool pastOne = false;
+	
+    while(file){
+        if(!file.isDirectory()){
+			if(pastOne == true){
+				retHtml += F(",");
+			}
+			retHtml += "{";
+			retHtml += "\"n\":\"" + String(file.name()) + "\"";
+			retHtml += ",\"s\":" + String(file.size());
+			retHtml += "}";
+			pastOne = true;
+        }
+        file = root.openNextFile();
+    }
+	retHtml += "]";
+
+	// return json string
+	return retHtml;
+}
+#else
+String IOTAppStory::strCertScan(String path){
+	
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
+	#endif
+	
+	//Initialize File System
+	if(!SPIFFS.begin()){
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINT(F(" SPIFFS Mount Failed"));
+		#endif
+	}
+	
+	/* <-- always fails
+    // check if SPIFFS certificate directory exists
+    if(!SPIFFS.exists("/cert")){  // || !root.isDirectory()
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F(" Failed to open directory"));
+		#endif
+		
+        //return "0";
+    }*/
+	
+	// open SPIFFS certificate directory
+	Dir dir = SPIFFS.openDir("/cert/");
+	
+	// delete requested file
+	if(path != ""){
+		if(!SPIFFS.remove(path)){
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(F(" Failed to delete file!"));
+			#endif
+		}
+	}
+	
+	// return all the files found in this directory and return them as a json string
+	String retHtml = "[";
+    while(dir.next()){
+		
+		if(dir.fileSize()) {
+			File file = dir.openFile("r");
+			
+			if(retHtml != "["){
+				retHtml += F(",");
+			}
+			retHtml += "{";
+			retHtml += "\"n\":\"" + String(file.name()) + "\"";
+			retHtml += ",\"s\":" + String(file.size());
+			retHtml += "}";
+		}
+    }
+	retHtml += "]";
+
+	// return json string
+	return retHtml;
 }
 #endif
 
 
-
 /** Save App Settings */
-void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
+String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
 	#endif
-	
-	String retHtml = F("0");
 	
 	if(_nrXF){
 		for(unsigned int i = 0; i < _nrXF; i++){
@@ -1548,75 +1669,29 @@ void IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 				strcpy((*fieldStruct[i].varPointer), request->getParam(String(i), true)->value().c_str());
 			}
 		}
-		retHtml = F("1");
+		
+		_writeConfig = true;
+		return F("1");
+	}
+	
+	return F("0");
+}
+
+
+
+/** Save App Settings */
+String IOTAppStory::servHdlactcodeSave(String actcode) {
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINT(SER_REC_ACT_CODE);
+	#endif
+	
+	if(actcode != ""){
+		
+		actcode.toCharArray(config.actCode, 7);
+		
 		writeConfig(true);
+		return F("1");
 	}
-	hdlReturn(request,  retHtml);
-}
 
-
-
-/** default httpclient */
-void IOTAppStory::httpClientSetup(HTTPClient& http, String url, bool spiffs) {
-	#if HTTPS == true
-	
-		#if defined  ESP8266
-			http.begin(url, config.sha1);
-		#elif defined ESP32
-			http.begin(url, ROOT_CA);
-		#endif
-		
-	#else
-		http.begin(url);
-	#endif
-	
-	// use HTTP/1.0 the update handler does not support transfer encoding
-	http.useHTTP10(true);
-	http.setTimeout(8000);
-	http.setUserAgent(F("ESP-http-Update"));
-
-	http.addHeader(F("x-ESP-STA-MAC"), WiFi.macAddress());
-	http.addHeader(F("x-ESP-ACT-ID"), String(config.actCode));
-	http.addHeader(F("x-ESP-LOCIP"), String(WiFi.localIP().toString()));
-	
-	#if defined ESP32
-		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getSdkVersion()));
-	#elif defined ESP8266
-		http.addHeader(F("x-ESP-FREE-SPACE"), String(ESP.getFreeSketchSpace()));
-		http.addHeader(F("x-ESP-SKETCH-SIZE"), String(ESP.getSketchSize()));
-		http.addHeader(F("x-ESP-SKETCH-MD5"), String(ESP.getSketchMD5()));
-		http.addHeader(F("x-ESP-FLASHCHIP-ID"), String(ESP.getFlashChipId()));
-		http.addHeader(F("x-ESP-CHIP-ID"), String(ESP.getChipId()));
-		http.addHeader(F("x-ESP-CORE-VERSION"), String(ESP.getCoreVersion()));
-	#endif
-
-	
-	http.addHeader(F("x-ESP-FLASHCHIP-SIZE"), String(ESP.getFlashChipSize()));
-	http.addHeader(F("x-ESP-VERSION"), String(config.appName) + " v" + config.appVersion);
-	
-	if(spiffs) {
-			http.addHeader(F("x-ESP-MODE"), F("spiffs"));
-	} else {
-			http.addHeader(F("x-ESP-MODE"), F("sketch"));
-	}
-}
-
-
-/** return page handler */
-void IOTAppStory::hdlReturn(AsyncWebServerRequest *request, String &retHtml, String type) {
-	#if CFG_AUTHENTICATE == true
-	if(!request->authenticate("admin", config.cfg_pass)){ 
-		return request->requestAuthentication(); 
-	}else{
-	#endif
-		
-		AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
-		response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-		response->addHeader(F("Pragma"), F("no-cache"));
-		response->addHeader(F("Expires"), F("-1"));
-		request->send(response);
-	
-	#if CFG_AUTHENTICATE == true
-	}
-	#endif
+	return F("0");
 }
