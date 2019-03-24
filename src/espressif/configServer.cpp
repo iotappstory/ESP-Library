@@ -9,8 +9,8 @@
 
 
 /** config server */
-void configServer::run() {
-		
+void configServer::run(){
+	
 		bool exitConfig = false;
 		
 		#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
@@ -195,7 +195,7 @@ void configServer::run() {
 
 				// if writeConfig bool is true write EEPROM (used by: saveWifi & saveApp
 				if(_ias->_writeConfig){
-					_ias->writeConfig();
+					_ias->writeConfig(true);
 					yield();
 					_ias->_writeConfig = false;
 				}
@@ -261,8 +261,6 @@ void configServer::run() {
 		#if DEBUG_LVL >= 2
 			DEBUG_PRINTLN(SER_CONFIG_EXIT);
 		#endif
-
-	delay(50);
 }
 
 

@@ -224,20 +224,22 @@ void IOTAppStory::begin(const char ea){
 	//---------- SELECT BOARD MODE -----------------------------
 	#if CFG_INCLUDE == true
 		if(boardMode == 'C'){
-
-			// callback entered config mode
-			if(_configModeCallback){
-				_configModeCallback();
+			{
+				// callback entered config mode
+				if(_configModeCallback){
+					_configModeCallback();
+				}
+				
+				// notifi IAS & enduser this device went to config mode (also sends localIP)
+				if(_connected){
+					this->iasLog("1");
+				}
+				
+				// run config server
+				configServer configServer(*this);
+				configServer.run();
 			}
-			
-			// notifi IAS & enduser this device went to config mode (also sends localIP)
-			if(_connected){
-				this->iasLog("1");
-			}
-			
-			// run config server
-			configServer configServer(*this);
-			configServer.run();
+			delay(100);
 			
 			// notifi IAS & enduser this device has left config mode (also sends localIP)
 			if(_connected){
