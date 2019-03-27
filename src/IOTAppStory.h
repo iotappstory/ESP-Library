@@ -200,6 +200,7 @@
 
 		void WiFiSetupAndConnect();
 		bool WiFiConnectToAP(bool multi = true);
+		void WiFiDisconnect();
 		void setClock();
 		
 		void callHome(bool spiffs = true);
