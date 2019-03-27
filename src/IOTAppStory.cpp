@@ -449,7 +449,21 @@ bool IOTAppStory::WiFiConnectToAP(bool multi){
 
 
 /**
-	// Set time via NTP, as required for x.509 validation
+	Dusconnect wifi
+*/
+void IOTAppStory::WiFiDisconnect(){
+	WiFi.disconnect();
+	_connected = false;
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINTLN(F(" WiFi disconnected!"));
+		DEBUG_PRINTLN(FPSTR(SER_DEV));
+	#endif
+}
+
+
+
+/**
+	Set time via NTP, as required for x.509 validation
 */
 void IOTAppStory::setClock(){
 	#if defined  ESP8266
@@ -513,18 +527,24 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 		_firmwareUpdateCheckCallback();
 	}
 
-	// try to update sketch from IOTAppStory
-	iotUpdater();
+	{
+		// try to update sketch from IOTAppStory
+		iotUpdater();
+	}
 
 	// try to update spiffs from IOTAppStory
 	#if OTA_UPD_CHECK_SPIFFS == true
 		if(spiffs){
-			iotUpdater(U_SPIFFS);
+			{
+				iotUpdater(U_SPIFFS);
+			}
 		}
 	#endif
 	
 	#if OTA_UPD_CHECK_NEXTION == true
-		iotUpdater(U_NEXTION);
+		{
+			iotUpdater(U_NEXTION);
+		}
 	#endif
 
 	#if DEBUG_LVL >= 2
@@ -653,8 +673,9 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 			DEBUG_PRINT(SER_INSTALLING);
 		#endif
 		
+
 		{
-			// create buffer for read uint8_t *mybuffer = new uint8_t[100];
+			// create buffer for read
 			uint8_t buff[2048] = { 0 };
 			
 			// to do counter
