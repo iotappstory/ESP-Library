@@ -7,8 +7,12 @@
 
 #include <Arduino.h>
 #include <Hash.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#if defined ESP8266
+  #include <ESPAsyncTCP.h>                                  // https://github.com/me-no-dev/ESPAsyncTCP
+#elif defined ESP32
+  #include <AsyncTCP.h>                                     // https://github.com/me-no-dev/AsyncTCP
+#endif
+#include <ESPAsyncWebServer.h>                              // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 
 #define COMPDATE __DATE__ __TIME__
