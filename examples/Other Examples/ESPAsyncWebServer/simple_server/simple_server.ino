@@ -121,8 +121,6 @@ void setup(){
       request->send(200, "text/plain", "Hello, POST: " + message);
   });
   
-
-
   // reboot and go to config mode
   server.on("/cfgmode", HTTP_GET, [](AsyncWebServerRequest *request){
     IAS.espRestart('C');
