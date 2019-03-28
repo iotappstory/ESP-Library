@@ -1,18 +1,46 @@
-//
-// A simple server implementation showing how to:
-//  * serve static messages
-//  * read GET and POST parameters
-//  * handle missing pages / 404s
-//
+/* 
+  A simple server implementation showing how to:
+  * setup the ESP Async Webserver in conjunction with the IOTAppStory library
+  * serve static messages
+  * read GET and POST parameters
+  * handle missing pages / 404s
+  * reboot and go to config mode
+  
+	This sketch is based on:
+	VirginSoil sketch [Andreas Spiess]
+	simple_server - Example that comes with the ESP Async Webserver [me-no-dev]
+  
+	Copyright (c) [2019] [Onno Dirkzwager]
+  
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+  
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+  
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+  
+  webserver V0.0.5
+*/
 
-#include <Arduino.h>
-#include <Hash.h>
 #if defined ESP8266
   #include <ESPAsyncTCP.h>                                  // https://github.com/me-no-dev/ESPAsyncTCP
 #elif defined ESP32
   #include <AsyncTCP.h>                                     // https://github.com/me-no-dev/AsyncTCP
 #endif
+
 #include <ESPAsyncWebServer.h>                              // https://github.com/me-no-dev/ESPAsyncWebServer
+#include <Hash.h>
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 
 #define COMPDATE __DATE__ __TIME__
@@ -40,8 +68,8 @@ void setup(){
   IAS.preSetDeviceName(hostName);                           // preset deviceName this is also your MDNS responder: http://virginsoil.local
   
 
-  IAS.addField(hostName, "textLine", 16);                   // These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(PARAM_MESSAGE, "textLine", 16);              // reference to org variable | field label value | max char return | Optional "special field" char Find out more about the optional "special fields" at https://iotappstory.com/wiki
+  IAS.addField(hostName, "Hostname", 16);                   // These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(PARAM_MESSAGE, "Param message", 16);              // reference to org variable | field label value | max char return | Optional "special field" char Find out more about the optional "special fields" at https://iotappstory.com/wiki
     
 
 
@@ -91,6 +119,13 @@ void setup(){
           message = "No message sent";
       }
       request->send(200, "text/plain", "Hello, POST: " + message);
+  });
+  
+
+
+  // reboot and go to config mode
+  server.on("/cfgmode", HTTP_GET, [](AsyncWebServerRequest *request){
+    IAS.espRestart('C');
   });
 
   server.onNotFound(notFound);
