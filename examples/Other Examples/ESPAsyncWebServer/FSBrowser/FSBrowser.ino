@@ -195,7 +195,10 @@ void setup(){
 
 
 // ================================================ LOOP =================================================
-void loop(void) {
+void loop() {
+  IAS.loop();				// this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+
+  //-------- Your Sketch starts from here ---------------
 
 }
 
