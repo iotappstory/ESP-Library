@@ -1,6 +1,6 @@
 /*
-	This is an initial sketch to get your device registered at IOTappstory.com
-	You will need an account at IOTAppStory.com
+  This is an initial sketch to get your device registered at IOTappstory.com
+  You will need an account at IOTAppStory.com
 
   Copyright (c) [2016] [Andreas Spiess]
 
