@@ -1,7 +1,10 @@
 /*
-  FSWebServer - Example WebServer with SPIFFS backend for esp8266
+  This sketch is based on:
+  VirginSoil sketch [Andreas Spiess]
+  ESP_AsyncFSBrowser - [me-no-dev]
+  FSWebServer - Example WebServer with SPIFFS backend for esp8266 [Hristo Gochkov]
+  
   Copyright (c) 2015 Hristo Gochkov. All rights reserved.
-  This file is part of the ESP8266WebServer library for Arduino environment.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -15,21 +18,20 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-  upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
-  or you can upload the contents of a folder if you CD in that folder and run the following command:
-  for file in `\ls -A1`; do curl -F "file=@$PWD/$file" esp8266fs.local/edit; done
-
-  access the sample web page at http://esp8266fs.local
-  edit the page by going to http://esp8266fs.local/edit
+  Export & upload the contents of the data folder to your IOTAppStory.com App ("ESP8266 or ESP32 Sketch Data Upload" in Tools menu in Arduino IDE)
 */
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <ArduinoOTA.h>
+
+#if defined ESP8266
+  #include <ESPAsyncTCP.h>                                  // https://github.com/me-no-dev/ESPAsyncTCP
+#elif defined ESP32
+  #include <AsyncTCP.h>                                     // https://github.com/me-no-dev/AsyncTCP
+  #include <SPIFFS.h>
+#endif
+
+#include <ESPAsyncWebServer.h>                              // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <FS.h>
-#include <Hash.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
+#include <Hash.h>
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 
 #define COMPDATE __DATE__ __TIME__
@@ -63,9 +65,9 @@ void setup(){
   IAS.preSetDeviceName(hostName);                           // preset deviceName this is also your MDNS responder: http://virginsoil.local
   
 
-  IAS.addField(hostName, "textLine", 16);                   // These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(http_username, "textLine", 16);              // reference to org variable | field label value | max char return | Optional "special field" char
-  IAS.addField(http_password, "textLine", 16);              // Find out more about the optional "special fields" at https://iotappstory.com/wiki
+  IAS.addField(hostName, "Hostname", 16);                   // These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(http_username, "Username", 16);              // reference to org variable | field label value | max char return | Optional "special field" char
+  IAS.addField(http_password, "Password", 16);              // Find out more about the optional "special fields" at https://iotappstory.com/wiki
     
 
 
@@ -87,7 +89,7 @@ void setup(){
   });
 
  
-  IAS.begin('P');                                     // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin('P'); // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
 
 
   //-------- Your Setup starts from here ---------------
@@ -178,6 +180,12 @@ void setup(){
     request->send(200, "text/json", json);
     json = String();
   });
+
+  // reboot and go to config mode
+  server.on("/cfgmode", HTTP_GET, [](AsyncWebServerRequest *request){
+    // reboot to config mode
+    IAS.espRestart('C');
+  });
   
   server.begin();
   Serial.printf("Open http://%s.local in your browser\n", hostName);
@@ -187,7 +195,14 @@ void setup(){
 
 
 // ================================================ LOOP =================================================
-void loop(void) {
+void loop() {
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
+
+
+  //-------- Your Sketch starts from here ---------------
 
 }
 

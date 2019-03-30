@@ -80,11 +80,15 @@
       heap = createGraph(document.getElementById("heap"), "Current Heap", 100, 125, 0, 30000, true, "orange");
       digi = createDigiGraph(document.getElementById("digital"), "GPIO", 100, 146, [0, 4, 5, 16], "gold");
       run();
+	  
+	  document.getElementById("analog").style.margin = "5px auto";
+	  document.getElementById("heap").style.margin = "5px auto";
+	  document.getElementById("digital").style.margin = "5px auto";
     }
   </script>
 </head>
 <body id="index" style="margin:0; padding:0;" onload="onBodyLoad()">
-  <div id="controls" style="display: block; border: 1px solid rgb(68, 68, 68); padding: 5px; margin: 5px; width: 362px; background-color: rgb(238, 238, 238);">
+  <div id="controls" style="display: block; border: 1px solid rgb(68, 68, 68); padding: 5px; margin: 5px auto; width: 362px; background-color: rgb(238, 238, 238);">
     <label>Period (ms):</label>
     <input type="number" id="refresh-rate"/>
     <input type="button" id="start-button" value="Start"/>
