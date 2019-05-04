@@ -231,20 +231,28 @@ void IOTAppStory::begin(const char ea){
 				}
 				
 				// notifi IAS & enduser this device went to config mode (also sends localIP)
-				if(_connected){
-					this->iasLog("1");
-				}
-				
+				#if CFG_STORAGE != ST_SPIFSS
+					if(_connected){
+						this->iasLog("1");
+					}
+				#endif
+			#ifdef ESP32	//<<--- this is to prevent nasty async tcp errors
+			}	
+			#endif
 				// run config server
 				configServer configServer(*this);
 				configServer.run();
-			}
+			#ifdef ESP8266
+			}	
+			#endif
 			delay(100);
 			
 			// notifi IAS & enduser this device has left config mode (also sends localIP)
-			if(_connected){
-				this->iasLog("0");
-			}
+			#if CFG_STORAGE != ST_SPIFSS
+				if(_connected){
+					this->iasLog("0");
+				}
+			#endif
 			
 			// Restart & return to Normal Operation
 			this->espRestart('N');
@@ -259,7 +267,12 @@ void IOTAppStory::begin(const char ea){
 	_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
 	_appState = AppStateNoPress;
 
-	// ----------- END SPECIFIC SETUP CODE ----------------------------
+
+	#if DEBUG_FREE_HEAP == true
+		DEBUG_PRINTLN(" end of IAS::begin");
+		DEBUG_PRINTF(" Free heap: %u\n", ESP.getFreeHeap());
+	#endif
+		
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINT(F("\n\n\n\n\n"));
 	#endif
@@ -673,6 +686,10 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 			DEBUG_PRINT(SER_INSTALLING);
 		#endif
 		
+		
+		// Write the buffered bytes to the esp. If this fails, return false.
+		//Serial.println(streamPtr.available());
+		/*result = devObj.update(streamPtr);*/
 
 		{
 			// create buffer for read
@@ -1189,6 +1206,11 @@ void IOTAppStory::loop() {
 	
 	// handle button presses: short, long, xlong
 	this->buttonLoop();
+	
+	#if DEBUG_FREE_HEAP == true
+		DEBUG_PRINTLN(" end of IAS::loop");
+		DEBUG_PRINTF(" Free heap: %u\n", ESP.getFreeHeap());
+	#endif
 }
 
 
@@ -1368,12 +1390,10 @@ String IOTAppStory::servHdlDevInfo(){
 	retHtml.replace(F("{s3}"), config.ssid[2]);
 	
 	retHtml.replace(F("{cid}"), String(ESP_GETCHIPID));
+	retHtml.replace(F("{fid}"), String(ESP_GETFLASHCHIPID));
 
 	#if HTTPS_8266_TYPE == FNGPRINT
 		retHtml.replace(F("{f}"), config.sha1);
-	#endif
-	#if defined ESP32
-		//retHtml.replace(F("{fid}"), "");				// not available yet
 	#endif
 
 	retHtml.replace(F("{fss}"), String(ESP.getFreeSketchSpace()));
@@ -1682,7 +1702,7 @@ String IOTAppStory::strCertScan(String path){
 
 /** Save App Settings */
 String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
-	#if DEBUG_LVL >= 3
+	#if DEBUG_LVL >= 2
 		DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
 	#endif
 	
@@ -1704,8 +1724,9 @@ String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 
 /** Save App Settings */
 String IOTAppStory::servHdlactcodeSave(String actcode) {
-	#if DEBUG_LVL >= 3
+	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(SER_REC_ACT_CODE);
+		DEBUG_PRINTLN(actcode);
 	#endif
 	
 	if(actcode != ""){
