@@ -1722,15 +1722,14 @@ String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 
 
 
-/** Save App Settings */
+/** Save activation code */
 String IOTAppStory::servHdlactcodeSave(String actcode) {
-	#if DEBUG_LVL >= 2
+	#if DEBUG_LVL >= 3
 		DEBUG_PRINT(SER_REC_ACT_CODE);
 		DEBUG_PRINTLN(actcode);
 	#endif
 	
 	if(actcode != ""){
-		
 		actcode.toCharArray(config.actCode, 7);
 		
 		writeConfig(true);
