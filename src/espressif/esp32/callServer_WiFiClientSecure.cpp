@@ -198,7 +198,7 @@
 
 
 				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
-				   //F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +			// <--- not available yet for ESP32
+				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP_GETFLASHCHIPID +
 				   F("\r\nx-ESP-CHIP-ID: ") + ESP_GETCHIPID +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getSdkVersion() +
 				   
