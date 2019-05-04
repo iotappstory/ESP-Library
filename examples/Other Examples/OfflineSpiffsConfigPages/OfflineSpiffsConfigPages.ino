@@ -67,9 +67,8 @@ char* timeZone    = "0.0";
 void setup() {
   /* TIP! delete lines below when not used */
   IAS.preSetDeviceName("virginsoil");                       // preset deviceName this is also your MDNS responder: http://virginsoil.local
-  //IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
-  //IAS.preSetAutoConfig(false);                            // automaticConfig (true, false)
-  //IAS.preSetWifi("ssid","password");                      // preset Wifi
+  IAS.preSetAutoUpdate(false);                              // automaticUpdate (true, false)
+  IAS.preSetAutoConfig(false);                              // automaticConfig (true, false)
   /* TIP! Delete Wifi cred. when you publish your App. */
   
 
@@ -113,38 +112,6 @@ void setup() {
       //Serial.print(F(" of "));
       //Serial.print(total);
   });
-  
-  /* 
-  IAS.onModeButtonNoPress([]() {
-    Serial.println(F(" Mode Button is not pressed."));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-  
-  IAS.onFirstBoot([]() {                              
-    Serial.println(F(" Run or display something on the first time this app boots"));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-
-  IAS.onFirmwareUpdateCheck([]() {
-    Serial.println(F(" Checking if there is a firmware update available."));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-
-  IAS.onFirmwareUpdateDownload([]() {
-    Serial.println(F(" Downloading and Installing firmware update."));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-
-  IAS.onFirmwareUpdateError([]() {
-    Serial.println(F(" Update failed...Check your logs"));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-
-  IAS.onConfigMode([]() {
-    Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
-    Serial.println(F("*-------------------------------------------------------------------------*"));
-  });
-  */
 
   /* TIP! delete the lines above when not used */
  
