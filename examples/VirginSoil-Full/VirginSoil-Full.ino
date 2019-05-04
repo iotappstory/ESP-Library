@@ -1,5 +1,5 @@
 /*
-	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+  This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
 
   Copyright (c) [2016] [Andreas Spiess]
@@ -184,5 +184,4 @@ void loop() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
     printEntry = millis();
   }
-
 }
