@@ -1,4 +1,5 @@
 #ifdef ESP32
+	#include <rom/spi_flash.h>
 	#include <WiFi.h>
 	#include <WiFiMulti.h>
 	#include <ESPmDNS.h>
@@ -18,12 +19,10 @@
 	#include <DNSServer.h> 
 	#include <EEPROM.h>
 	#include <ESPAsyncWebServer.h>              // https://github.com/me-no-dev/ESPAsyncWebServer
-	
 #endif
 
 
 #ifdef  ESP8266
-
 	#include <ESP8266WiFi.h>
 	#include <ESP8266WiFiMulti.h>
 	#include <ESP8266mDNS.h>
@@ -43,12 +42,10 @@
 	#include <DNSServer.h> 
 	#include <EEPROM.h>
 	#include <ESPAsyncWebServer.h>				// https://github.com/me-no-dev/ESPAsyncWebServer
-
 #endif
 
 
 #ifdef ARDUINO_SAMD_VARIANT_COMPLIANCE
-
 	//#WIFI_MULTI false
 	#include <SPI.h>
 	#include <WiFiNINA.h>
