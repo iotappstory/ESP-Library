@@ -6,6 +6,7 @@
 	#define DEBUG_LVL					2			// Debug level: 0 - 3 | none - max
 	#define DEBUG_EEPROM_CONFIG			false
 	#define DEBUG_FREE_HEAP				false
+	
 	#define SERIAL_SPEED				115200
 	#define BOOTSTATISTICS				true
 		
@@ -29,18 +30,18 @@
 	
 	// Internal clock
 	#if defined  ESP8266
-	   #define SNTP_INT_CLOCK_UPD			true		// Synchronize the internal clock useing SNTP? BearSSL: This is necessary to verify that the TLS certificates offered by servers are currently valid.
-	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000	// Clock update internal in miliseconds (default 43200000 = 12 hour)
+	   #define SNTP_INT_CLOCK_UPD			true			// Synchronize the internal clock useing SNTP? BearSSL: This is necessary to verify that the TLS certificates offered by servers are currently valid.
+	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000		// Clock update internal in miliseconds (default 43200000 = 12 hour)
 	#elif defined ESP32
-	   #define SNTP_INT_CLOCK_UPD			false		// The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
-	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000	// Clock update internal in miliseconds (default 43200000 = 12 hour)
+	   #define SNTP_INT_CLOCK_UPD			false			// The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
+	   #define SNTP_INT_CLOCK_UPD_INTERVAL	43200000		// Clock update internal in miliseconds (default 43200000 = 12 hour)
 	#endif
 	
 	
 	// HTTPS defines
-	#define HTTPS         				true		// Use HTTPS for OTA updates
-	#define HTTPS_8266_TYPE				CERTIFICATE	// FNGPRINT / CERTIFICATE
-	#define HTTPS_CERT_STORAGE			ST_SPIFFS	// ST_SPIFFS / ST_PROGMEM
+	#define HTTPS         				true				// Use HTTPS for OTA updates
+	#define HTTPS_8266_TYPE				CERTIFICATE			// FNGPRINT / CERTIFICATE | ESP32 only accepts certificates
+	#define HTTPS_CERT_STORAGE			ST_SPIFFS			// ST_SPIFFS / ST_PROGMEM
 	#define HTTPS_FNGPRINT				"34:6D:0A:26:F0:40:3A:0A:1B:F1:CA:8E:C8:0C:F5:14:21:83:7C:B1" // Initial fingerprint. You can edit & change later in config mode.
 	
 	
@@ -48,6 +49,7 @@
 	#define OTA_HOST 					"iotappstory.com"   // OTA update host
 	#define OTA_UPD_FILE 				"/ota/updates.php" 	// file at host that handles 8266 updates
 	#define OTA_LOG_FILE 				"/ota/logs.php" 	// file at host that handles 8266 updates
+	#define OTA_LOCAL_UPDATE			false				// Update firmware by uploading a .bin file in config mode
 	#define OTA_UPD_CHECK_SPIFFS		true				// Do you want to OTA update SPIFFS? | true / false
 	#define OTA_UPD_CHECK_NEXTION		false				// Do you want to OTA update your Nextion display? | true / false
 
@@ -119,6 +121,8 @@
 	// define for get chip id
 	#if defined  ESP8266
 		#define ESP_GETCHIPID ESP.getChipId()
+		#define ESP_GETFLASHCHIPID ESP.getFlashChipId()
 	#elif defined ESP32
 		#define ESP_GETCHIPID (uint32_t)ESP.getEfuseMac()
+		#define ESP_GETFLASHCHIPID (uint32_t)g_rom_flashchip.device_id
 	#endif
