@@ -1574,8 +1574,8 @@ String IOTAppStory::servHdlAppInfo(){
 
 
 
-#if defined  ESP8266
-/** Save new fingerprint 
+#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
+/** Save new fingerprint */
 String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_FINGERPRINT);
@@ -1583,10 +1583,9 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	
 	fngprint.toCharArray(config.sha1, 60);
 	
-	
 	writeConfig();
 	return F("1");
-}*/
+}
 #endif
 
 
