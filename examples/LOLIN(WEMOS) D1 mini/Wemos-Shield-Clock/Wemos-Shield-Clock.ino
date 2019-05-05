@@ -30,18 +30,17 @@
 #define MODEBUTTON D3                                     // Button pin on the esp for selecting modes. 0 for Generic devices!
 
 
-#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>                                  // IotAppStory.com library
-#include <SNTPtime.h>                                     //
+#include <ezTime.h>                                       // https://github.com/ropg/ezTime
+#include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
 
 
-SNTPtime NTPch("ch.pool.ntp.org");                        // Initialize time
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
+Timezone myTZ;                                            // Initialize ezTime
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
 
 
 // ================================================ VARS =================================================
-strDateTime dateTime;
 String deviceName = "wemosclock";
 String chipId;
 
@@ -60,22 +59,22 @@ unsigned long loopEntry;
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* updTimer    = "1";                                  // 0 = false, 1 = true
 char* updInt      = "60";                                 // every x sec
-char* timeZone    = "1.0";
+char* timeZone    = "Europe/Amsterdam";
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  display.init();                                         // setup OLED and show "Wait"
-  display.flipScreenVertically();
-  display.clear();
-  display.setFont(ArialMT_Plain_16);
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.drawString(48, 35, F("Wait"));
-  display.display();
-
+  if(IAS.boardMode == 'N'){                                // setup OLED and show "Loading" Only in normal mode! Preserve heap for config mode.
+    display.init();
+    display.flipScreenVertically();
+    display.clear();
+    display.setFont(ArialMT_Plain_16);
+    display.setTextAlignment(TEXT_ALIGN_CENTER);
+    display.drawString(64, 24, F("Loading"));
+    display.display();
+  }
 
   // creat a unique deviceName for classroom situations (deviceName-123)
   chipId      = String(ESP_GETCHIPID);
@@ -83,11 +82,10 @@ void setup() {
   deviceName += chipId;
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
+  IAS.preSetAutoUpdate(false);                            // automaticUpdate on boot (true, false)
 
-
-  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(updInt, "Update every", 8, 'I');           // reference to org variable | field label value | max char return | Optional "special field" char
-  IAS.addField(timeZone, "Timezone", 4, 'Z');
+  IAS.addField(updInt, "Update every", 8, 'I');           // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(timeZone, "Timezone", 48, 'Z');            // reference to org variable | field label value | max char return | Optional "special field" char
                                                           
 
 
@@ -130,21 +128,19 @@ void setup() {
   
 
   IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  if(atoi(updTimer) == 1){                                // If the update interval is turned on in the config pages
-    IAS.setCallHomeInterval(atoi(updInt));                // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
-  }
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
   
   
   //-------- Your Setup starts from here ---------------
-
-
-  while (!NTPch.setSNTPtime()) Serial.print(".");         // set internal clock
-  
+  delay(500);
   Serial.print(F(" Time zone set to: "));                 // display timeZone
   Serial.print(timeZone);
   Serial.println(F(" You can change this in config."));
   Serial.println(F("*-------------------------------------------------------------------------*\n\n"));
 
+  //setDebug(INFO);
+  waitForSync();
+  myTZ.setLocation(timeZone);                             // Set timezone
 }
 
 
@@ -153,19 +149,15 @@ void setup() {
 void loop() {
   IAS.loop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
 
-
   //-------- Your Sketch starts from here ---------------
   
   if (millis() > loopEntry + 1000 && digitalRead(MODEBUTTON) == HIGH) {
-    dateTime = NTPch.getTime(atof(timeZone), 1); // get time from internal clock
     drawFace();
-    drawArms(dateTime.hour, dateTime.minute, dateTime.second);
+    drawArms(myTZ.dateTime("H").toInt(), myTZ.dateTime("i").toInt(), myTZ.dateTime("s").toInt());
     display.display();
+    
     loopEntry = millis();
   }
-
-  
-  
 }
 
 
