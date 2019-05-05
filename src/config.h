@@ -18,6 +18,11 @@
 	#define CFG_PASS					"admin"		// initial authentication password. You edit & change this in config mode. | max 16 char
 	#define CFG_PAGE_INFO				true		// include the info page in Config mode
 	#define CFG_PAGE_IAS 				true  		// include the IAS page in Config mode
+	#if defined  ESP8266
+		#define CFG_ANNOUNCE			false		// Announce to IAS on which ip this device is. (unstable with ESP8266 BearSSL during Config mode)
+	#elif defined ESP32
+		#define CFG_ANNOUNCE			true
+	#endif
 	
 
 	// Wifi defines
