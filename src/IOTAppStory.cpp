@@ -231,7 +231,7 @@ void IOTAppStory::begin(const char ea){
 				}
 				
 				// notifi IAS & enduser this device went to config mode (also sends localIP)
-				#if CFG_STORAGE != ST_SPIFSS
+				#if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
 					if(_connected){
 						this->iasLog("1");
 					}
@@ -248,7 +248,7 @@ void IOTAppStory::begin(const char ea){
 			delay(100);
 			
 			// notifi IAS & enduser this device has left config mode (also sends localIP)
-			#if CFG_STORAGE != ST_SPIFSS
+			#if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
 				if(_connected){
 					this->iasLog("0");
 				}
@@ -1702,7 +1702,7 @@ String IOTAppStory::strCertScan(String path){
 
 /** Save App Settings */
 String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
-	#if DEBUG_LVL >= 2
+	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
 	#endif
 	
