@@ -94,9 +94,9 @@ void configServer::run(){
 		
 		
 		// save the received fingerprint and serv results
-		/*#if defined  ESP8266
+		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 			server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
-		#endif*/
+		#endif
 		
 		
 		// serv cert scan in json format
