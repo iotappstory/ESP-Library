@@ -1,4 +1,4 @@
-#if defined ESP8266 && HTTPS_8266_TYPE == FNGPRINT
+#ifdef ESP8266
 	#include "callServer_WiFiClientSecure.h"
 	
 	callServer::callServer(strConfig &config, int command){
@@ -103,25 +103,90 @@
 	
 	bool callServer::get(const char* url, String args){
 		
+		#if DEBUG_FREE_HEAP == true
+			DEBUG_PRINTLN(" begin callServer::get(const char* url, String args)");
+			DEBUG_PRINTF(" Free heap: %u\n", ESP.getFreeHeap());
+		#endif
+		
+		// connect to client
 		#if HTTPS == true
-			_client.setFingerprint(_config->sha1);
-			if (!_client.connect(_callHost, 443)) {
+			#if HTTPS_8266_TYPE == CERTIFICATE
+			
+				#if HTTPS_CERT_STORAGE == ST_SPIFFS
+					// Set root certificate (from SPIFFS file)
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT(SER_SPIFFS_MOUNTING);
+					#endif
+					
+					// Start SPIFFS and load partition
+					if(!SPIFFS.begin()){
+					   (*_statusMessage) = SER_SPIFFS_PART_NOT_FOUND;
+					   return false;
+					} 
+
+					// Get root certificate file from SPIFFS
+					File file = SPIFFS.open("/cert/iasRootCa.cer", "r");
+					if(!file){
+					   (*_statusMessage) = SER_CERTIFICATE_NOT_FOUND;
+						return false;
+					}
+					
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINT("File size: ");
+						DEBUG_PRINTLN(file.size());
+					#endif
+
+					// Load root certificate (from SPIFFS)
+					if(!_client.loadCACert(file, file.size()) || file.size() == 0){
+					   (*_statusMessage) = SER_CERTIFICATE_NOT_LOADED;
+						return false;
+					}
+					
+					//setClock(); <--> moved to the IAS callhome method
+				
+				#else
+					// Set root certificate (from const char ROOT_CA[] PROGMEM)
+					_client.setCACert(ROOT_CA);
+				#endif
+				
+				_client.connect(_callHost, 443);
+				
+				#if DEBUG_FREE_HEAP == true
+					DEBUG_PRINTLN(" after _client.connect");
+					DEBUG_PRINTF(" Free heap: %u\n", ESP.getFreeHeap());
+				#endif
+				
+				// check connection return false if connection failed
+				if (!_client.connected()) {
+					// Error: connection failed
+					(*_statusMessage) = SER_CALLHOME_FAILED;
+					return false;
+				}
+				
+			#elif HTTPS_8266_TYPE == FNGPRINT
+				_client.setFingerprint(_config->sha1);
+				
+				if(!_client.connect(_callHost, 443)){
+					// Error: connection failed
+					(*_statusMessage) = SER_CALLHOME_FAILED;
+					return false;
+				}
+				
+				if(!_client.verify(_config->sha1, _callHost)){
+					//ERROR: certificate verification failed!
+					(*_statusMessage) = SER_CALLHOME_CERT_FAILED;
+					return false;
+				}
+			#endif
+			
+			
+			
 		#else
-			if (!_client.connect(_callHost, 80)) {
+			_client.connect(_callHost, 80);
 		#endif
 		
-			// Error: connection failed
-			(*_statusMessage) = SER_CALLHOME_FAILED;
-			return false;
-		}
-		
-		#if HTTPS == true
-			if(!_client.verify(_config->sha1, _callHost)){
-				//ERROR: certificate verification failed!
-				(*_statusMessage) = SER_CALLHOME_CERT_FAILED;
-				return false;
-			}
-		#endif
+
+
 		
 		String mode, md5;
 		if(_command == U_LOGGER){
@@ -155,7 +220,7 @@
 
 
 				   F("\r\nx-ESP-SKETCH-MD5: ") + md5 +
-				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP.getFlashChipId() +
+				   F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP_GETFLASHCHIPID +
 				   F("\r\nx-ESP-CHIP-ID: ") + ESP_GETCHIPID +
 				   F("\r\nx-ESP-CORE-VERSION: ") + ESP.getCoreVersion() +
 				   

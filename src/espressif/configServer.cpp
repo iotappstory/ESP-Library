@@ -94,9 +94,9 @@ void configServer::run(){
 		
 		
 		// save the received fingerprint and serv results
-		/*#if defined  ESP8266
+		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 			server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
-		#endif*/
+		#endif
 		
 		
 		// serv cert scan in json format
@@ -109,7 +109,7 @@ void configServer::run(){
 		});
 				
 		// upload a file to /certupl
-		server->on("/certupl", HTTP_POST, [&](AsyncWebServerRequest *request){
+		server->on("/certupl", HTTP_POST, [](AsyncWebServerRequest *request){
 			request->send(200);
 		}, 
 			[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
@@ -165,6 +165,62 @@ void configServer::run(){
 			}
 		);
 		
+		// locally upload new firmware
+		#if OTA_LOCAL_UPDATE == true
+			server->on("/update", HTTP_POST, [&](AsyncWebServerRequest *request){
+				bool result = false;
+				if(!Update.hasError()){
+					// update is success
+					result = true;
+
+					// save new app name & version
+					{
+					request->getParam("n", true)->value().toCharArray(_ias->config.appName, 33);
+					String("(local)").toCharArray(_ias->config.appVersion, 12);
+					}
+
+					// tell the loop to write config changes to eeprom
+					_ias->_writeConfig = true;
+				}
+				AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", result?"OK":"FAIL");
+				response->addHeader("Connection", "close");
+				request->send(response);
+				delay(200);
+				ESP.restart();
+			},[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+				if(!index){
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTF(" Update Start: %s\n", filename.c_str());
+					#endif
+					#ifdef ESP8266
+						Update.runAsync(true);
+					#endif
+					if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+						#if DEBUG_LVL >= 2
+							Update.printError(Serial);
+						#endif
+					}
+				}
+				if(!Update.hasError()){
+					if(Update.write(data, len) != len){
+						#if DEBUG_LVL >= 2
+							Update.printError(Serial);
+						#endif
+					}
+				}
+				if(final){
+					bool status = Update.end(true);
+					#if DEBUG_LVL >= 2
+						if(status){
+							DEBUG_PRINTF(" Update Success: %uB\n", index+len);
+						}else{
+							DEBUG_PRINTLN(" Update Failed!");
+						}
+					#endif
+				}
+			});
+		#endif
+		
 		// serv the app fields in json format
 		server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
 
@@ -190,15 +246,15 @@ void configServer::run(){
 		while(exitConfig == false){
 			
 			yield();
+
+			// if writeConfig bool is true write EEPROM (used by: saveWifi & saveApp
+			if(_ias->_writeConfig){
+				_ias->writeConfig(true);
+				yield();
+				_ias->_writeConfig = false;
+			}
 			
 			if(_ias->_connected){
-
-				// if writeConfig bool is true write EEPROM (used by: saveWifi & saveApp
-				if(_ias->_writeConfig){
-					_ias->writeConfig(true);
-					yield();
-					_ias->_writeConfig = false;
-				}
 				
 				// when succesfully added wifi cred in AP mode change to STA mode
 				if(_ias->_connChangeMode){
