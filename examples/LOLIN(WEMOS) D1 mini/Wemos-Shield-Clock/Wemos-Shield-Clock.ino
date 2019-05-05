@@ -82,7 +82,6 @@ void setup() {
   deviceName += chipId;
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
-  IAS.preSetAutoUpdate(false);                            // automaticUpdate on boot (true, false)
 
   IAS.addField(updInt, "Update every", 8, 'I');           // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(timeZone, "Timezone", 48, 'Z');            // reference to org variable | field label value | max char return | Optional "special field" char
