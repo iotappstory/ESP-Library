@@ -1,7 +1,7 @@
 {
   "name": "IOTAppStory-ESP",
   "keywords": "esp8266, esp32, IOT, IAS, wifi, wi-fi, OTA",
-  "description": "Update your ESP8266 & ESP32 modules over the air(OTA)",
+  "description": "Update your ESP8266, ESP32 & Nextion displays over the air(OTA)",
   "repository":
   {
     "type": "git",
@@ -15,5 +15,5 @@
     "platforms": ["espressif8266", "espressif32"],
     "authors": "Hristo Gochkov"
   },
-  "version": "2.0.2"
+  "version": "2.1.0-RC1"
 }
