@@ -114,7 +114,7 @@
 				#endif
 				
 				// Start SPIFFS and load partition
-				if(!SPIFFS.begin()){
+				if(!ESP_SPIFFSBEGIN){
 				   (*_statusMessage) = SER_SPIFFS_PART_NOT_FOUND;
 				   return false;
 				} 

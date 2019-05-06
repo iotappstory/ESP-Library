@@ -1392,7 +1392,7 @@ String IOTAppStory::servHdlDevInfo(){
 	retHtml.replace(F("{cid}"), String(ESP_GETCHIPID));
 	retHtml.replace(F("{fid}"), String(ESP_GETFLASHCHIPID));
 
-	#if HTTPS_8266_TYPE == FNGPRINT
+	#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 		retHtml.replace(F("{f}"), config.sha1);
 	#endif
 
@@ -1647,7 +1647,7 @@ String IOTAppStory::strCertScan(String path){
 	#endif
 	
 	//Initialize File System
-	if(!SPIFFS.begin()){
+	if(!ESP_SPIFFSBEGIN){
 		#if DEBUG_LVL >= 3
 			DEBUG_PRINT(F(" SPIFFS Mount Failed"));
 		#endif
