@@ -119,11 +119,13 @@
 	#define MAGICEEP      				"%"
 	
 	
-	// define for get chip id
+	
 	#if defined  ESP8266
-		#define ESP_GETCHIPID ESP.getChipId()
-		#define ESP_GETFLASHCHIPID ESP.getFlashChipId()
+		#define ESP_GETCHIPID ESP.getChipId()				// define for get chip id
+		#define ESP_GETFLASHCHIPID ESP.getFlashChipId()		// define for get flash chip id
+		#define ESP_SPIFFSBEGIN SPIFFS.begin()				// define for SPIFFS.begin()
 	#elif defined ESP32
 		#define ESP_GETCHIPID (uint32_t)ESP.getEfuseMac()
 		#define ESP_GETFLASHCHIPID (uint32_t)g_rom_flashchip.device_id
+		#define ESP_SPIFFSBEGIN SPIFFS.begin(true)
 	#endif
