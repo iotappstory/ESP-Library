@@ -61,7 +61,7 @@
 		
 		char deviceName[STRUCT_BNAME_SIZE];
 		char compDate[STRUCT_COMPDATE_SIZE];     // saved compile date time
-		#if HTTPS_8266_TYPE == FNGPRINT
+		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 			char sha1[60];
 		#endif
 		#if CFG_AUTHENTICATE == true
@@ -118,7 +118,7 @@
 
 	const char HTTP_APP_INFO[] PROGMEM    = "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
 
-	#if HTTPS_8266_TYPE == FNGPRINT
+	#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 		const char HTTP_DEV_INFO[] PROGMEM = "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\", \"f\":\"{f}\"}";
 	#else
 		const char HTTP_DEV_INFO[] PROGMEM = "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
@@ -146,7 +146,7 @@
 			{"","",""},
 			"yourESP",
 			"",
-			#if HTTPS_8266_TYPE == FNGPRINT
+			#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 				HTTPS_FNGPRINT,
 			#endif
 			#if CFG_AUTHENTICATE == true
