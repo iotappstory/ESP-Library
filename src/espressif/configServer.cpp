@@ -14,7 +14,7 @@ void configServer::run(){
 		bool exitConfig = false;
 		
 		#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
-			if(!SPIFFS.begin()){
+			if(!ESP_SPIFFSBEGIN){
 				#if DEBUG_LVL >= 1
 					DEBUG_PRINT(F(" SPIFFS Mount Failed"));
 				#endif
