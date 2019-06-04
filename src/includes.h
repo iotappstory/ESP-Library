@@ -2,6 +2,7 @@
 	#include <rom/spi_flash.h>					// enable flash chip id from the SDK
 	#include <WiFi.h>
 	#include <WiFiMulti.h>
+	#include "espressif/WiFiConnector.h"
 	#include <ESPmDNS.h>
 
 	#include "espressif/esp32/boardInfo.h"
@@ -11,7 +12,7 @@
 	#include "espressif/UpdateClassVirt.h"
 	#include <Update.h>
 	#include "espressif/updateESP.h"
-	#if NEXT_OTA == true
+	#if OTA_UPD_CHECK_NEXTION == true
 		#include "espressif/updateNextion.h"
 	#endif
 	
@@ -25,6 +26,7 @@
 #ifdef  ESP8266
 	#include <ESP8266WiFi.h>
 	#include <ESP8266WiFiMulti.h>
+	#include "espressif/WiFiConnector.h"
 	#include <ESP8266mDNS.h>
 
 	#include "espressif/esp8266/boardInfo.h"
@@ -33,7 +35,7 @@
 	
 	#include "espressif/UpdateClassVirt.h"
 	#include "espressif/updateESP.h"
-	#if NEXT_OTA == true
+	#if OTA_UPD_CHECK_NEXTION == true
 		#include "espressif/updateNextion.h"
 	#endif
 	
