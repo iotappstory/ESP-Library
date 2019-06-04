@@ -1,11 +1,11 @@
 	/**
 		------ ------ ------ ------ ------ ------ DEFINED SERIAL FEEDBACK ------ ------ ------ ------ ------ ------ 
 	*/
-	#define SER_ERASE_FULL					" Full erase of EEPROM"
-	#define SER_ERASE_PART					" Partial erase of EEPROM"
+	#define SER_ERASE_FULL					" (F)ull erase of EEPROM"
+	#define SER_ERASE_PART					" (P)artial erase of EEPROM"
 	#define SER_ERASE_PART_EXT				" Partial erase of EEPROM but leaving config settings"
-	#define SER_ERASE_NONE					" Leave EEPROM intact"
-	#define SER_ERASE_FLASH					" Erasing Flash...\n From %4d to %4d\n"
+	#define SER_ERASE_NONE					" (L)eave EEPROM intact"
+	#define SER_ERASE_FLASH					" Erasing EEPROM...\n From %4d to %4d\n"
 	
 	#define SER_CALLBACK_FIRST_BOOT			" Run first boot callback"
 	#define SER_START						" Start "
@@ -23,7 +23,7 @@
 	#define SER_CONFIG_MODE					"\n\n\n\n C O N F I G U R A T I O N   M O D E\n"
 	#define SER_CONFIG_AP_MODE				" AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"
 	#define SER_CONFIG_STA_MODE				" STA mode. Open "
-	#define SER_CONFIG_STA_MODE_CHANGE		" Changed to STA mode."
+	#define SER_CONFIG_STA_MODE_CHANGE		" Changed to STA mode. Reconnect to: "
 	#define SER_CONFIG_EXIT					" Exit config"
 	#define SER_CONFIG_ENTER				" Entering in Configuration Mode"
 	
@@ -34,12 +34,12 @@
 	#define SER_CONN_NONE_GO_CFG			" Going into Configuration Mode\n"
 	#define SER_CONN_NONE_CONTINU			"\n Continu without WiFi\n"
 	#define SER_CONN_LOST_RECONN			" Connection lost! Reconnecting"
-	#define SER_CONNECTED					"\n WiFi connected\n"
+	#define SER_CONNECTED					" WiFi connected\n"
 	#define SER_SYNC_TIME_NTP				" Synchronising time with NTP server\n "
 	
 	
 	#define SER_DEV_MAC						" Device MAC: "
-	#define SER_DEV_IP						" Assigned IP Address: "
+	#define SER_DEV_IP						" IP Address: "
 	#define SER_DEV_MDNS					" MDNS responder started: http://"
 	#define SER_DEV_MDNS_INFO				"\n\n To use mDNS Install host software:\n - For Linux, install Avahi (http://avahi.org/)\n - For Windows, install Bonjour (https://commaster.net/content/how-resolve-multicast-dns-windows)\n - For Mac OSX and iOS support is built in through Bonjour already"
 	#define SER_DEV_MDNS_FAIL				" MDNS responder failed to start"
@@ -88,6 +88,7 @@
 	
 	#define SER_SERV_DEV_INFO				" Serving device info"
 	#define SER_SERV_WIFI_SCAN_RES			" Serving results of Wifiscan"
+	#define SER_SERV_WIFI_CRED				" Serving Wifi credentials"
 	#define SER_SERV_CERT_SCAN_RES			" Serving results of certificate scan"
 	#define SER_SERV_APP_SETTINGS			" Serving App Settings"
 	
@@ -99,4 +100,4 @@
 	#define SER_CONN_REC_CRED_DB3			"\n Connect with received credentials: %s - %s\n"
 	#define SER_CONN_REC_CRED_PROC			"\n Processing received credentials"
 	#define SER_CONN_ADDED_AP_CRED			"\n Added wifi credentials for AP%d\n"
-	#define SER_CONN_CRED_MISSING			"SSID or Password is missing"
+	#define SER_CONN_CRED_MISSING			" SSID or Password is missing"

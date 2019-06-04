@@ -1,6 +1,7 @@
 #ifndef _UPDATENEXTION
 	#define _UPDATENEXTION
 	
+	#include "../config.h"
 	#include "UpdateClassVirt.h"
 	#include <ESPNexUpload.h>
 
@@ -17,7 +18,7 @@
 			
 			virtual void sm(String *statusMessage);
 			
-			ESPNexUpload nextion{115200};
+			ESPNexUpload nextion{NEXT_BAUD};
 
 		private:
 			String *_statusMessage;

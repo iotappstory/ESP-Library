@@ -2,8 +2,9 @@
 	#include "configServer.h"
 	#include <IOTAppStory.h> 
 	
-	configServer::configServer(IOTAppStory &ias){
+	configServer::configServer(IOTAppStory &ias, configStruct &config){
 		_ias = &ias;
+		_config = &config;
 	}
 
 
@@ -13,7 +14,7 @@ void configServer::run(){
 	
 		bool exitConfig = false;
 		
-		#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID
+		#if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID || defined ESP32
 			if(!ESP_SPIFFSBEGIN){
 				#if DEBUG_LVL >= 1
 					DEBUG_PRINT(F(" SPIFFS Mount Failed"));
@@ -39,6 +40,9 @@ void configServer::run(){
 			#endif
 			
 		}else{
+			#if WIFI_DHCP_ONLY == false
+				WiFi.disconnect();
+			#endif
 			
 			// when there is no wifi setup server in AP mode
 			IPAddress apIP(192, 168, 4, 1);
@@ -48,12 +52,13 @@ void configServer::run(){
 				WiFi.beginSmartConfig();
 			#endif
 			WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-			WiFi.softAP(_ias->config.deviceName);
+			WiFi.softAP(_config->deviceName);
 			
 			#if DEBUG_LVL >= 2
-				DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _ias->config.deviceName);
+				DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _config->deviceName);
 			#endif
-
+			
+			WiFi.scanNetworks(true);
 		}
 		
 
@@ -71,24 +76,100 @@ void configServer::run(){
 		#endif
 		
 		// serv the wifi scan results
-		server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
+		server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
+		
+		// serv the wifi credentials
+		server->on("/wc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strWifiCred(), F("text/json")); });
 		
 		// save the received ssid & pass for the received APnr(i) ans serv results
 		server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ 
+
+					
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(request->getParam("s", true)->value());
+				DEBUG_PRINTLN(request->getParam("p", true)->value());
+			#endif
 			
 			int postAPnr = 0;
 			if(request->hasParam("i", true)){
 				postAPnr = atoi(request->getParam("i", true)->value().c_str());
 			}
 			
-			hdlReturn(
-				request, 
-				_ias->servHdlWifiSave(
-					request->getParam("s", true)->value(), 
-					request->getParam("p", true)->value(), 
-					postAPnr
-				)
-			);
+
+			
+			int len_char = request->getParam("s", true)->value().length() + 1; 
+			char charSSID[len_char];
+			request->getParam("s", true)->value().toCharArray(charSSID, len_char);
+			
+			len_char = request->getParam("p", true)->value().length() + 1; 
+			char charPass[len_char];
+			request->getParam("p", true)->value().toCharArray(charPass, len_char);
+			
+			if(postAPnr > 0){
+				hdlReturn(
+					request, 
+					_ias->servHdlWifiSave(
+						charSSID, 
+						charPass, 
+						#if WIFI_DHCP_ONLY == true
+							postAPnr
+						#else
+							request->getParam("sip", true)->value(),
+							request->getParam("ssn", true)->value(),
+							request->getParam("sgw", true)->value(),
+							request->getParam("sds", true)->value()
+						#endif
+					)
+				);
+			}else{
+				if(_tryToConn == false){
+					WiFi.begin(charSSID, charPass);
+					_tryToConn = true;
+					hdlReturn(request, "2");	// busy
+					#if DEBUG_LVL >= 3
+						DEBUG_PRINTLN("configServer debug:\tbusy");
+					#endif
+				}else{
+					String retHtml;
+					if(_connFail){
+						_connFail = false;
+						retHtml = F("3");		// return html Failed
+						
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTLN("configServer debug:\tTrying to connect: failed");
+						#endif
+						
+					}else if(_ias->_connected){
+						_connChangeMode = true;
+						_tryToConn = false;
+							
+						_ias->servHdlWifiSave(
+							charSSID, 
+							charPass
+							#if WIFI_DHCP_ONLY == false
+								,request->getParam("sip", true)->value(),
+								request->getParam("ssn", true)->value(),
+								request->getParam("sgw", true)->value(),
+								request->getParam("sds", true)->value()
+							#endif
+						);
+						
+						retHtml = F("1:");		// ok:ip
+						retHtml += WiFi.localIP().toString();
+						
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTLN("configServer debug:\tTrying to connect: connected! send ip");
+						#endif
+						
+					}else{
+						retHtml = F("2");		// still busy
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINTLN("configServer debug:\tstill busy!");
+						#endif
+					}
+					hdlReturn(request, retHtml);
+				}
+			}
 		});
 
 		
@@ -175,12 +256,10 @@ void configServer::run(){
 
 					// save new app name & version
 					{
-					request->getParam("n", true)->value().toCharArray(_ias->config.appName, 33);
-					String("(local)").toCharArray(_ias->config.appVersion, 12);
+					request->getParam("n", true)->value().toCharArray(_config->appName, 33);
+					String("(local)").toCharArray(_config->appVersion, 12);
 					}
 
-					// tell the loop to write config changes to eeprom
-					_ias->_writeConfig = true;
 				}
 				AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", result?"OK":"FAIL");
 				response->addHeader("Connection", "close");
@@ -247,24 +326,20 @@ void configServer::run(){
 			
 			yield();
 
-			// if writeConfig bool is true write EEPROM (used by: saveWifi & saveApp
-			if(_ias->_writeConfig){
-				_ias->writeConfig(true);
-				yield();
-				_ias->_writeConfig = false;
-			}
-			
 			if(_ias->_connected){
+				//DEBUG_PRINTLN("Configserver connected loop part");
 				
 				// when succesfully added wifi cred in AP mode change to STA mode
-				if(_ias->_connChangeMode){
+				if(_connChangeMode){
 					delay(1000);
 					WiFi.mode(WIFI_STA);
 					delay(100);
-					_ias->_connChangeMode = false;
+					_connChangeMode = false;
 					
 					#if DEBUG_LVL >= 2
-						DEBUG_PRINTLN(SER_CONFIG_STA_MODE_CHANGE);
+						DEBUG_PRINTLN(SER_CONNECTED);
+						DEBUG_PRINT(SER_CONFIG_STA_MODE_CHANGE);
+						DEBUG_PRINTLN(WiFi.localIP());
 					#endif
 				}
 				
@@ -279,36 +354,35 @@ void configServer::run(){
 				#endif
 				
 				// wifi connect when asked
-				if(_ias->_tryToConn == true){
-						
+				if(_tryToConn == true){
+					
+					int retries = WIFI_CONN_MAX_RETRIES;
+					
 					#if DEBUG_LVL >= 2
 						DEBUG_PRINTLN(SER_CONN_REC_CRED);
-					#endif
-					#if DEBUG_LVL >= 3
-						DEBUG_PRINTLN(F(""));
-						DEBUG_PRINT(_ias->config.ssid[0]);
-						DEBUG_PRINT(F(" - "));
-						DEBUG_PRINTLN(_ias->config.password[0]);
+						DEBUG_PRINT(F(" "));
 					#endif
 					
-
-					WiFi.begin(_ias->config.ssid[0], _ias->config.password[0]);
-					if(_ias->WiFiConnectToAP(false)){
-						_ias->_connFail = false;
-						
-						#if DEBUG_LVL >= 3
-							DEBUG_PRINT(SER_CONN_SAVE_EEPROM);
-						#endif
-					}else{
-						_ias->_connFail = true;
-						
+					while (WiFi.status() != WL_CONNECTED && retries-- > 0 ) {
+						delay(500);
 						#if DEBUG_LVL >= 1
-							DEBUG_PRINT(SER_FAILED_TRYAGAIN);
+							DEBUG_PRINT(F("."));
 						#endif
-						
 					}
 					
-					_ias->_tryToConn = false;
+					#if DEBUG_LVL >= 1
+						DEBUG_PRINT(F("\n"));
+					#endif
+
+					if(retries > 0){
+						_ias->_connected = true;
+						_connFail = false;
+					}else{
+						_ias->_connected = false;
+						_connFail = true;
+					}
+
+					_tryToConn = false;
 					yield();
 				}
 			}
@@ -339,7 +413,7 @@ void configServer::onUpload(AsyncWebServerRequest *request, String filename, siz
 /** return page handler */
 void configServer::hdlReturn(AsyncWebServerRequest *request, String retHtml, String type) {
 	#if CFG_AUTHENTICATE == true
-	if(!request->authenticate("admin", _ias->config.cfg_pass)){ 
+	if(!request->authenticate("admin", _config->cfg_pass)){ 
 		return request->requestAuthentication(); 
 	}else{
 	#endif

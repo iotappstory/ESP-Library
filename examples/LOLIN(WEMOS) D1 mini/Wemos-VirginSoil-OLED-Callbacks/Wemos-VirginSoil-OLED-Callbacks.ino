@@ -43,6 +43,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppSt
 
 // ================================================ VARS =================================================
 unsigned long printEntry;
+String deviceName = "woled-vs";
+String chipId;
 
 
 
@@ -56,8 +58,12 @@ void setup() {
   display.drawString(48, 35, F("Wait"));
   display.display();
 
-
-  IAS.preSetDeviceName("wemos-oled-virginsoil");          // preset deviceName this is also your MDNS responder: http://woled-vs.local
+  // create a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://woled-vs.local
   
 
 

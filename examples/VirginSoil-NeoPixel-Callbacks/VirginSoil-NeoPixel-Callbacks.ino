@@ -51,19 +51,18 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, FEEDBACKLED, NEO_GRB + NEO_KHZ80
 
 // ================================================ VARS =================================================
 unsigned long printEntry;
+bool loadPixel    = true;
+String deviceName = "ws2812b-vs";
+String chipId;
 
 uint32_t none   = pixels.Color(0, 0, 0);
-
 uint32_t cyan   = pixels.Color(0, 255, 255);              // wait / booting
 uint32_t white  = pixels.Color(255, 255, 255);            // configuration mode
-
 uint32_t blue   = pixels.Color(0, 0, 255);                // If mode button is released, I will enter in firmware update mode.
 uint32_t purple = pixels.Color(128, 0, 128);              // If mode button is released, I will enter in configuration mode.
-
 uint32_t yellow = pixels.Color(255, 255, 100);            // firmware update mode: calling home / checking for updates
 uint32_t orange = pixels.Color(255, 140, 0);              // firmware update mode: downloading update
 uint32_t red    = pixels.Color(255, 0, 0);                // firmware update mode: update error, check your logs
-
 uint32_t green  = pixels.Color(0, 128, 0);                // loop / running
 
 
@@ -77,8 +76,13 @@ void setup() {
   pixels.show();                                          // tell the neopixel to show the color
   delay(100);
   
-
-  IAS.preSetDeviceName("ws2812b-vs");                     // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
+  
+  // create a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -88,6 +92,7 @@ void setup() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     
+    pixels.clear();
     pixels.setPixelColor(0, blue);                        // send blue / release for updates to the neopixel
     pixels.show();
   });
@@ -96,33 +101,60 @@ void setup() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     
+    pixels.clear();
     pixels.setPixelColor(0, purple);                      // send purple / release for config to the neopixel
     pixels.show();
     delay(100);
   });
 
   IAS.onConfigMode([]() {
+    pixels.clear();
     pixels.setPixelColor(0, white);                       // send white /entered config mode to the neopixel
     pixels.show();
     delay(100);
   });
 
   IAS.onFirmwareUpdateCheck([]() {
+    pixels.clear();
     pixels.setPixelColor(0, yellow);                      // send yellow / update check to the neopixel
     pixels.show();
     delay(100);
   });
 
   IAS.onFirmwareUpdateDownload([]() {
+    pixels.clear();
     pixels.setPixelColor(0, orange);                      // send orange / update download to the neopixel
     pixels.show();
     delay(100);
   });
 
   IAS.onFirmwareUpdateError([]() {
+    pixels.clear();
     pixels.setPixelColor(0, red);                         // send red / update error to the neopixel
     pixels.show();
     delay(100);
+  });
+  
+  IAS.onFirmwareUpdateProgress([](int written, int total){
+      Serial.print(".");
+
+      if(written%5==0){
+        Serial.print(F("\n Written "));
+        Serial.print(written);
+        Serial.print(F(" of "));
+        Serial.print(total);
+        
+        pixels.clear();
+        if(!loadPixel){
+          pixels.setPixelColor(atoi(feedbackled), orange);
+          loadPixel = true;
+        }else{
+          pixels.setPixelColor(atoi(feedbackled), none);
+          loadPixel = false;
+        }      
+        pixels.show();
+        delay(50);
+      }
   });
   
 

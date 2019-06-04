@@ -37,6 +37,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotApp
 // ================================================ EXAMPLE VARS =========================================
 // used in this example to print variables every 10 seconds
 unsigned long printEntry;
+String deviceName = "virginsoil";
+String chipId;
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
@@ -58,8 +60,13 @@ char* timeZone    = "0.0";
 
 // ================================================ SETUP ================================================
 void setup() {
+  // create a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+	
   /* TIP! delete lines below when not used */
-  IAS.preSetDeviceName("virginsoil");                       // preset deviceName this is also your MDNS responder: http://virginsoil.local
+  IAS.preSetDeviceName(deviceName);                       	// preset deviceName this is also your MDNS responder: http://virginsoil.local
   //IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
   //IAS.preSetAutoConfig(false);                            // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                      // preset Wifi

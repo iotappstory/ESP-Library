@@ -45,32 +45,32 @@
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
 	**/
 	
-	typedef struct eFields{
+	struct addFieldStruct{
 		const char* fieldLabel;
-		char* (*varPointer);
 		int length;
 		char type;
+		
+		const char magicBytes[2] = "%";
 	};
 
-	typedef struct strConfig{
-		char actCode[7];                         // saved IotAppStory activation code
-		char appName[33];
-		char appVersion[12];
-		char ssid[3][STRUCT_CHAR_ARRAY_SIZE];    // 3x SSID
-		char password[3][STRUCT_PASSWORD_SIZE];  // 3x PASS
+	struct configStruct{
+		char actCode[7] = "";							// saved IotAppStory activation code
+		char appName[33] = "";
+		char appVersion[12] = "";
+		char deviceName[STRUCT_BNAME_SIZE] = "yourESP";
+		char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
 		
-		char deviceName[STRUCT_BNAME_SIZE];
-		char compDate[STRUCT_COMPDATE_SIZE];     // saved compile date time
 		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-			char sha1[60];
+			char sha1[60] = HTTPS_FNGPRINT;
 		#endif
 		#if CFG_AUTHENTICATE == true
-			char cfg_pass[17];
+			char cfg_pass[17] = CFG_PASS;
 		#endif
-		#if NEXT_OTA == true
-			char next_md5[33];
+		#if OTA_UPD_CHECK_NEXTION == true
+			char next_md5[33] = "00000000000000000000000000000000";
 		#endif
-		const char magicBytes[4];
+		
+		char magicBytes[4] = MAGICBYTES;
 	};
 	
 	struct firmwareStruct{
@@ -101,9 +101,11 @@
 	/**
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
 	*/
-
-	const char SER_DEV[] PROGMEM          = "*-------------------------------------------------------------------------*";
-	
+	#if DEBUG_LVL == 1
+		const char SER_DEV[] PROGMEM      = "---";
+	#else
+		const char SER_DEV[] PROGMEM      = "*-------------------------------------------------------------------------*";
+	#endif
 	const char HTTP_200[] PROGMEM         = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 	const char HTTP_TEMP_START[] PROGMEM  = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/><meta name=\"theme-color\" content=\"#000\" />{h}<title>Config</title></head><body>";
 	const char HTTP_TEMP_END[] PROGMEM    = "</body></html>";
@@ -114,14 +116,19 @@
 	const char HTTP_AP_CSS[] PROGMEM      = "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#m,#m a{color:#000}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:14px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc}input:focus{border-color:#fcbc12}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;float:right;background:#fcbc12;border-radius:4px;border:0;font-size:16px;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}table{width:100%}table tr:nth-child(2n-1){background:#1A1A1A}table td{padding:3px 4px}table td:nth-child(3):not([data-e=\"7\"]){width:20px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAABFElEQVQ4je2Pu07DUBBEz/oGBAUPG3dpEEI0CApEjSIlvIrwP6Hj9TN8QmxACKhIgeySHtFgRAMKvvZSxJFIcIoISqZZaWdnZ0YoQRr4NSFvIWwUq47mejqx83o3fCs/xKF7Jkir4N6KOQtkAkemkZx8v3cGxd6eIIfAs8K+qSeuuU1c0CbwonCcBn6tLDUA2YUX29DTtL1QH+bspX9gQ09t6N2XVtCbOTfrmkQgNo1kvczABu4jIkvmY2pGmk/vAxXsp6wBqEg8MqIjEeCk093V/qoCoOdMZrmz3M+jV/OLpRUztOear2iHB9kkFQAbetfA1kjnMijtynayW1SQ6lhiQIRqL80v8f/g7x5oNK5QlQjgCxBXWhCbZi53AAAAAElFTkSuQmCC) right center no-repeat;background-width:16px}table td:nth-child(3)[data-e=\"7\"]{background:0 0}</style>";
 
 	const char HTTP_WIFI_SCAN[] PROGMEM   = "<tr><td onclick=\"c(this);\">{s}</td><td>{q} dBm</td><td data-e=\"{e}\"></td></tr>";
-	const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
-
+	
+	#if WIFI_DHCP_ONLY == true
+		const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
+	#else
+		const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><label for=\"sip\">IP address</label><input type=\"text\" name=\"sip\"><label for=\"ssn\">Subnet</label><input type=\"text\" name=\"ssn\"><label for=\"sgw\">Gateway</label><input type=\"text\" name=\"sgw\"><label for=\"sds\">DNS server</label><input type=\"text\" name=\"sds\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
+	#endif
+	
 	const char HTTP_APP_INFO[] PROGMEM    = "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
 
 	#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-		const char HTTP_DEV_INFO[] PROGMEM = "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\", \"f\":\"{f}\"}";
+		const char HTTP_DEV_INFO[] PROGMEM = "{\"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\", \"f\":\"{f}\"}";
 	#else
-		const char HTTP_DEV_INFO[] PROGMEM = "{\"s1\":\"{s1}\", \"s2\":\"{s2}\", \"s3\":\"{s3}\", \"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
+		const char HTTP_DEV_INFO[] PROGMEM = "{\"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
 	#endif
 
 
@@ -137,26 +144,6 @@
 		int bootTimes;
 		char boardMode = 'N';                    // Normal operation or Configuration mode?
 		String statusMessage = "";
-
-		strConfig config = {
-			"",
-			"",
-			"",
-			{"","",""},
-			{"","",""},
-			"yourESP",
-			"",
-			#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-				HTTPS_FNGPRINT,
-			#endif
-			#if CFG_AUTHENTICATE == true
-				CFG_PASS,
-			#endif
-			#if NEXT_OTA == true
-				"00000000000000000000000000000000",
-			#endif
-			"CFG"  // Magic Bytes
-		};
 
 
 		// similar to the ModeButtonState but has some extra states
@@ -184,23 +171,24 @@
 		void preSetDeviceName(String deviceName);
 		void preSetAutoUpdate(bool automaticUpdate);
 		void preSetAutoConfig(bool automaticConfig);
-		void preSetWifi(String ssid, String password);
+		void preSetWifi(const char *ssid, const char *password);
 
-		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. Remove with version 3.0.0
+		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
 		void setCallHomeInterval(unsigned long interval);
 
-		void begin(const char ea);
+		void begin(const char ea) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
+		void begin();
 
 		void loop();
 
 
-		void writeConfig(bool wifiSave = false);
-		void readConfig();
+		void writeConfig(configStruct &config);
+		void readConfig(configStruct &config);
 		void espRestart(char mmode);
-		void eraseFlash(int eepFrom, int eepTo);
+		void eraseEEPROM(int eepFrom, int eepTo);
+		void eraseEEPROM(const char ea);
 
 		void WiFiSetupAndConnect();
-		bool WiFiConnectToAP(bool multi = true);
 		void WiFiDisconnect();
 		void setClock();
 		
@@ -209,6 +197,9 @@
 		bool espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
 		
 		void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
+
+		
+		
 		void iasLog(String msg);
 		int dPinConv(String orgVal);
 
@@ -238,20 +229,11 @@
 		const char *_compDate;
 		const int _modeButton;							// which gpio is used for selecting modes
 		unsigned int _nrXF					= 0;		// nr of extra fields required in the config manager
-
+		unsigned int _nrXFlastAdd			= 0;		// nr of extra fields required in the config manager
 		bool _updateOnBoot					= true;		// update on boot? (end of begin();)
 		bool _automaticConfig				= true;		// automaticly go to config on boot if there is no wifi connection present
-
 		bool _setPreSet						= false;	// ;) have there been any preSets set?
-		bool _setDeviceName					= false;	// is the device name set?
-		bool _configReaded					= false;	// has the config already been read?
-		bool _writeConfig					= false;	// flag to notify the loop to write the config settings
-		
 		bool _connected						= false;	// wifi connection status bool
-		bool _tryToConn						= false;	// is the wifi connector busy? (trying to connect)
-		bool _connFail						= false;	// did the last connection attempt faile
-		bool _connChangeMode				= false;	// flag to notify the loop to change from AP to STA mode
-		
 		
 		bool _timeSet						= false;	// maby?<---------------
 		unsigned long _lastTimeSet			= 0;
@@ -262,8 +244,7 @@
 		unsigned long _debugEntry;
 		AppState      _appState;
 
-		eFields fieldStruct[MAXNUMEXTRAFIELDS];
-
+		
 		THandlerFunction _firstBootCallback;
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
@@ -282,12 +263,12 @@
 			------ ------ ------ ------ ------ ------ FUNCTION DEFINITIONS ------ ------ ------ ------ ------ ------
 		*/
 
-		void firstBoot(const char ea);
+		void firstBoot();
 		void printBoardInfo();
-		void processField();
 
 
 		String strWifiScan();
+		String strWifiCred();
 		String strCertScan(String path = "");
 		String servHdlRoot();
 		String servHdlDevInfo();
@@ -295,7 +276,8 @@
 		#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT
 			String servHdlFngPrintSave(String fngprint);
 		#endif
-		String servHdlWifiSave(String newSSID, String newPass, int apNr=0);
+		String servHdlWifiSave(const char* newSSID, const char* newPass, const int apNr=0);
+		String servHdlWifiSave(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv);
 		String servHdlAppSave(AsyncWebServerRequest *request);
 		String servHdlactcodeSave(String actcode="");
 
