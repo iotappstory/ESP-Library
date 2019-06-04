@@ -16,19 +16,23 @@
 		#endif
 		#include <ESPAsyncWebServer.h>					// https://github.com/me-no-dev/ESPAsyncWebServer
 		
-		#define TEMPLATE_PLACEHOLDER '`'
 		
-		struct strConfig;
+		struct configStruct;
 		class IOTAppStory;
 		
 		
 		class configServer {
 			public:
-				configServer(IOTAppStory &ias);
+				configServer(IOTAppStory &ias, configStruct &config);
 				void run();
 			private:
 				IOTAppStory* _ias;
+				configStruct* _config;
 				std::unique_ptr<AsyncWebServer> 	server;
+
+				bool _tryToConn			= false;		// is the wifi connector busy? (trying to connect)
+				bool _connFail			= false;		// did the last connection attempt faile
+				bool _connChangeMode	= false;		// flag to notify the loop to change from AP to STA mode
 				
 				void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 				void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
