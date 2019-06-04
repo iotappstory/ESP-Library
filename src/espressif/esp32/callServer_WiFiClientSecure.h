@@ -56,14 +56,14 @@
 			"-----END CERTIFICATE-----\n";
 		#endif
 		
-		struct strConfig;
+		struct configStruct;
 		struct firmwareStruct;
 		
 		
 		class callServer{
 			
 			public:
-				callServer(strConfig &config, int command = U_FLASH);
+				callServer(configStruct &config, int command = U_FLASH);
 				Stream &getStream(firmwareStruct *firmwareStruct);
 				
 				bool get(const char* url, String args);
@@ -78,7 +78,7 @@
 				#endif
 				String *_statusMessage;
 				
-				strConfig* _config;
+				configStruct* _config;
 				int _command;
 				const char* _callHost		= OTA_HOST;         // ota update host | Set in config.h
 				const char* _callFile		= OTA_UPD_FILE; 	// file at host that handles esp updates
