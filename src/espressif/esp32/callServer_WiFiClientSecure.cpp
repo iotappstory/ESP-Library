@@ -1,7 +1,7 @@
 #ifdef  ESP32
 	#include "callServer_WiFiClientSecure.h"
 	
-	callServer::callServer(strConfig &config, int command){
+	callServer::callServer(configStruct &config, int command){
 		_config = &config;
 		_command = command;
 	}
@@ -176,7 +176,7 @@
 			mode = F("spiffs");
 			md5 = ESP.getSketchMD5();
 		}
-		#if NEXT_OTA == true
+		#if OTA_UPD_CHECK_NEXTION == true
 			else if(_command == U_NEXTION){
 				mode = F("nextion");
 				md5 = _config->next_md5;
