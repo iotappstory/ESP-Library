@@ -54,7 +54,7 @@
 	#define OTA_LOG_FILE 				"/ota/logs.php" 	// file at host that handles 8266 updates
 	#define OTA_LOCAL_UPDATE			false				// Update firmware by uploading a .bin file in config mode | Only when config is stored in SPIFFS. CFG_STORAGE (line 15)
 	#define OTA_UPD_CHECK_SPIFFS		true				// Do you want to OTA update SPIFFS? | true / false
-	#define OTA_UPD_CHECK_NEXTION		true				// Do you want to OTA update your Nextion display? | true / false
+	#define OTA_UPD_CHECK_NEXTION		false				// Do you want to OTA update your Nextion display? | true / false
 
 	#if defined  ESP8266
 		#define OTA_BUFFER				1024
