@@ -13,22 +13,27 @@
  * For more info on the ESP-DASH V2 library: https://github.com/ayushsharma82/ESP-DASH
 */
 
+#define COMPDATE __DATE__ __TIME__
+#define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
+
 #include <WiFi.h>
 #include <AsyncTCP.h>                                       // https://github.com/me-no-dev/AsyncTCP
 #include <ESPAsyncWebServer.h>                              // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <ESPDash.h>                                        // https://github.com/ayushsharma82/ESP-DASH
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 
-#define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotAppStory
 
-
 AsyncWebServer server(80);
+
+void buttonClicked(const char* id);                         // forward declaration of buttonClicked
 
 
 
 // ================================================ EXAMPLE VARS =========================================
+String deviceName = "ESPDash-blink";
+String chipId;
+
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported. (Keep in mind that html form fields always return Strings)
 // Use functions like atoi() and atof() to transform the char array to integers or floats
@@ -39,8 +44,14 @@ char* LEDpin    = "2";                                     // The value given he
 
 
 // ================================================ SETUP ================================================
-void setup(){
-  IAS.preSetDeviceName("ESPDash-blink");                    // preset deviceName this is also your MDNS responder: http://virginsoil.local
+void setup(){  
+  
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+ 
+  IAS.preSetDeviceName(deviceName);                         // preset deviceName this is also your MDNS responder: http://ESPDash-blink-123.local
 
 
   IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
@@ -62,12 +73,18 @@ void setup(){
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
   });
-
- 
-  IAS.begin('P'); // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                                              // Run IOTAppStory
 
 
   //-------- Your Setup starts from here ---------------
+
+  
   delay(500);
   pinMode(IAS.dPinConv(LEDpin), OUTPUT);
   Serial.println(F(" Start server..."));
