@@ -22,7 +22,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  virginSoilFull V2.2.2
+  OfflineSpiffsConfigPages V0.0.9
 */
 /*
   To run config mode in offline situations you have to do 2 things:
@@ -35,7 +35,6 @@
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 
-
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotAppStory
 
@@ -44,6 +43,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotApp
 // ================================================ EXAMPLE VARS =========================================
 // used in this example to print variables every 10 seconds
 unsigned long printEntry;
+String deviceName = "spiffs-config";
+String chipId;
 
 // We want to be able to edit these example variables below from the wifi config manager
 // Currently only char arrays are supported.
@@ -65,8 +66,14 @@ char* timeZone    = "0.0";
 
 // ================================================ SETUP ================================================
 void setup() {
+
+  // create a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
   /* TIP! delete lines below when not used */
-  IAS.preSetDeviceName("virginsoil");                       // preset deviceName this is also your MDNS responder: http://virginsoil.local
+  IAS.preSetDeviceName("deviceName");                       // preset deviceName this is also your MDNS responder: http://spiffs-config-123.local
   IAS.preSetAutoUpdate(false);                              // automaticUpdate (true, false)
   IAS.preSetAutoConfig(false);                              // automaticConfig (true, false)
   /* TIP! Delete Wifi cred. when you publish your App. */
@@ -107,15 +114,24 @@ void setup() {
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
       
-      //Serial.print(F("\n Written "));
-      //Serial.print(written);
-      //Serial.print(F(" of "));
-      //Serial.print(total);
+      /*
+      if(written%5==0){
+        Serial.print(F("\n Written "));
+        Serial.print(written);
+        Serial.print(F(" of "));
+        Serial.print(total);
+      }
+      */
   });
-
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
   /* TIP! delete the lines above when not used */
  
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin();                                            // Run IOTAppStory
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
 
@@ -127,7 +143,10 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                                   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------
@@ -158,5 +177,4 @@ void loop() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
     printEntry = millis();
   }
-
 }
