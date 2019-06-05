@@ -13,22 +13,24 @@
  * For more info on the ESP-DASH V2 library: https://github.com/ayushsharma82/ESP-DASH
 */
 
+#define COMPDATE __DATE__ __TIME__                          // Button pin on the esp for selecting modes. D3 for the Wemos!
+#define MODEBUTTON 0
+
 #include <WiFi.h>
 #include <AsyncTCP.h>                                       // https://github.com/me-no-dev/AsyncTCP
 #include <ESPAsyncWebServer.h>                              // https://github.com/me-no-dev/ESPAsyncWebServer
 #include <ESPDash.h>                                        // https://github.com/ayushsharma82/ESP-DASH
 #include <IOTAppStory.h>                                    // IotAppStory.com library
 
-#define COMPDATE __DATE__ __TIME__
-#define MODEBUTTON 0                                        // Button pin on the esp for selecting modes. D3 for the Wemos!
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                      // Initialize IotAppStory
-
 
 AsyncWebServer server(80);
 
 
 
 // ================================================ EXAMPLE VARS =========================================
+String deviceName = "ESPDash-AP";
+String chipId;
 // used in this example to blink (LEDpin) every (blinkTime) miliseconds
 unsigned long lastUpdate;
 
@@ -43,8 +45,14 @@ char* password = "admin";
 
 
 // ================================================ SETUP ================================================
-void setup(){
-  IAS.preSetDeviceName("ESPDash-AP");                       // preset deviceName this is also your MDNS responder: http://virginsoil.local
+void setup(){  
+  
+  // creat a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+ 
+  IAS.preSetDeviceName(deviceName);                         // preset deviceName this is also your MDNS responder: http://ESPDash-AP-123.local
   
 
   IAS.addField(ssid, "SSID", 16);                           // These fields are added to the "App Settings" page in config mode and saved to eeprom. Updated values are returned to the original variable.
@@ -68,12 +76,18 @@ void setup(){
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
   });
-
- 
-  IAS.begin('P'); // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                                              // Run IOTAppStory
 
 
   //-------- Your Setup starts from here ---------------
+
+  
   delay(500);
   Serial.println(F(" This example runs in AP mode. So we will have to change WiFi mode and disconnect\n from your set WiFi AP. In AP mode we cannot use setCallHomeInterval to call home\n for updates. To check for updates press reset!"));
   IAS.WiFiDisconnect();
@@ -100,7 +114,7 @@ void setup(){
 
 // ================================================ LOOP =================================================
 void loop() {
-  //IAS.loop();        // <<-- we cannot use the IAS.loop 
+  //IAS.loop();        // <<-- we cannot use the IAS.loop with this ESP-DASH example
 
   //-------- Your Sketch starts from here ---------------
   
