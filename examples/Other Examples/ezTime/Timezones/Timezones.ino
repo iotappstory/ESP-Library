@@ -89,39 +89,39 @@ void setup() {
 
 
   // Uncomment the line below to see what it does behind the scenes
-	setDebug(INFO);
-	waitForSync();
+  setDebug(INFO);
+  waitForSync();
 
-	Serial.println();
-	Serial.println("UTC:             " + UTC.dateTime());
+  Serial.println();
+  Serial.println("UTC:             " + UTC.dateTime());
 
-	Timezone myTZ;
+  Timezone myTZ;
 
-	// Provide official timezone names
-	// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-	myTZ.setLocation(F("Pacific/Auckland"));
-	Serial.print(F("New Zealand:     "));
-	Serial.println(myTZ.dateTime());
+  // Provide official timezone names
+  // https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  myTZ.setLocation(F("Pacific/Auckland"));
+  Serial.print(F("New Zealand:     "));
+  Serial.println(myTZ.dateTime());
 
-	// Wait a little bit to not trigger DDoS protection on server
-	// See https://github.com/ropg/ezTime#timezonedropnl
-	delay(5000);
+  // Wait a little bit to not trigger DDoS protection on server
+  // See https://github.com/ropg/ezTime#timezonedropnl
+  delay(5000);
 
-	// Or country codes for countries that do not span multiple timezones
-	myTZ.setLocation(F("de"));
-	Serial.print(F("Germany:         "));
-	Serial.println(myTZ.dateTime());
+  // Or country codes for countries that do not span multiple timezones
+  myTZ.setLocation(F("de"));
+  Serial.print(F("Germany:         "));
+  Serial.println(myTZ.dateTime());
 
-	// Same as above
-	delay(5000);
+  // Same as above
+  delay(5000);
 
-	// See if local time can be obtained (does not work in countries that span multiple timezones)
-	Serial.print(F("Local (GeoIP):   "));
-	if (myTZ.setLocation()) {
-		Serial.println(myTZ.dateTime());
-	} else {
+  // See if local time can be obtained (does not work in countries that span multiple timezones)
+  Serial.print(F("Local (GeoIP):   "));
+  if (myTZ.setLocation()) {
+  	Serial.println(myTZ.dateTime());
+  } else {
 		Serial.println(errorString());
-	}
+  }
 }
 
 
