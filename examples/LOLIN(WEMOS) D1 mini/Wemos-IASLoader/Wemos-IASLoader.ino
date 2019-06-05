@@ -121,7 +121,10 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                             // this routine handles the calling home on the configured itnerval as well as reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   if (millis() - printEntry > 5000 && digitalRead(D3) == HIGH) {
