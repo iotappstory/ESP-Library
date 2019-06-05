@@ -80,15 +80,19 @@ void setup() {
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
   });
-
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
   
-  IAS.begin('P');                           // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin();                              // Run IOTAppStory
   IAS.setCallHomeInterval(60);              // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
   
 	
   //-------- Your Setup starts from here ---------------
-	
-	
+  
+  
   pinMode(IAS.dPinConv(LEDpin), OUTPUT);
 }
 
@@ -96,13 +100,16 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();																// this routine handles the calling home on the configured itnerval as well as reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------
 
 	
-  if (millis() - blinkEntry > atoi(blinkTime)) {
+  if (millis() - blinkEntry > atoi(blinkTime) && digitalRead(MODEBUTTON) == HIGH) {
     digitalWrite(IAS.dPinConv(LEDpin), !digitalRead(IAS.dPinConv(LEDpin)));
     blinkEntry = millis();
 
