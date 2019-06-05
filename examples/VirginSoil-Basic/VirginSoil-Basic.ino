@@ -36,7 +36,13 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);	// Initialize IotAppStory
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.begin('P');         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                          // Run IOTAppStory
 	
 
   //-------- Your Setup starts from here ---------------
@@ -47,7 +53,8 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();				// this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();				                    // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+
 
   //-------- Your Sketch starts from here ---------------
 
