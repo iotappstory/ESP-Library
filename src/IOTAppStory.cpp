@@ -1526,6 +1526,7 @@ String IOTAppStory::servHdlAppInfo(){
 	Save new fingerprint
 	Only used if ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 */
+#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT
 String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	
 	// get config from EEPROM
@@ -1547,6 +1548,7 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 
 	return F("1");
 }
+#endif
 
 
 
