@@ -61,6 +61,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);      // Initialize IOTAppStory
 
 // ================================================ EXAMPLE VARS =========================================
 // used in this example to switch WiFi on or off every 10 seconds
+String deviceName = "wifi-connections";
+String chipId;
 unsigned long connEntry;                    // Last time switched
 unsigned long connTime = 10000;             // Every 10 seconds
 bool oddEven = true;                        // Switch between 2 options
@@ -73,7 +75,12 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   
-  IAS.preSetDeviceName("wifi-connections"); // preset deviceName this is also your MDNS responder: http://iasblink.local
+  // create a unique deviceName for classroom situations (deviceName-123)
+  chipId      = String(ESP_GETCHIPID);
+  chipId      = "-"+chipId.substring(chipId.length()-3);
+  deviceName += chipId;
+  
+  IAS.preSetDeviceName(deviceName);         // preset deviceName this is also your MDNS responder: http://wifi-connections-123.local
   IAS.preSetAutoConfig(true);               // Set whether or not the device should go into config mode after after failing to connect to a Wifi AP. The default is true
   // IAS.preSetWifi("MyWifiAP", "My Pass")  // Set the WiFi credentials without going to the config pages. For development only! Make sure to delete this preSet when you publish your App.
 
@@ -83,9 +90,14 @@ void setup() {
   // https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266WiFi/examples/WiFiEvents/WiFiEvents.ino
   // https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiClientEvents/WiFiClientEvents.ino
   WiFi.onEvent(WiFiEvent);
+
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
   
-  
-  IAS.begin('L');                           // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin();                              // Run IOTAppStory
   IAS.setCallHomeInterval(60);              // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
   
   
