@@ -2,7 +2,7 @@
   This is an initial sketch to get your device registered at IOTappstory.com
   You will need an account at IOTAppStory.com 
 
-  You will need the button & OLED shields!
+  You will need the button & OLED(v1) shields!
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -23,7 +23,6 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
-
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -36,6 +35,7 @@
 
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
+
 
 
 // ================================================ VARS =================================================
@@ -61,10 +61,9 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
 
-  
-  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
-  IAS.preSetAppName(F("WemosLoader"));                    // preset appName
-  IAS.preSetAppVersion(F("1.2.0"));                       // preset appVersion
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName-123.local
+  IAS.preSetAppName(F("WemosLoader"));                    // preset appName | The appName & appVersion get updated when you receive OTA updates. As this is your first app we will set it manually.
+  IAS.preSetAppVersion(F("1.3.1"));                       // preset appVersion
   IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
 
 
@@ -109,22 +108,23 @@ void setup() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
 
-
-  IAS.begin('F');                                           // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.setCallHomeInterval(60);                              // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('F');                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
   
-  //-------- Your Setup starts from here ---------------
 
-
-  IAS.callHome(true);
-  
+  IAS.begin();                            // Run IOTAppStory
+  IAS.setCallHomeInterval(60);            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                                         // this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   if (millis() - printEntry > 5000 && digitalRead(D3) == HIGH) {

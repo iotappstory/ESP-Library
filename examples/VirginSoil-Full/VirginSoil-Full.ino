@@ -60,13 +60,14 @@ char* timeZone    = "0.0";
 
 // ================================================ SETUP ================================================
 void setup() {
+  
   // create a unique deviceName for classroom situations (deviceName-123)
   chipId      = String(ESP_GETCHIPID);
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
 	
   /* TIP! delete lines below when not used */
-  IAS.preSetDeviceName(deviceName);                       	// preset deviceName this is also your MDNS responder: http://virginsoil.local
+  IAS.preSetDeviceName(deviceName);                       	// preset deviceName this is also your MDNS responder: http://virginsoil-123.local
   //IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
   //IAS.preSetAutoConfig(false);                            // automaticConfig (true, false)
   //IAS.preSetWifi("ssid","password");                      // preset Wifi
@@ -107,11 +108,15 @@ void setup() {
 
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
-      
-      //Serial.print(F("\n Written "));
-      //Serial.print(written);
-      //Serial.print(F(" of "));
-      //Serial.print(total);
+
+      /*
+      if(written%5==0){
+        Serial.print(F("\n Written "));
+        Serial.print(written);
+        Serial.print(F(" of "));
+        Serial.print(total);
+      }
+      */
   });
   
   /* 
@@ -144,11 +149,15 @@ void setup() {
     Serial.println(F(" Starting configuration mode. Search for my WiFi and connect to 192.168.4.1."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
+  
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
   */
 
 	/* TIP! delete the lines above when not used */
  
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin();                                            // Run IOTAppStory
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
 
@@ -160,10 +169,14 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                                   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------
+
 
   if (millis() - printEntry > 10000) {          // Serial.print the example variables every 10 seconds
 

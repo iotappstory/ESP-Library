@@ -30,7 +30,7 @@
   Don't forget to upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
   or you can upload it to IOTAppStory.com
 
-  WebAppToggleBtn V3.0.1
+  WebAppToggleBtn V3.0.2
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -60,6 +60,7 @@ void onRequest(AsyncWebServerRequest *request){
 }
 
 
+
 // ================================================ VARS =================================================
 String deviceName = "webtoggle";
 String chipId;
@@ -80,8 +81,7 @@ long debounceDelay = 50;		// the debounce time; increase if the output flickers
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
 char* LEDpin      = "2";                                  // The value given here is the default value and can be overwritten by values saved in configuration mode
-char* btnDefPin   = "14";
-char* updTimer    = "1";                                  // 0 = false, 1 = true
+char* btnDefPin   = "14";                                 // button pin
 char* updInt      = "60";                                 // every x sec
 
 
@@ -94,15 +94,13 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
 	
-	IAS.preSetDeviceName(deviceName);											  // preset deviceName this is also your MDNS responder: http://webtoggle.local
+	IAS.preSetDeviceName(deviceName);											  // preset deviceName this is also your MDNS responder: http://webtoggle-123.local
   IAS.preSetAutoUpdate(true);                             // automaticUpdate (true, false)
 
 
-  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C'); // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(updInt, "Update every", 8, 'I');           // reference to org variable | field label value | max char return | Optional "special field" char
-	IAS.addField(LEDpin, "Led Pin", 2, 'P');
+  IAS.addField(updInt, "Update every", 8, 'I');           // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(LEDpin, "Led Pin", 2, 'P');                // reference to org variable | field label value | max char return | Optional "special field" char
 	IAS.addField(btnDefPin, "Button Pin", 2, 'P');
-
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -120,15 +118,18 @@ void setup() {
   IAS.onFirmwareUpdateProgress([](int written, int total){
     Serial.print(".");
   });
-
-	
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  if(atoi(updTimer) == 1){                                // If the update interval is turned on in the config pages
-    IAS.setCallHomeInterval(atoi(updInt));                // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
-  }
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                                            // Run IOTAppStory
+  IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
 
   //-------- Your Setup starts from here ---------------
+
 
   if(!SPIFFS.begin()){
       Serial.println(F(" SPIFFS Mount Failed"));
@@ -184,15 +185,16 @@ void setup() {
 	Serial.print(F(" HTTP server started at: "));
 	Serial.println(WiFi.localIP());
 	Serial.println("");
-	
-
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop(); // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------

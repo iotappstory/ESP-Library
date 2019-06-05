@@ -1,5 +1,5 @@
 /*
-	This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
+  This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be filled wherever it is marked.
 
   Copyright (c) [2016] [Andreas Spiess]
@@ -36,7 +36,13 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);	// Initialize IotAppStory
 
 // ================================================ SETUP ================================================
 void setup() {
-  IAS.begin('P');         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                          // Run IOTAppStory
 	
 
   //-------- Your Setup starts from here ---------------
@@ -47,7 +53,11 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();				// this routine handles the reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
+
 
   //-------- Your Sketch starts from here ---------------
 

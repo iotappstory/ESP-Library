@@ -70,7 +70,6 @@ void setup(){
   IAS.addField(http_password, "Password", 16);              // Find out more about the optional "special fields" at https://iotappstory.com/wiki
     
 
-
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
 
@@ -87,9 +86,13 @@ void setup(){
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
   });
-
- 
-  IAS.begin('P'); // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
+  
+  IAS.begin();                                            // Run IOTAppStory
 
 
   //-------- Your Setup starts from here ---------------

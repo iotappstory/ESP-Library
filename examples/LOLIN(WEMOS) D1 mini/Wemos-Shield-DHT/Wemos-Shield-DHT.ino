@@ -23,7 +23,6 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
-
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -33,7 +32,6 @@
 #include <SSD1306.h>              // OLED library by Daniel Eichhorn
 #include <IOTAppStory.h>          // IotAppStory.com library
 #include <DHT.h>                  // Adafruit DHT Arduino library
-
 #include <PubSubClient.h>         // Arduino Client for MQTT by knolleary/pubsubclient
 
 
@@ -72,7 +70,6 @@ char msg[50]            = "field1=22.5&field2=65.7&status=MQTTPUBLISH";
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* updTimer    = "1";                                  // 0 = false, 1 = true
 char* updInt      = "60";                                 // every x sec
 char* scale       = "0";                                  // 0 = Celsius, 1 = Fahrenheit
 char* apikey      = "";                                   // ThingSpeak Write API Key
@@ -95,14 +92,12 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
   
-  IAS.preSetDeviceName(deviceName);                               // preset Boardname this is also your MDNS responder: http://deviceName.local
+  IAS.preSetDeviceName(deviceName);                               // preset Boardname this is also your MDNS responder: http://deviceName-123.local
 
 
-  IAS.addField(updTimer, "Update timer:Turn on", 1, 'C');         // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
-  IAS.addField(updInt, "Update every", 8, 'I');                   // reference to org variable | field label value | max char return | Optional "special field" char
-  IAS.addField(scale, "Temp. scale:Celsius,Fahrenheit", 1, 'S');  
+  IAS.addField(updInt, "Update every", 8, 'I');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  IAS.addField(scale, "Temp. scale:Celsius,Fahrenheit", 1, 'S');  // reference to org variable | field label value | max char return | Optional "special field" char 
   IAS.addField(apikey, "TS Write API Key", 16, 'T');
-
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -141,12 +136,14 @@ void setup() {
   IAS.onFirmwareUpdateError([]() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
-  
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
 
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  if(atoi(updTimer) == 1){                                // If the update interval is turned on in the config pages
-    IAS.setCallHomeInterval(atoi(updInt));                // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
-  }
+  IAS.begin();                              // Run IOTAppStory
+  IAS.setCallHomeInterval(atoi(updInt));    // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
   
 
   //-------- Your Setup starts from here ---------------
@@ -183,10 +180,14 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------
+
   
   if (millis() > tempEntry + 5000 && digitalRead(D3) == HIGH) { // Wait a few seconds between measurements.
     tempEntry = millis();

@@ -29,22 +29,19 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  WS2812B-VirginSoil V0.7.0
+  WS2812B-VirginSoil V1.0.1
 */
 
-#define APPNAME "WS2812B-VirginSoil"
-#define VERSION "V1.0.0"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                                      // Button pin on the esp8266 for selecting modes. D3 for the Wemos!
-
 #define FEEDBACKLED 4                                     // Pin on the esp8266 connected to the NeoPixel you want to use for feedback. D2 for the Wemos!
+
 
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <Adafruit_NeoPixel.h>                            // Adafruit_NeoPixel_Library (https://github.com/adafruit/Adafruit_NeoPixel)
 
 
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
-
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, FEEDBACKLED, NEO_GRB + NEO_KHZ800);
 
 
@@ -82,7 +79,7 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
   
-  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://ws2812b-vs.local
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://ws2812b-vs-123.local
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
@@ -146,20 +143,24 @@ void setup() {
         
         pixels.clear();
         if(!loadPixel){
-          pixels.setPixelColor(atoi(feedbackled), orange);
+          pixels.setPixelColor(FEEDBACKLED, orange);
           loadPixel = true;
         }else{
-          pixels.setPixelColor(atoi(feedbackled), none);
+          pixels.setPixelColor(FEEDBACKLED, none);
           loadPixel = false;
         }      
         pixels.show();
         delay(50);
       }
   });
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
   
-
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.setCallHomeInterval(60);                            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.begin();                              // Run IOTAppStory
+  IAS.setCallHomeInterval(60);              // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
   //-------- Your Setup starts from here ---------------
 
@@ -170,13 +171,16 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                                             // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 
 
   //-------- Your Sketch starts from here ---------------
 
   
-  if(digitalRead(MODEBUTTON) == HIGH) {                   // if the button is not being pressed set the neopixel to green and blink every 5 seconds
+  if(digitalRead(MODEBUTTON) == HIGH) {     // if the button is not being pressed set the neopixel to green and blink every 5 seconds
     if(millis() - printEntry > 5000) {
       printEntry = millis();
   

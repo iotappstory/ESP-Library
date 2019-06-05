@@ -21,18 +21,15 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
-
-  INITLoader V1.2.0
 */
 
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON 0                      // Button pin on the esp for selecting modes. D3 for the Wemos!
 
 
-
 #include <IOTAppStory.h>                  // IOTAppStory.com library
-
 IOTAppStory IAS(COMPDATE, MODEBUTTON);    // Initialize IOTAppStory
+
 
 
 // ================================================ VARS =================================================
@@ -49,9 +46,9 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
   
-  IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName.local
-  IAS.preSetAppName(F("INITLoader"));     // preset appName
-  IAS.preSetAppVersion(F("1.3.0"));       // preset appVersion
+  IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName-123.local
+  IAS.preSetAppName(F("INITLoader"));     // preset appName | The appName & appVersion get updated when you receive OTA updates. As this is your first app we will set it manually.
+  IAS.preSetAppVersion(F("1.3.1"));       // preset appVersion
   IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
@@ -70,24 +67,22 @@ void setup() {
   IAS.onFirmwareUpdateProgress([](int written, int total){
       Serial.print(".");
   });
-  
-  #ifdef  ESP8266
-    IAS.onFirstBoot([]() {
-      Serial.println(F(" Manual reset necessary after serial upload!"));
-      Serial.println(F("*-------------------------------------------------------------------------*"));
-      ESP.restart();
-    });
-  #endif  
 
-  IAS.begin('F');                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.setCallHomeInterval(60);            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('F');                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
   
-  IAS.callHome(true);                     // call home immediately
+
+  IAS.begin();                            // Run IOTAppStory
+  IAS.setCallHomeInterval(60);            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 }
 
 
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();                             // this routine handles the calling home on the configured itnerval as well as reaction of the Flash button. If short press: update of skethc, long press: Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                // reconnecting WiFi when the connection is lost,
+                // and setting the internal clock (ESP8266 for BearSSL)
 }
