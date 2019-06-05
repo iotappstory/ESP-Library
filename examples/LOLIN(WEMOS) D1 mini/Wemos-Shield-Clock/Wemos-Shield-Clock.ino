@@ -23,7 +23,6 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
-
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -38,6 +37,7 @@
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 Timezone myTZ;                                            // Initialize ezTime
 SSD1306  display(0x3c, D2, D1);                           // Initialize OLED
+
 
 
 // ================================================ VARS =================================================
@@ -83,10 +83,10 @@ void setup() {
   
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
 
+
   IAS.addField(updInt, "Update every", 8, 'I');           // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(timeZone, "Timezone", 48, 'Z');            // reference to org variable | field label value | max char return | Optional "special field" char
                                                           
-
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
@@ -124,13 +124,19 @@ void setup() {
   IAS.onFirmwareUpdateError([]() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
   
-
-  IAS.begin('P');                                         // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
+  IAS.begin();                                            // Run IOTAppStory
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
   
   
   //-------- Your Setup starts from here ---------------
+  
+  
   delay(500);
   Serial.print(F(" Time zone set to: "));                 // display timeZone
   Serial.print(timeZone);
@@ -146,9 +152,14 @@ void setup() {
 
 // ================================================ LOOP =================================================
 void loop() {
-  IAS.loop();   // this routine handles the calling home functionality and reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+  IAS.loop();   // this routine handles the calling home functionality,
+                 // reaction of the MODEBUTTON pin. If short press (<4 sec): update of sketch, long press (>7 sec): Configuration
+                 // reconnecting WiFi when the connection is lost,
+                 // and setting the internal clock (ESP8266 for BearSSL)
+
 
   //-------- Your Sketch starts from here ---------------
+
   
   if (millis() > loopEntry + 1000 && digitalRead(MODEBUTTON) == HIGH) {
     drawFace();
