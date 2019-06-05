@@ -24,7 +24,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  Wemos-OLED-VirginSoil v1.0.0
+  Wemos-OLED-VirginSoil v1.0.1
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -63,9 +63,8 @@ void setup() {
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
   
-  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://woled-vs.local
+  IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://woled-vs-123.local
   
-
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
@@ -103,10 +102,14 @@ void setup() {
   IAS.onFirmwareUpdateError([]() {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
+  /*
+  IAS.onFirstBoot([]() {
+    IAS.eraseEEPROM('P');                                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+  });
+  */
   
-
-  IAS.begin('P');                       // Optional parameter: What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase(default) | 'L' Leave intact
-  IAS.setCallHomeInterval(60);          // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
+  IAS.begin();                                            // Run IOTAppStory
+  IAS.setCallHomeInterval(60);                            // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
 
 
   //-------- Your Setup starts from here ---------------
@@ -121,6 +124,7 @@ void loop() {
 
 
   //-------- Your Sketch starts from here ---------------
+
 
   if (millis() - printEntry > 5000 && digitalRead(D3) == HIGH) {
     printEntry = millis();
