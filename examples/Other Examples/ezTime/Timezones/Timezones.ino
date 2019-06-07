@@ -1,8 +1,6 @@
 /*
   This sketch is based on one of the examples that comes with the ezTime library adapted to use IOTAppStory.
-  
-  This sketch prints a message at noon UTC, every second Tuesday of the month.
-  Not very useful, but demonstrates events and ordinal time.
+
 
   This sketch was written by C.W.L Broeders(2019) and is based on:
   VirginSoil sketch [Andreas Spiess]
@@ -89,7 +87,7 @@ void setup() {
 
 
   // Uncomment the line below to see what it does behind the scenes
-  setDebug(INFO);
+  // setDebug(INFO);
   waitForSync();
 
   Serial.println();
