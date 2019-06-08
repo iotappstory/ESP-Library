@@ -775,7 +775,6 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 			// EEPROM begin
 			EEPROM.begin(EEPROM_SIZE);
 			
-			
 			// check for MAGICEEP to confirm the this fieldStruct is stored in EEPROM
 			if(EEPROM.read(magicBytesBegin) != MAGICEEP[0]){
 
@@ -832,12 +831,58 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 					#if DEBUG_LVL >= 2
 						DEBUG_PRINTF_P(SER_PROC_TBL_OVRW, eepVal);
 					#endif
-			
+					
 					// workaround to prevent jiberish chars | move addField char* to char[] with v3!
 					defaultVal = new char[length+1];				
 					
 					// update the default value with the value from EEPROM
 					strcpy(defaultVal, eepVal);
+				}
+				
+				bool putfieldStruct = false;
+
+				// compair EEPROM fieldLabel with the current fieldLabel
+				if(fieldStruct.fieldLabel != fieldLabel){
+					
+					// EEPROM value is NOT the same als the default value
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN("Overwritting label");
+					#endif				
+					
+					// update the default value with the value from EEPROM
+					fieldStruct.fieldLabel 	= fieldLabel;
+					putfieldStruct = true;
+				}
+				
+				// compair EEPROM fieldLabel with the current fieldLabel
+				if(fieldStruct.length != length){
+					
+					// EEPROM value is NOT the same als the default value
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN("Overwritting length");
+					#endif
+					
+					// update the default value with the value from EEPROM
+					fieldStruct.length 		= length;
+					putfieldStruct = true;
+				}
+				
+				// compair EEPROM fieldLabel with the current fieldLabel
+				if(fieldStruct.type != type){
+					
+					// EEPROM value is NOT the same als the default value
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN("Overwritting type");
+					#endif
+					
+					// update the default value with the value from EEPROM
+					fieldStruct.type 		= type;
+					putfieldStruct = true;
+				}
+				
+				if(putfieldStruct){
+					// put the fieldStruct to EEPROM
+					EEPROM.put(eepStartAddress, fieldStruct);
 				}
 			}
 
