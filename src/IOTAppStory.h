@@ -2,7 +2,6 @@
 	#define IOTAppStory_h
 
 
-
 	/**
 		------ ------ ------ ------ ------ ------ library includes ------ ------ ------ ------ ------ ------
 	*/
@@ -17,7 +16,6 @@
 	/**
 		------ ------ ------ ------ ------ ------ macros for debugging ------ ------ ------ ------ ------ ------ 
 	*/
-
 	#if DEBUG_LVL >= 1
 
 		// set to true to include code for show EEPROM contents in debug
@@ -44,7 +42,6 @@
 	/**
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
 	**/
-	
 	struct addFieldStruct{
 		const char* fieldLabel;
 		int length;
@@ -82,21 +79,28 @@
 	};
 		
 	enum  ModeButtonState{
-		ModeButtonNoPress,                       // mode button is not pressed
-		ModeButtonShortPress,                    // short press - will enter in firmware update mode
-		ModeButtonLongPress,                     // long press - will enter in configuration mode
-		ModeButtonVeryLongPress,                 // very long press - won't do anything (but the app developer might want to do something)
-		ModeButtonFirmwareUpdate,                // about to enter in firmware update mode
-		ModeButtonConfigMode                     // about to enter in configuration mode
+		ModeButtonNoPress,          // mode button is not pressed
+		ModeButtonShortPress,       // short press - will enter in firmware update mode
+		ModeButtonLongPress,        // long press - will enter in configuration mode
+		ModeButtonVeryLongPress,    // very long press - won't do anything (but the app developer might want to do something)
+		ModeButtonFirmwareUpdate,	// about to enter in firmware update mode
+		ModeButtonConfigMode        // about to enter in configuration mode
 	};
 
-		
-	// callback template definition
-	typedef std::function<void(void)> THandlerFunction;
-	typedef std::function<void(int, int)> THandlerFunctionArg;
+	// similar to the ModeButtonState but has some extra states
+	// that are used internally by the state machine method
+	enum AppState {
+		AppStateNoPress,        	// mode button is not pressed
+		AppStateWaitPress,      	// mode button is pressed but not long enough for a short press
+		AppStateShortPress,     	// mode button is pressed for a short time. Releasing it will make it go to firmware update mode.
+		AppStateLongPress,      	// mode button is pressed for a long time. Releasing it will make it go to config mode.
+		AppStateVeryLongPress,  	// mode button is pressed for a very long time. Releasing it won't do anything.
+		AppStateFirmwareUpdate, 	// about to enter in firmware update mode
+		AppStateConfigMode      	// about to enter in config mode
+	};
 
-	extern UpdateESPClass UpdateESP;
-
+	
+	
 
 	/**
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
@@ -131,8 +135,19 @@
 		const char HTTP_DEV_INFO[] PROGMEM = "{\"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
 	#endif
 
+		
+		
+		
+	// callback template definition
+	typedef std::function<void(void)> THandlerFunction;
+	typedef std::function<void(int, int)> THandlerFunctionArg;
+	
+	// external classes
+	extern UpdateESPClass UpdateESP;
 
 
+
+	
 	class IOTAppStory {
 
 		public:
@@ -140,29 +155,14 @@
 		/** 
 			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
 		*/
-
 		int bootTimes;
 		char boardMode = 'N';                    // Normal operation or Configuration mode?
 		String statusMessage = "";
 
 
-		// similar to the ModeButtonState but has some extra states
-		// that are used internally by the state machine method
-		enum AppState {
-			AppStateNoPress,        // mode button is not pressed
-			AppStateWaitPress,      // mode button is pressed but not long enough for a short press
-			AppStateShortPress,     // mode button is pressed for a short time. Releasing it will make it go to firmware update mode.
-			AppStateLongPress,      // mode button is pressed for a long time. Releasing it will make it go to config mode.
-			AppStateVeryLongPress,  // mode button is pressed for a very long time. Releasing it won't do anything.
-			AppStateFirmwareUpdate, // about to enter in firmware update mode
-			AppStateConfigMode      // about to enter in config mode
-		};
-
-
 		/** 
 			------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------ 
 		*/
-
 		IOTAppStory(const char *compDate, const int modeButton);
 
 		// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
@@ -173,15 +173,15 @@
 		void preSetAutoConfig(bool automaticConfig);
 		void preSetWifi(const char *ssid, const char *password);
 
-		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
-		void setCallHomeInterval(unsigned long interval);
-
+		
+		void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
 		void begin(const char ea) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
 		void begin();
-
+		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
+		void setCallHomeInterval(unsigned long interval);
 		void loop();
 
-
+		
 		void writeConfig(configStruct &config);
 		void readConfig(configStruct &config);
 		void espRestart(char mmode);
@@ -195,29 +195,44 @@
 		void callHome(bool spiffs = true);
 		bool iotUpdater(int command = U_FLASH);
 		bool espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
-		
-		void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
 
-		
-		
 		void iasLog(String msg);
 		int dPinConv(String orgVal);
 
+		
 		void onFirstBoot(THandlerFunction fn);              	// called at the end of firstBoot
 		void onModeButtonNoPress(THandlerFunction fn);      	// called when state is changed to idle (mode button is not pressed)
 		void onModeButtonShortPress(THandlerFunction fn);   	// called when state is changed to short press
 		void onModeButtonLongPress(THandlerFunction fn);    	// called when state is changed to long press
 		void onModeButtonVeryLongPress(THandlerFunction fn); 	// called when state is changed to very long press
 		void onConfigMode(THandlerFunction fn);             	// called when the app is about to enter in configuration mode
-
 		void onFirmwareUpdateCheck(THandlerFunction fn);    	// called when the app checks for firmware updates
 		void onFirmwareUpdateDownload(THandlerFunction fn); 	// called when firmware download starts
 		void onFirmwareUpdateProgress(THandlerFunctionArg fn); 	// called during update process
 		void onFirmwareUpdateError(THandlerFunction fn);    	// called when firmware update ends in an error
 		void onFirmwareUpdateSuccess(THandlerFunction fn);  	// called when firmware update ends in success
 
-		private:
 		
+		String strRetWifiScan();
+		String strRetWifiCred();
+		String strRetCertScan(String path = "");
+		String strRetHtmlRoot();
+		String strRetDevInfo();
+		String strRetAppInfo();
+		#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT		// prevent compile errors on the ESP32
+			bool servSaveFngPrint(String fngprint);
+		#endif
+		bool servSaveWifiCred(const char* newSSID, const char* newPass, const int apNr=0);
+		bool servSaveWifiCred(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv);
+		bool servSaveAppInfo(AsyncWebServerRequest *request);
+		bool servSaveActcode(String actcode="");
+		
+
+		private:
+			
+		/** 
+			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
+		*/
 		#if WIFI_MULTI == true
 			#ifdef ESP32
 				WiFiMulti wifiMulti;
@@ -244,14 +259,12 @@
 		unsigned long _debugEntry;
 		AppState      _appState;
 
-		
 		THandlerFunction _firstBootCallback;
 		THandlerFunction _noPressCallback;
 		THandlerFunction _shortPressCallback;
 		THandlerFunction _longPressCallback;
 		THandlerFunction _veryLongPressCallback;
 		THandlerFunction _configModeCallback;
-
 		THandlerFunction 	_firmwareUpdateCheckCallback;
 		THandlerFunction 	_firmwareUpdateDownloadCallback;
 		THandlerFunctionArg _firmwareUpdateProgressCallback;
@@ -262,37 +275,18 @@
 		/**
 			------ ------ ------ ------ ------ ------ FUNCTION DEFINITIONS ------ ------ ------ ------ ------ ------
 		*/
-
 		void firstBoot();
 		void printBoardInfo();
-
-
-		String strWifiScan();
-		String strWifiCred();
-		String strCertScan(String path = "");
-		String servHdlRoot();
-		String servHdlDevInfo();
-		String servHdlAppInfo();
-		#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT
-			String servHdlFngPrintSave(String fngprint);
-		#endif
-		String servHdlWifiSave(const char* newSSID, const char* newPass, const int apNr=0);
-		String servHdlWifiSave(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv);
-		String servHdlAppSave(AsyncWebServerRequest *request);
-		String servHdlactcodeSave(String actcode="");
 
 		void updateLoop();
 		bool isModeButtonPressed();
 		ModeButtonState getModeButtonState();
 		ModeButtonState buttonLoop();
 
-
-		friend class configServer;
-
+		
 		/** 
 			------ ------ ------ ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ ------ ------ ------
 		*/
-
 		bool SetConfigValueCharArray(char* a, String &b, int len, bool &changeFlag) {
 			if (b != a) {
 				b.toCharArray(a, len);
@@ -314,6 +308,9 @@
 				return String("[" + String(value, DEC) + "]");
 			}
 		}
+
+
+		friend class configServer;
 	};
 
 #endif
