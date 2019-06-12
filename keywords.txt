@@ -7,16 +7,14 @@
 #######################################
 
 IOTAppStory	KEYWORD1
-IAS_Xtra_Func	KEYWORD1
 
 
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-serialdebug	KEYWORD2
-preSetConfig	KEYWORD2
 
+# preSets
 preSetDeviceName	KEYWORD2
 preSetAppName	KEYWORD2
 preSetAppVersion	KEYWORD2
@@ -24,26 +22,55 @@ preSetAutoUpdate	KEYWORD2
 preSetAutoConfig	KEYWORD2
 preSetWifi	KEYWORD2
 
+# callbacks
+onFirstBoot	KEYWORD2
 onModeButtonNoPress	KEYWORD2
 onModeButtonShortPress	KEYWORD2
 onModeButtonLongPress	KEYWORD2
 onModeButtonVeryLongPress	KEYWORD2
-onFirstBoot	KEYWORD2
+onConfigMode	KEYWORD2
 onFirmwareUpdateCheck	KEYWORD2
 onFirmwareUpdateDownload	KEYWORD2
 onFirmwareUpdateProgress	KEYWORD2
 onFirmwareUpdateError	KEYWORD2
 onFirmwareUpdateSuccess	KEYWORD2
-onConfigMode	KEYWORD2
 
+# regular functions
 addField	KEYWORD2
 begin	KEYWORD2
-loop	KEYWORD2
-callHome	KEYWORD2
 setCallHome	KEYWORD2
 setCallHomeInterval	KEYWORD2
+loop	KEYWORD2
+
+writeConfig	KEYWORD2
+readConfig	KEYWORD2
+espRestart	KEYWORD2
+eraseEEPROM	KEYWORD2
+
+WiFiSetupAndConnect	KEYWORD2
+WiFiDisconnect	KEYWORD2
+setClock	KEYWORD2
+
+callHome	KEYWORD2
+iotUpdater	KEYWORD2
+espInstaller	KEYWORD2
+
+iasLog	KEYWORD2
 dPinConv	KEYWORD2
 eepFreeFrom	KEYWORD2
+
+#server functions
+strRetWifiScan	KEYWORD2
+strRetWifiCred	KEYWORD2
+strRetCertScan	KEYWORD2
+strRetHtmlRoot	KEYWORD2
+strRetDevInfo	KEYWORD2
+strRetAppInfo	KEYWORD2
+servSaveFngPrint	KEYWORD2
+servSaveWifiCred	KEYWORD2
+servSaveAppInfo	KEYWORD2
+servSaveActcode	KEYWORD2
+
 
 #######################################
 # Constants (LITERAL1)
