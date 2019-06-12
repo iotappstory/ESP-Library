@@ -68,18 +68,18 @@ void configServer::run(){
 		#endif
 		#if CFG_STORAGE == ST_CLOUD || CFG_STORAGE == ST_HYBRID
 			// serv the index page or force wifi setup
-			server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->servHdlRoot()); });
+			server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strRetHtmlRoot()); });
 		#endif
 		#if CFG_PAGE_INFO == true
 			// serv this device information in json format (first page in config)
-			server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlDevInfo(), F("text/json")); });
+			server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strRetDevInfo(), F("text/json")); });
 		#endif
 		
 		// serv the wifi scan results
-		server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strWifiScan(), F("text/json")); });
+		server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strRetWifiScan(), F("text/json")); });
 		
 		// serv the wifi credentials
-		server->on("/wc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strWifiCred(), F("text/json")); });
+		server->on("/wc", HTTP_GET, [&](AsyncWebServerRequest *request){ 		hdlReturn(request, _ias->strRetWifiCred(), F("text/json")); });
 		
 		// save the received ssid & pass for the received APnr(i) ans serv results
 		server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request){ 
@@ -108,7 +108,7 @@ void configServer::run(){
 			if(postAPnr > 0){
 				hdlReturn(
 					request, 
-					_ias->servHdlWifiSave(
+					_ias->servSaveWifiCred(
 						charSSID, 
 						charPass, 
 						#if WIFI_DHCP_ONLY == true
@@ -143,7 +143,7 @@ void configServer::run(){
 						_connChangeMode = true;
 						_tryToConn = false;
 							
-						_ias->servHdlWifiSave(
+						_ias->servSaveWifiCred(
 							charSSID, 
 							charPass
 							#if WIFI_DHCP_ONLY == false
@@ -176,16 +176,16 @@ void configServer::run(){
 		
 		// save the received fingerprint and serv results
 		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-			server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlFngPrintSave(request->getParam("f", true)->value())); });
+			server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servSaveFngPrint(request->getParam("f", true)->value())); });
 		#endif
 		
 		
 		// serv cert scan in json format
 		server->on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request){
 			if(request->hasParam("d")){
-				hdlReturn(request, _ias->strCertScan(request->getParam("d")->value()), F("text/json")); 
+				hdlReturn(request, _ias->strRetCertScan(request->getParam("d")->value()), F("text/json")); 
 			}else{
-				hdlReturn(request, _ias->strCertScan(), F("text/json")); 
+				hdlReturn(request, _ias->strRetCertScan(), F("text/json")); 
 			}
 		});
 				
@@ -301,13 +301,13 @@ void configServer::run(){
 		#endif
 		
 		// serv the app fields in json format
-		server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->servHdlAppInfo(), F("text/json")); });
+		server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request){ 	hdlReturn(request, _ias->strRetAppInfo(), F("text/json")); });
 
 		// save the received app fields and serv results
-		server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlAppSave(request)); });
+		server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servSaveAppInfo(request)); });
 
 		// save the received device activation code
-		server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servHdlactcodeSave(request->getParam("ac", true)->value())); });
+		server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request){ hdlReturn(request, _ias->servSaveActcode(request->getParam("ac", true)->value())); });
 		
 		// close and exit the web server
 		server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request){ exitConfig = true; });
@@ -427,5 +427,12 @@ void configServer::hdlReturn(AsyncWebServerRequest *request, String retHtml, Str
 	#if CFG_AUTHENTICATE == true
 	}
 	#endif
+}
+
+
+
+/** return page handler */
+void configServer::hdlReturn(AsyncWebServerRequest *request, int ret) {
+	this->hdlReturn(request, String(ret));
 }
 #endif

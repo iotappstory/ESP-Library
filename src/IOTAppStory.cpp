@@ -1289,7 +1289,7 @@ void IOTAppStory::onConfigMode(THandlerFunction value) {
 
 
 /** Handle root */
-String IOTAppStory::servHdlRoot() {
+String IOTAppStory::strRetHtmlRoot() {
 
 	String retHtml;
 	retHtml += FPSTR(HTTP_TEMP_START);
@@ -1302,7 +1302,7 @@ String IOTAppStory::servHdlRoot() {
 
 		retHtml.replace("{h}", FPSTR(HTTP_AP_CSS));
 		retHtml += FPSTR(HTTP_WIFI_FORM);
-		retHtml.replace("{r}", strWifiScan());
+		retHtml.replace("{r}", strRetWifiScan());
 		retHtml += FPSTR(HTTP_AP_JS);
 	}
 
@@ -1313,7 +1313,7 @@ String IOTAppStory::servHdlRoot() {
 
 
 /** Handle device information */
-String IOTAppStory::servHdlDevInfo(){
+String IOTAppStory::strRetDevInfo(){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_DEV_INFO);
 	#endif
@@ -1351,7 +1351,7 @@ String IOTAppStory::servHdlDevInfo(){
 
 
 /** Handle wifi scan */
-String IOTAppStory::strWifiScan(){
+String IOTAppStory::strRetWifiScan(){
 	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_WIFI_SCAN_RES);
@@ -1407,7 +1407,7 @@ String IOTAppStory::strWifiScan(){
 
 
 /** Handle wifi scan */
-String IOTAppStory::strWifiCred(){
+String IOTAppStory::strRetWifiCred(){
 	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_WIFI_CRED);
@@ -1455,7 +1455,7 @@ String IOTAppStory::strWifiCred(){
 
 
 /** Handle save wifi credentials */
-String IOTAppStory::servHdlWifiSave(const char* newSSID, const char* newPass, const int apNr) {
+bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, const int apNr) {
 
 	WiFiConnector WiFiConn;
 	if(apNr==0){
@@ -1464,13 +1464,13 @@ String IOTAppStory::servHdlWifiSave(const char* newSSID, const char* newPass, co
 		WiFiConn.addAPtoEEPROM(newSSID, newPass, apNr);
 	}
 	
-	return F("1");		// ok
+	return true;		// ok
 }
 
 
 
 /** Handle save wifi credentials */
-String IOTAppStory::servHdlWifiSave(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv) {
+bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv) {
 	
 	WiFiConnector WiFiConn;
 	if((ip+subnet+gateway+dnsserv) == ""){
@@ -1479,13 +1479,13 @@ String IOTAppStory::servHdlWifiSave(const char* newSSID, const char* newPass, St
 		WiFiConn.addAPtoEEPROM(newSSID, newPass, ip, subnet, gateway, dnsserv);
 	}
 	
-	return F("1");		// ok
+	return true;		// ok
 }
 
 
 
 /** Handle app / firmware information */
-String IOTAppStory::servHdlAppInfo(){
+String IOTAppStory::strRetAppInfo(){
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
 	#endif
@@ -1572,7 +1572,7 @@ String IOTAppStory::servHdlAppInfo(){
 	Only used if ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 */
 #if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT
-String IOTAppStory::servHdlFngPrintSave(String fngprint){
+bool IOTAppStory::servSaveFngPrint(String fngprint){
 	
 	// get config from EEPROM
 	configStruct config;
@@ -1591,7 +1591,7 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 	// write config to EEPROM
 	this->writeConfig(config);
 
-	return F("1");
+	return true;
 }
 #endif
 
@@ -1599,7 +1599,7 @@ String IOTAppStory::servHdlFngPrintSave(String fngprint){
 
 #if defined  ESP32
 /** Get all root certificates */
-String IOTAppStory::strCertScan(String path){
+String IOTAppStory::strRetCertScan(String path){
 	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
@@ -1648,7 +1648,7 @@ String IOTAppStory::strCertScan(String path){
 	return retHtml;
 }
 #else
-String IOTAppStory::strCertScan(String path){
+String IOTAppStory::strRetCertScan(String path){
 	
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SERV_CERT_SCAN_RES);
@@ -1708,7 +1708,7 @@ String IOTAppStory::strCertScan(String path){
 
 
 /** Save App Settings */
-String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
+bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
 	#endif
@@ -1784,16 +1784,16 @@ String IOTAppStory::servHdlAppSave(AsyncWebServerRequest *request) {
 		EEPROM.end();
 		delay(200);
 
-		return F("1");
+		return true;
 	}
 	
-	return F("0");
+	return false;
 }
 
 
 
 /** Save activation code */
-String IOTAppStory::servHdlactcodeSave(String actcode) {
+bool IOTAppStory::servSaveActcode(String actcode) {
 	#if DEBUG_LVL >= 3
 		DEBUG_PRINT(SER_REC_ACT_CODE);
 		DEBUG_PRINTLN(actcode);
@@ -1809,8 +1809,8 @@ String IOTAppStory::servHdlactcodeSave(String actcode) {
 		// write config to EEPROM
 		this->writeConfig(config);
 
-		return F("1");
+		return true;
 	}
 
-	return F("0");
+	return false;
 }
