@@ -11,10 +11,8 @@
 	#include "includes.h"
 
 
-	
-	
 	/**
-		------ ------ ------ ------ ------ ------ macros for debugging ------ ------ ------ ------ ------ ------ 
+		------ ------ ------ ------ ------ ------ macros for debugging ------ ------ ------ ------ ------ ------
 	*/
 	#if DEBUG_LVL >= 1
 
@@ -37,26 +35,24 @@
 	#endif
 
 
-
-
 	/**
 		------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
 	**/
-	struct addFieldStruct{
+	struct addFieldStruct {
 		const char* fieldLabel;
 		int length;
 		char type;
-		
+
 		const char magicBytes[2] = "%";
 	};
 
-	struct configStruct{
+	struct configStruct {
 		char actCode[7] = "";							// saved IotAppStory activation code
 		char appName[33] = "";
 		char appVersion[12] = "";
 		char deviceName[STRUCT_BNAME_SIZE] = "yourESP";
 		char compDate[STRUCT_COMPDATE_SIZE];			// saved compile date time
-		
+
 		#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 			char sha1[60] = HTTPS_FNGPRINT;
 		#endif
@@ -66,19 +62,19 @@
 		#if OTA_UPD_CHECK_NEXTION == true
 			char next_md5[33] = "00000000000000000000000000000000";
 		#endif
-		
+
 		char magicBytes[4] = MAGICBYTES;
 	};
-	
-	struct firmwareStruct{
+
+	struct firmwareStruct {
 		bool		success;
 		uint32_t 	xlength = 0;
 		String		xname;
 		String		xver;
 		String		xmd5;
 	};
-		
-	enum  ModeButtonState{
+
+	enum  ModeButtonState {
 		ModeButtonNoPress,          // mode button is not pressed
 		ModeButtonShortPress,       // short press - will enter in firmware update mode
 		ModeButtonLongPress,        // long press - will enter in configuration mode
@@ -99,9 +95,6 @@
 		AppStateConfigMode      	// about to enter in config mode
 	};
 
-	
-	
-
 	/**
 		------ ------ ------ ------ ------ ------ PROGMEM ------ ------ ------ ------ ------ ------
 	*/
@@ -120,13 +113,13 @@
 	const char HTTP_AP_CSS[] PROGMEM      = "<style>#po,body,html{height:100%;width:100%}#m,.fi{opacity:0}#m,#m a{color:#000}#cnt,body{position:relative}#po,body,html,input{width:100%}body,body a,input{color:#FFF}.btn,body a:hover{text-decoration:none}@keyframes kfi{to{z-index:10;opacity:1}}.fi{z-index:10;animation:kfi .5s ease-in 1 forwards}body,html{padding:0;margin:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}*,:after,:before{-webkit-box-sizing:inherit;-moz-box-sizing:inherit;box-sizing:inherit}body{background:#000;font:14px sans-serif}#po{padding-top:100px;position:fixed;z-index:0;background:rgba(0,0,0,.8);text-align:center;opacity:1}#m{width:200px;padding:10px;display:inline-block;background:#FFF;text-align:left}#cnt{min-width:280px;max-width:425px;margin:0 auto;padding:0 15px;z-index:2;border:1px solid #000}input{padding:4px 8px;margin:4px 0 10px;background:0;outline:0;border:1px solid #ccc}input:focus{border-color:#fcbc12}.btn{width:50%;margin:10px 0 0;padding:5px 14px 8px;display:block;float:right;background:#fcbc12;border-radius:4px;border:0;font-size:16px;color:#fff;text-align:center}.btn.sm{font-size:15px;padding:3px 14px 4px}.btn:active,.btn:focus,.btn:hover{background:#d3d3d3}table{width:100%}table tr:nth-child(2n-1){background:#1A1A1A}table td{padding:3px 4px}table td:nth-child(3):not([data-e=\"7\"]){width:20px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAABFElEQVQ4je2Pu07DUBBEz/oGBAUPG3dpEEI0CApEjSIlvIrwP6Hj9TN8QmxACKhIgeySHtFgRAMKvvZSxJFIcIoISqZZaWdnZ0YoQRr4NSFvIWwUq47mejqx83o3fCs/xKF7Jkir4N6KOQtkAkemkZx8v3cGxd6eIIfAs8K+qSeuuU1c0CbwonCcBn6tLDUA2YUX29DTtL1QH+bspX9gQ09t6N2XVtCbOTfrmkQgNo1kvczABu4jIkvmY2pGmk/vAxXsp6wBqEg8MqIjEeCk093V/qoCoOdMZrmz3M+jV/OLpRUztOear2iHB9kkFQAbetfA1kjnMijtynayW1SQ6lhiQIRqL80v8f/g7x5oNK5QlQjgCxBXWhCbZi53AAAAAElFTkSuQmCC) right center no-repeat;background-width:16px}table td:nth-child(3)[data-e=\"7\"]{background:0 0}</style>";
 
 	const char HTTP_WIFI_SCAN[] PROGMEM   = "<tr><td onclick=\"c(this);\">{s}</td><td>{q} dBm</td><td data-e=\"{e}\"></td></tr>";
-	
+
 	#if WIFI_DHCP_ONLY == true
 		const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
 	#else
 		const char HTTP_WIFI_FORM[] PROGMEM   = "<div id=\"po\"><div id=\"m\"></div></div><div id=\"cnt\"><h1>WIFI CONNECTION</h1><table>{r}</table><br><br><label>SSID</label><input id=\"s\" name=\"s\" maxlength=50 placeholder=\"SSID\"><label>Password</label><input id=\"p\" name=\"p\" maxlength=64 placeholder=\"password\"><label for=\"sip\">IP address</label><input type=\"text\" name=\"sip\"><label for=\"ssn\">Subnet</label><input type=\"text\" name=\"ssn\"><label for=\"sgw\">Gateway</label><input type=\"text\" name=\"sgw\"><label for=\"sds\">DNS server</label><input type=\"text\" name=\"sds\"><br><br><button class=\"btn\" onclick=\"ld('/wsa')\">Save</button></div>";
 	#endif
-	
+
 	const char HTTP_APP_INFO[] PROGMEM    = "{\"l\":\"{l}\", \"v\":\"{v}\", \"n\":\"{n}\", \"m\":\"{m}\", \"t\":\"{t}\"}";
 
 	#if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
@@ -135,182 +128,172 @@
 		const char HTTP_DEV_INFO[] PROGMEM = "{\"cid\":\"{cid}\", \"fid\":\"{fid}\", \"fss\":\"{fss}\", \"ss\":\"{ss}\", \"fs\":\"{fs}\", \"ab\":\"{ab}\", \"ac\":\"{ac}\", \"mc\":\"{mc}\", \"xf\":\"{xf}\"}";
 	#endif
 
-		
-		
-		
 	// callback template definition
 	typedef std::function<void(void)> THandlerFunction;
 	typedef std::function<void(int, int)> THandlerFunctionArg;
-	
+
 	// external classes
 	extern UpdateESPClass UpdateESP;
 
-
-
-	
 	class IOTAppStory {
 
 		public:
-			
-		/** 
-			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
-		*/
-		int bootTimes;
-		char boardMode = 'N';                    // Normal operation or Configuration mode?
-		String statusMessage = "";
+			/**
+				------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
+			*/
+			int bootTimes;
+			char boardMode = 'N';                    // Normal operation or Configuration mode?
+			String statusMessage = "";
 
 
-		/** 
-			------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------ 
-		*/
-		IOTAppStory(const char *compDate, const int modeButton);
+			/**
+				------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------
+			*/
+			IOTAppStory(const char *compDate, const int modeButton);
 
-		// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
-		void preSetAppName(String appName);
-		void preSetAppVersion(String appVersion);
-		void preSetDeviceName(String deviceName);
-		void preSetAutoUpdate(bool automaticUpdate);
-		void preSetAutoConfig(bool automaticConfig);
-		void preSetWifi(const char *ssid, const char *password);
+			// function for pre setting config parameters ssid & password, deviceName, automatic update, HOST1 and FILE1
+			void preSetAppName(String appName);
+			void preSetAppVersion(String appVersion);
+			void preSetDeviceName(String deviceName);
+			void preSetAutoUpdate(bool automaticUpdate);
+			void preSetAutoConfig(bool automaticConfig);
+			void preSetWifi(const char *ssid, const char *password);
 
-		
-		void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
-		void begin(const char ea) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
-		void begin();
-		void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
-		void setCallHomeInterval(unsigned long interval);
-		void loop();
 
-		
-		void writeConfig(configStruct &config);
-		void readConfig(configStruct &config);
-		void espRestart(char mmode);
-		void eraseEEPROM(int eepFrom, int eepTo);
-		void eraseEEPROM(const char ea);
+			void addField(char* &defaultVal, const char *fieldLabel, const int length, const char type = 'L');
+			void begin(const char ea) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
+			void begin();
+			void setCallHome(bool callHome) __attribute__((deprecated));// <----- deprecated left for compatibility. This will be removed with version 3.0.0
+			void setCallHomeInterval(unsigned long interval);
+			void loop();
 
-		void WiFiSetupAndConnect();
-		void WiFiDisconnect();
-		void setClock();
-		
-		void callHome(bool spiffs = true);
-		bool iotUpdater(int command = U_FLASH);
-		bool espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
 
-		void iasLog(String msg);
-		int dPinConv(String orgVal);
+			void writeConfig(configStruct &config);
+			void readConfig(configStruct &config);
+			void espRestart(char mmode);
+			void eraseEEPROM(int eepFrom, int eepTo);
+			void eraseEEPROM(const char ea);
 
-		
-		void onFirstBoot(THandlerFunction fn);              	// called at the end of firstBoot
-		void onModeButtonNoPress(THandlerFunction fn);      	// called when state is changed to idle (mode button is not pressed)
-		void onModeButtonShortPress(THandlerFunction fn);   	// called when state is changed to short press
-		void onModeButtonLongPress(THandlerFunction fn);    	// called when state is changed to long press
-		void onModeButtonVeryLongPress(THandlerFunction fn); 	// called when state is changed to very long press
-		void onConfigMode(THandlerFunction fn);             	// called when the app is about to enter in configuration mode
-		void onFirmwareUpdateCheck(THandlerFunction fn);    	// called when the app checks for firmware updates
-		void onFirmwareUpdateDownload(THandlerFunction fn); 	// called when firmware download starts
-		void onFirmwareUpdateProgress(THandlerFunctionArg fn); 	// called during update process
-		void onFirmwareUpdateError(THandlerFunction fn);    	// called when firmware update ends in an error
-		void onFirmwareUpdateSuccess(THandlerFunction fn);  	// called when firmware update ends in success
+			void WiFiSetupAndConnect();
+			void WiFiDisconnect();
+			void setClock();
 
-		
-		String strRetWifiScan();
-		String strRetWifiCred();
-		String strRetCertScan(String path = "");
-		String strRetHtmlRoot();
-		String strRetDevInfo();
-		String strRetAppInfo();
-		#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT		// prevent compile errors on the ESP32
-			bool servSaveFngPrint(String fngprint);
-		#endif
-		bool servSaveWifiCred(const char* newSSID, const char* newPass, const int apNr=0);
-		bool servSaveWifiCred(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv);
-		bool servSaveAppInfo(AsyncWebServerRequest *request);
-		bool servSaveActcode(String actcode="");
-		
+			void callHome(bool spiffs = true);
+			bool iotUpdater(int command = U_FLASH);
+			bool espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
+
+			void iasLog(String msg);
+			int dPinConv(String orgVal);
+
+
+			void onFirstBoot(THandlerFunction fn);              	// called at the end of firstBoot
+			void onModeButtonNoPress(THandlerFunction fn);      	// called when state is changed to idle (mode button is not pressed)
+			void onModeButtonShortPress(THandlerFunction fn);   	// called when state is changed to short press
+			void onModeButtonLongPress(THandlerFunction fn);    	// called when state is changed to long press
+			void onModeButtonVeryLongPress(THandlerFunction fn); 	// called when state is changed to very long press
+			void onConfigMode(THandlerFunction fn);             	// called when the app is about to enter in configuration mode
+			void onFirmwareUpdateCheck(THandlerFunction fn);    	// called when the app checks for firmware updates
+			void onFirmwareUpdateDownload(THandlerFunction fn); 	// called when firmware download starts
+			void onFirmwareUpdateProgress(THandlerFunctionArg fn); 	// called during update process
+			void onFirmwareUpdateError(THandlerFunction fn);    	// called when firmware update ends in an error
+			void onFirmwareUpdateSuccess(THandlerFunction fn);  	// called when firmware update ends in success
+
+
+			String strRetWifiScan();
+			String strRetWifiCred();
+			String strRetCertScan(String path = "");
+			String strRetHtmlRoot();
+			String strRetDevInfo();
+			String strRetAppInfo();
+			#if defined  ESP8266 && HTTPS_8266_TYPE	== FNGPRINT		// prevent compile errors on the ESP32
+				bool servSaveFngPrint(String fngprint);
+			#endif
+			bool servSaveWifiCred(const char* newSSID, const char* newPass, const int apNr=0);
+			bool servSaveWifiCred(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv);
+			bool servSaveAppInfo(AsyncWebServerRequest *request);
+			bool servSaveActcode(String actcode="");
+
 
 		private:
-			
-		/** 
-			------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
-		*/
-		#if WIFI_MULTI == true
-			#ifdef ESP32
-				WiFiMulti wifiMulti;
-			#elif defined ESP8266
-				ESP8266WiFiMulti wifiMulti;
+			/**
+				------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
+			*/
+			#if WIFI_MULTI == true
+				#ifdef ESP32
+					WiFiMulti wifiMulti;
+				#elif defined ESP8266
+					ESP8266WiFiMulti wifiMulti;
+				#endif
 			#endif
-		#endif
 
-		const char *_compDate;
-		const int _modeButton;							// which gpio is used for selecting modes
-		unsigned int _nrXF					= 0;		// nr of extra fields required in the config manager
-		unsigned int _nrXFlastAdd			= 0;		// nr of extra fields required in the config manager
-		bool _updateOnBoot					= true;		// update on boot? (end of begin();)
-		bool _automaticConfig				= true;		// automaticly go to config on boot if there is no wifi connection present
-		bool _setPreSet						= false;	// ;) have there been any preSets set?
-		bool _connected						= false;	// wifi connection status bool
-		
-		bool _timeSet						= false;	// maby?<---------------
-		unsigned long _lastTimeSet			= 0;
-		unsigned long _lastCallHomeTime		= 0;       	// Time when we last called home
-		unsigned long _callHomeInterval		= 0; 		// Interval we want to call home at in milliseconds. 0 = off
+			const char *_compDate;
+			const int _modeButton;							// which gpio is used for selecting modes
+			unsigned int _nrXF					= 0;		// nr of extra fields required in the config manager
+			unsigned int _nrXFlastAdd			= 0;		// nr of extra fields required in the config manager
+			bool _updateOnBoot					= true;		// update on boot? (end of begin();)
+			bool _automaticConfig				= true;		// automaticly go to config on boot if there is no wifi connection present
+			bool _setPreSet						= false;	// ;) have there been any preSets set?
+			bool _connected						= false;	// wifi connection status bool
 
-		unsigned long _buttonEntry;
-		unsigned long _debugEntry;
-		AppState      _appState;
+			bool _timeSet						= false;	// maby?<---------------
+			unsigned long _lastTimeSet			= 0;
+			unsigned long _lastCallHomeTime		= 0;       	// Time when we last called home
+			unsigned long _callHomeInterval		= 0; 		// Interval we want to call home at in milliseconds. 0 = off
 
-		THandlerFunction _firstBootCallback;
-		THandlerFunction _noPressCallback;
-		THandlerFunction _shortPressCallback;
-		THandlerFunction _longPressCallback;
-		THandlerFunction _veryLongPressCallback;
-		THandlerFunction _configModeCallback;
-		THandlerFunction 	_firmwareUpdateCheckCallback;
-		THandlerFunction 	_firmwareUpdateDownloadCallback;
-		THandlerFunctionArg _firmwareUpdateProgressCallback;
-		THandlerFunction 	_firmwareUpdateErrorCallback;
-		THandlerFunction 	_firmwareUpdateSuccessCallback;
+			unsigned long _buttonEntry;
+			unsigned long _debugEntry;
+			AppState      _appState;
 
+			THandlerFunction _firstBootCallback;
+			THandlerFunction _noPressCallback;
+			THandlerFunction _shortPressCallback;
+			THandlerFunction _longPressCallback;
+			THandlerFunction _veryLongPressCallback;
+			THandlerFunction _configModeCallback;
+			THandlerFunction 	_firmwareUpdateCheckCallback;
+			THandlerFunction 	_firmwareUpdateDownloadCallback;
+			THandlerFunctionArg _firmwareUpdateProgressCallback;
+			THandlerFunction 	_firmwareUpdateErrorCallback;
+			THandlerFunction 	_firmwareUpdateSuccessCallback;
 
-		/**
-			------ ------ ------ ------ ------ ------ FUNCTION DEFINITIONS ------ ------ ------ ------ ------ ------
-		*/
-		void firstBoot();
-		void printBoardInfo();
+			/**
+				------ ------ ------ ------ ------ ------ FUNCTION DEFINITIONS ------ ------ ------ ------ ------ ------
+			*/
+			void firstBoot();
+			void printBoardInfo();
 
-		void updateLoop();
-		bool isModeButtonPressed();
-		ModeButtonState getModeButtonState();
-		ModeButtonState buttonLoop();
+			void updateLoop();
+			bool isModeButtonPressed();
+			ModeButtonState getModeButtonState();
+			ModeButtonState buttonLoop();
 
-		
-		/** 
-			------ ------ ------ ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ ------ ------ ------
-		*/
-		bool SetConfigValueCharArray(char* a, String &b, int len, bool &changeFlag) {
-			if (b != a) {
-				b.toCharArray(a, len);
-				changeFlag = true;
-				return true;
-			} else {
-				return false;
+			/**
+				------ ------ ------ ------ ------ ------ AUXILIARY FUNCTIONS ------ ------ ------ ------ ------ ------
+			*/
+			bool SetConfigValueCharArray(char* a, String &b, int len, bool &changeFlag) {
+				if (b != a) {
+					b.toCharArray(a, len);
+					changeFlag = true;
+					return true;
+				} else {
+					return false;
+				}
 			}
-		}
-		/* ------ */
+			/* ------ */
 
-		/* ------ CONVERT BYTE TO STRING   */
-		String GetCharToDisplayInDebug(char value) {
-			if (value>=32 && value<=126){
-				return String(value);
-			} else if (value == 0){
-				return ".";
-			} else {
-				return String("[" + String(value, DEC) + "]");
+			/* ------ CONVERT BYTE TO STRING   */
+			String GetCharToDisplayInDebug(char value) {
+				if (value>=32 && value<=126){
+					return String(value);
+				} else if (value == 0){
+					return ".";
+				} else {
+					return String("[" + String(value, DEC) + "]");
+				}
 			}
-		}
 
 
-		friend class configServer;
+			friend class configServer;
 	};
 
 #endif

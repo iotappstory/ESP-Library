@@ -3,7 +3,7 @@
 		#define callServer_h
 
 		#include <IOTAppStory.h>
-		
+
 		#if HTTPS == true
 			#include <WiFiClientSecure.h>
 		#endif
@@ -11,13 +11,12 @@
 		#if NEXT_OTA == true
 			#define U_NEXTION 300
 		#endif
-		
+
 		#define U_FLASH		0
 		#define U_SPIFFS	100
 		#define U_AUTH		200
 		#define U_LOGGER	400
-		
-		
+
 		#if CERT_STORAGE == ST_PROGMEM
 		const char ROOT_CA[] PROGMEM = \
 			"-----BEGIN CERTIFICATE-----\n" \
@@ -55,21 +54,20 @@
 			"NVOFBkpdn627G190\n" \
 			"-----END CERTIFICATE-----\n";
 		#endif
-		
+
 		struct configStruct;
 		struct firmwareStruct;
-		
-		
-		class callServer{
-			
+
+		class callServer {
+
 			public:
 				callServer(configStruct &config, int command = U_FLASH);
 				Stream &getStream(firmwareStruct *firmwareStruct);
-				
+
 				bool get(const char* url, String args);
-				
+
 				void sm(String *statusMessage);
-				
+
 			private:
 				#if HTTPS == true
 					WiFiClientSecure _client;
@@ -77,11 +75,11 @@
 					WiFiClient _client;
 				#endif
 				String *_statusMessage;
-				
+
 				configStruct* _config;
 				int _command;
-				const char* _callHost		= OTA_HOST;         // ota update host | Set in config.h
-				const char* _callFile		= OTA_UPD_FILE; 	// file at host that handles esp updates
+				const char* _callHost = OTA_HOST;         // ota update host | Set in config.h
+				const char* _callFile = OTA_UPD_FILE; 	// file at host that handles esp updates
 		};
 	#endif
 #endif

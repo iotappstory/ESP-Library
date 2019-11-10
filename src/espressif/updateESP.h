@@ -11,18 +11,17 @@
 		extern "C" uint32_t _SPIFFS_start;
 		extern "C" uint32_t _SPIFFS_end;
 	#endif
-	
 
-	class UpdateESPClass : public UpdateClassVirt{
+	class UpdateESPClass : public UpdateClassVirt {
 		public:
-			~UpdateESPClass(){};
-		
+			~UpdateESPClass() {};
+
 			virtual bool prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command);
-			
+
 			virtual bool update(uint8_t *file_buf, size_t buf_size);
-			
+
 			virtual bool end(void);
-			
+
 			virtual void sm(String *statusMessage);
 
 		private:

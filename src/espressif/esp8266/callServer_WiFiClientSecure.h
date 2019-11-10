@@ -4,7 +4,7 @@
 
 		#include <IOTAppStory.h>
 		#include <ESP8266WiFi.h>
-		
+
 		#if HTTPS == true
 			#include <WiFiClientSecureBearSSL.h>
 			#include <time.h>
@@ -13,10 +13,9 @@
 		#if OTA_UPD_CHECK_NEXTION == true
 			#define U_NEXTION 300
 		#endif
-		
+
 		#define U_LOGGER 400
-		
-		
+
 		#if HTTPS_CERT_STORAGE == ST_PROGMEM
 			const uint8_t ROOT_CA[] PROGMEM = \
 				"-----BEGIN CERTIFICATE-----\n" \
@@ -57,18 +56,17 @@
 
 		struct configStruct;
 		struct firmwareStruct;
-		
-		
-		class callServer{
-			
+
+		class callServer {
+
 			public:
 				callServer(configStruct &config, int command = U_FLASH);
 				Stream &getStream(firmwareStruct *firmwareStruct);
-				
+
 				bool get(const char* url, String args);
-				
+
 				void sm(String *statusMessage);
-				
+
 			private:
 				#if HTTPS == true
 					#if HTTPS_8266_TYPE == CERTIFICATE
@@ -80,11 +78,11 @@
 					WiFiClient _client;
 				#endif
 				String *_statusMessage;
-				
+
 				configStruct* _config;
 				int _command;
-				const char* _callHost		= OTA_HOST;         // ota update host | Set in config.h
-				const char* _callFile		= OTA_UPD_FILE; 	// file at host that handles esp updates
+				const char* _callHost = OTA_HOST;         // ota update host | Set in config.h
+				const char* _callFile = OTA_UPD_FILE; 	// file at host that handles esp updates
 		};
 	#endif
 #endif

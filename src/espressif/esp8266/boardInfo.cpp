@@ -1,16 +1,14 @@
 #ifdef  ESP8266
 	#include "boardInfo.h"
 
-	boardInfo::boardInfo(int &bootTimes, char &boardMode){
+	boardInfo::boardInfo(int &bootTimes, char &boardMode) {
 		_bootTimes = &bootTimes;
 		_boardMode = &boardMode;
 	}
 
-
-
-	void boardInfo::read(){
+	void boardInfo::read() {
 		rtcMemDef rtcMem;
-		
+
 		system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
 		if (rtcMem.markerFlag != MAGICBYTE) {
 			rtcMem.markerFlag = MAGICBYTE;
@@ -22,13 +20,12 @@
 		(*_bootTimes) = rtcMem.bootTimes;
 	}
 
-
-	void boardInfo::write(){
+	void boardInfo::write() {
 		rtcMemDef rtcMem;
-		
+
 		rtcMem.boardMode = (*_boardMode);
 		rtcMem.bootTimes = (*_bootTimes);
-		
+
 		rtcMem.markerFlag = MAGICBYTE;
 		system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
 	}
