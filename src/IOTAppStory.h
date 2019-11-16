@@ -302,7 +302,7 @@ class IOTAppStory {
         }
 
 
-        friend class configServer;
+        friend class ConfigServer;
 };
 
 /*---------------------------------------------------------------------------*/
