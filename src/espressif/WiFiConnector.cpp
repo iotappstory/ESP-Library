@@ -1,7 +1,44 @@
+/*                          =======================
+============================   C/C++ SOURCE FILE   ============================
+                            =======================                       *//**
+  WiFiConnector.cpp
+
+  Created by Onno Dirkzwager on 05.06.2019.
+  Copyright (c) 2019 IOTAppStory. All rights reserved.
+
+*///===========================================================================
+
+/*---------------------------------------------------------------------------*/
+/*                                INCLUDES                                   */
+/*---------------------------------------------------------------------------*/
+
 #include "WiFiConnector.h"
 
+/*---------------------------------------------------------------------------*/
+/*                        DEFINITIONS AND MACROS                             */
+/*---------------------------------------------------------------------------*/
 
-void WiFiConnector::getAPfromEEPROM(WiFiCredStruct &config, const int apNr) {
+/*---------------------------------------------------------------------------*/
+/*                        TYPEDEFS AND STRUCTURES                            */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                                PROTOTYPES                                 */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                            LOCAL VARIABLES                                */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                        FUNCTION IMPLEMENTATION                            */
+/*---------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------
+                        WiFiConnector getAPfromEEPROM
+
+*///---------------------------------------------------------------------------
+void WiFiConnector::getAPfromEEPROM(WiFiCredStruct& config, const int apNr) {
     #if WIFICONNECTOR_DEBUG == true
         Serial.print(F("WIFICONNECTOR_DEBUG\t| running getAPfromEEPROM("));
         Serial.print(apNr);
@@ -32,6 +69,10 @@ void WiFiConnector::getAPfromEEPROM(WiFiCredStruct &config, const int apNr) {
     //return config;
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector getSSIDfromEEPROM
+
+*///---------------------------------------------------------------------------
 const char* WiFiConnector::getSSIDfromEEPROM(const int apNr) {
     EEPROM.begin(EEPROM_SIZE);
     WiFiCredStruct config;
@@ -39,6 +80,10 @@ const char* WiFiConnector::getSSIDfromEEPROM(const int apNr) {
     return config.ssid;
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector addAPtoEEPROM
+
+*///---------------------------------------------------------------------------
 void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, const int apNr) {
     if(apNr > 0) {
         _configCount = apNr - 1;
@@ -74,6 +119,10 @@ void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, const 
     #endif
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector addAPtoEEPROM
+
+*///---------------------------------------------------------------------------
 #if WIFI_DHCP_ONLY == false
 void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, IPAddress ip, IPAddress subnet, IPAddress gateway, IPAddress dnsserv) {
     #if WIFICONNECTOR_DEBUG == true
@@ -108,10 +157,18 @@ void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, IPAddr
 }
 #endif
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector addAPtoEEPROM
+
+*///---------------------------------------------------------------------------
 void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, String ip, String subnet, String gateway, String dnsserv) {
     this->addAPtoEEPROM(ssid, password, this->ipFromString(ip), this->ipFromString(subnet), this->ipFromString(gateway), this->ipFromString(dnsserv));
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector addAndShiftAPinEEPROM
+
+*///---------------------------------------------------------------------------
 void WiFiConnector::addAndShiftAPinEEPROM(const char *ssid, const char *password) {
     // get current AP1
     WiFiCredStruct ap1;
@@ -143,6 +200,10 @@ void WiFiConnector::addAndShiftAPinEEPROM(const char *ssid, const char *password
     this->addAPtoEEPROM(ssid, password, 1);
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector WiFiCredStructToEEPROM
+
+*///---------------------------------------------------------------------------
 void WiFiConnector::WiFiCredStructToEEPROM(WiFiCredStruct config, const int apNr) {
     EEPROM.begin(EEPROM_SIZE);
 
@@ -164,9 +225,12 @@ void WiFiConnector::WiFiCredStructToEEPROM(WiFiCredStruct config, const int apNr
     #endif
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        WiFiConnector setup
+
     Setup WiFi
-*/
+
+*///---------------------------------------------------------------------------
 bool WiFiConnector::setup() {
     #if WIFICONNECTOR_DEBUG == true
         Serial.println(F("\nWIFICONNECTOR_DEBUG\t| Running setup();"));
@@ -298,9 +362,12 @@ bool WiFiConnector::setup() {
     return true;
 }
 
-/**
-    Connect to Wifi AP
-*/
+/*-----------------------------------------------------------------------------
+                        WiFiConnector connectToAP
+
+     Connect to Wifi AP
+
+*///---------------------------------------------------------------------------
 bool WiFiConnector::connectToAP(const char *waitChar) {
 
     int retries = WIFI_CONN_MAX_RETRIES;
@@ -329,9 +396,13 @@ bool WiFiConnector::connectToAP(const char *waitChar) {
     }
 }
 
-/**
-    Dusconnect wifi
-*/
+
+/*-----------------------------------------------------------------------------
+                        WiFiConnector connectLoop
+
+     Disconnect wifi
+
+*///---------------------------------------------------------------------------
 bool WiFiConnector::connectLoop(const char *waitChar) {
     if(WiFi.status() == WL_NO_SSID_AVAIL) {
         _connected = false;
@@ -345,16 +416,29 @@ bool WiFiConnector::connectLoop(const char *waitChar) {
     return false;
 }
 
-/**
-    Disconnect wifi
-*/
+/*-----------------------------------------------------------------------------
+                        WiFiConnector disconnect
+
+     Disconnect wifi
+
+*///---------------------------------------------------------------------------
 void WiFiConnector::disconnect() {
     WiFi.disconnect();
     _connected = false;
 }
 
+/*-----------------------------------------------------------------------------
+                        WiFiConnector ipFromString
+
+     Disconnect wifi
+
+*///---------------------------------------------------------------------------
 IPAddress WiFiConnector::ipFromString(String strIP) {
     IPAddress ip;
     ip.fromString(strIP);
     return ip;
 }
+
+/*---------------------------------------------------------------------------*/
+/*                                    EOF                                    */
+/*---------------------------------------------------------------------------*/

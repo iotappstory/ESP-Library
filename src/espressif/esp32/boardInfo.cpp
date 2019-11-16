@@ -1,40 +1,94 @@
-#ifdef  ESP32
-    #include "boardInfo.h"
+/*                          =======================
+============================   C/C++ SOURCE FILE   ============================
+                            =======================                       *//**
+  BoardInfo.cpp
 
-    boardInfo::boardInfo(int &bootTimes, char &boardMode) {
-        _bootTimes = &bootTimes;
-        _boardMode = &boardMode;
-    }
+  Created by Onno Dirkzwager on 22.11.2018.
+  Copyright (c) 2018 IOTAppStory. All rights reserved.
 
-    void boardInfo::read() {
-        Preferences preferences;
+*///===========================================================================
 
-        // Open Preferences
-        preferences.begin("boardInfo", false);
+#ifdef ESP32
 
-        // Get the boardMode value, if the key does not exist, return a default value of 'N'
-        (*_boardMode)   = preferences.getUInt("boardMode", 'N');
+/*---------------------------------------------------------------------------*/
+/*                                INCLUDES                                   */
+/*---------------------------------------------------------------------------*/
 
-        // Get the bootTimes value, if the key does not exist, return a default value of 0
-        (*_bootTimes)   = preferences.getUInt("bootTimes", 0);
+#include "BoardInfo.h"
 
-        // Close the Preferences
-        preferences.end();
-    }
+/*---------------------------------------------------------------------------*/
+/*                        DEFINITIONS AND MACROS                             */
+/*---------------------------------------------------------------------------*/
 
-    void boardInfo::write() {
-        Preferences preferences;
+/*---------------------------------------------------------------------------*/
+/*                        TYPEDEFS AND STRUCTURES                            */
+/*---------------------------------------------------------------------------*/
 
-        // Open Preferences
-        preferences.begin("boardInfo", false);
+/*---------------------------------------------------------------------------*/
+/*                                PROTOTYPES                                 */
+/*---------------------------------------------------------------------------*/
 
-        // Store the boardMode value
-        preferences.putUInt("boardMode", (*_boardMode));
+/*---------------------------------------------------------------------------*/
+/*                            LOCAL VARIABLES                                */
+/*---------------------------------------------------------------------------*/
 
-        // Store the bootTimes value
-        preferences.putUInt("bootTimes", (*_bootTimes));
+/*---------------------------------------------------------------------------*/
+/*                        FUNCTION IMPLEMENTATION                            */
+/*---------------------------------------------------------------------------*/
 
-        // Close the Preferences
-        preferences.end();
-    }
-#endif
+/*-----------------------------------------------------------------------------
+                        BoardInfo constructor
+
+    @param bootTimes int &
+    @param boardMode char &
+
+*///---------------------------------------------------------------------------
+BoardInfo::BoardInfo(int &bootTimes, char &boardMode) {
+    _bootTimes = &bootTimes;
+    _boardMode = &boardMode;
+}
+
+/*-----------------------------------------------------------------------------
+                        BoardInfo read
+
+*///---------------------------------------------------------------------------
+void BoardInfo::read() {
+    Preferences preferences;
+
+    // Open Preferences
+    preferences.begin("boardInfo", false);
+
+    // Get the boardMode value, if the key does not exist, return a default value of 'N'
+    (*_boardMode)   = preferences.getUInt("boardMode", 'N');
+
+    // Get the bootTimes value, if the key does not exist, return a default value of 0
+    (*_bootTimes)   = preferences.getUInt("bootTimes", 0);
+
+    // Close the Preferences
+    preferences.end();
+}
+
+/*-----------------------------------------------------------------------------
+                        BoardInfo write
+
+*///---------------------------------------------------------------------------
+void BoardInfo::write() {
+    Preferences preferences;
+
+    // Open Preferences
+    preferences.begin("boardInfo", false);
+
+    // Store the boardMode value
+    preferences.putUInt("boardMode", (*_boardMode));
+
+    // Store the bootTimes value
+    preferences.putUInt("bootTimes", (*_bootTimes));
+
+    // Close the Preferences
+    preferences.end();
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                    EOF                                    */
+/*---------------------------------------------------------------------------*/
+#endif // ESP32

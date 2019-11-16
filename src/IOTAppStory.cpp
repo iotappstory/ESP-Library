@@ -1,6 +1,43 @@
+/*                          =======================
+============================   C/C++ SOURCE FILE   ============================
+                            =======================                       *//**
+  IOTAppStory.cpp
+
+  Created by Onno Dirkzwager on 24.03.2017.
+  Copyright (c) 2017 IOTAppStory. All rights reserved.
+
+*///===========================================================================
+
+/*---------------------------------------------------------------------------*/
+/*                                INCLUDES                                   */
+/*---------------------------------------------------------------------------*/
+
 #include "IOTAppStory.h"
 
+/*---------------------------------------------------------------------------*/
+/*                        DEFINITIONS AND MACROS                             */
+/*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+/*                        TYPEDEFS AND STRUCTURES                            */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                                PROTOTYPES                                 */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                            LOCAL VARIABLES                                */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                        FUNCTION IMPLEMENTATION                            */
+/*---------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------
+                        IOTAppStory constructor
+
+*///---------------------------------------------------------------------------
 IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 : _compDate(compDate)
 , _modeButton(modeButton) {
@@ -13,9 +50,12 @@ IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
     #endif
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory firstBoot
+
     THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS)
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::firstBoot() {
 
     #if DEBUG_LVL >= 2
@@ -38,7 +78,7 @@ void IOTAppStory::firstBoot() {
     // reset boardMode & bootTimes
     boardMode = 'N';
     bootTimes = 0;
-    boardInfo boardInfo(bootTimes, boardMode);
+    BoardInfo boardInfo(bootTimes, boardMode);
     boardInfo.write();
 
     // overwrite save compile date with the current compile date
@@ -54,6 +94,10 @@ void IOTAppStory::firstBoot() {
     ESP.restart();
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetAppName
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetAppName(String appName) {
     // get config from EEPROM
     configStruct config;
@@ -68,6 +112,10 @@ void IOTAppStory::preSetAppName(String appName) {
     }
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetAppVersion
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetAppVersion(String appVersion) {
     // get config from EEPROM
     configStruct config;
@@ -82,6 +130,10 @@ void IOTAppStory::preSetAppVersion(String appVersion) {
     }
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetDeviceName
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetDeviceName(String deviceName) {
     // get config from EEPROM
     configStruct config;
@@ -96,14 +148,26 @@ void IOTAppStory::preSetDeviceName(String deviceName) {
     }
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetAutoUpdate
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate) {
     _updateOnBoot = automaticUpdate;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetAutoConfig
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetAutoConfig(bool automaticConfig) {
     _automaticConfig = automaticConfig;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory preSetWifi
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::preSetWifi(const char *ssid, const char *password) {
     // Save Wifi presets if newer
     WiFiConnector WiFiConn;
@@ -112,16 +176,32 @@ void IOTAppStory::preSetWifi(const char *ssid, const char *password) {
     }
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory setCallHome
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::setCallHome(bool callHome) {} // <----- deprecated left for compatibility. Remove with version 3.0.0
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory setCallHomeInterval
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
     _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory begin
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::begin(const char ea) { // <----- deprecated left for compatibility. This will be removed with version 3.0.0
     this->begin();
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory begin
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::begin() {
     {
 
@@ -162,7 +242,7 @@ void IOTAppStory::begin() {
 
         {
         // Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
-        boardInfo boardInfo(bootTimes, boardMode);
+        BoardInfo boardInfo(bootTimes, boardMode);
         boardInfo.read();
 
         // BOOT STATISTICS read and increase boot statistics (optional)
@@ -207,7 +287,7 @@ void IOTAppStory::begin() {
                 }
                 #endif
                     // run config server
-                    configServer configServer(*this, config);
+                    ConfigServer configServer(*this, config);
                     configServer.run();
                 #ifdef ESP8266
                 }
@@ -245,7 +325,12 @@ void IOTAppStory::begin() {
     #endif
 }
 
-/** print BoardInfo */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory printBoardInfo
+
+    Print BoardInfo
+
+*///---------------------------------------------------------------------------
 #if DEBUG_LVL >= 1
 void IOTAppStory::printBoardInfo() {
     DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
@@ -253,7 +338,12 @@ void IOTAppStory::printBoardInfo() {
 }
 #endif
 
-/** send msg to iasLog */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory iasLog
+
+    Send msg to iasLog
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::iasLog(String msg) {
 
     // get config from EEPROM
@@ -261,7 +351,7 @@ void IOTAppStory::iasLog(String msg) {
     this->readConfig(config);
 
     // notifi IAS & enduser about the localIP
-    callServer      callServer(config, U_LOGGER);
+    CallServer callServer(config, U_LOGGER);
     callServer.sm(&statusMessage);
     msg.replace(" ", "_");
     msg = "msg="+msg;
@@ -277,7 +367,12 @@ void IOTAppStory::iasLog(String msg) {
     #endif
 }
 
-/** Connect to Wifi AP */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory WiFiSetupAndConnect
+
+    Connect to Wifi AP
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::WiFiSetupAndConnect() {
 
     #if DEBUG_LVL >= 1
@@ -301,7 +396,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
             if(boardMode == 'N') {
                 boardMode = 'C';
-                boardInfo boardInfo(bootTimes, boardMode);
+                BoardInfo boardInfo(bootTimes, boardMode);
                 boardInfo.write();
             }
 
@@ -369,9 +464,12 @@ void IOTAppStory::WiFiSetupAndConnect() {
     #endif
 }
 
-/**
-    Dusconnect wifi
-*/
+/*-----------------------------------------------------------------------------
+                        IOTAppStory WiFiDisconnect
+
+    Disconnect wifi
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::WiFiDisconnect() {
     WiFi.disconnect();
     _connected = false;
@@ -381,9 +479,12 @@ void IOTAppStory::WiFiDisconnect() {
     #endif
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory setClock
+
     Set time via NTP, as required for x.509 validation
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::setClock() {
     #if defined  ESP8266
         int retries = WIFI_CONN_MAX_RETRIES;
@@ -430,9 +531,12 @@ void IOTAppStory::setClock() {
     #endif
 }
 
-/**
-    call home and check for updates
-*/
+/*-----------------------------------------------------------------------------
+                        IOTAppStory callHome
+
+    Call home and check for updates
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::callHome(bool spiffs /*= true*/) {
 
     // update from IOTappStory.com
@@ -475,9 +579,12 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
     _lastCallHomeTime = millis();
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory iotUpdater
+
     IOT updater
-*/
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::iotUpdater(int command) {
 
     // get config from EEPROM
@@ -527,7 +634,7 @@ bool IOTAppStory::iotUpdater(int command) {
         #endif
 
         firmwareStruct  firmwareStruct;
-        callServer      callServer(config, command);
+        CallServer callServer(config, command);
         callServer.sm(&statusMessage);
 
         Stream &clientStream = callServer.getStream(&firmwareStruct);
@@ -570,9 +677,12 @@ bool IOTAppStory::iotUpdater(int command) {
     return true;
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory espInstaller
+
     espInstaller
-*/
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
     devObj.sm(&statusMessage);
     bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
@@ -679,9 +789,12 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
     return result;
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory addField
+
     Add fields to the fieldStruct
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type) {
     // get config from EEPROM
     configStruct config;
@@ -851,9 +964,12 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
     }
 }
 
-/**
-    convert dpins to int
-*/
+/*-----------------------------------------------------------------------------
+                        IOTAppStory dPinConv
+
+    Convert dpins to int
+
+*///---------------------------------------------------------------------------
 int IOTAppStory::dPinConv(String orgVal) {
     #if defined ESP8266_OAK
 
@@ -933,21 +1049,27 @@ int IOTAppStory::dPinConv(String orgVal) {
     #endif
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory espRestart
+
     Set mode and reboot
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::espRestart(char mmode) {
     //while (isModeButtonPressed()) yield();    // wait till GPIOo released
     delay(500);
     boardMode = mmode;
-    boardInfo boardInfo(bootTimes, boardMode);
+    BoardInfo boardInfo(bootTimes, boardMode);
     boardInfo.write();
     ESP.restart();
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory eraseEEPROM
+
     Erase EEPROM from till
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::eraseEEPROM(int eepFrom, int eepTo) {
     #if DEBUG_LVL >= 2 || DEBUG_EEPROM_CONFIG == true
         DEBUG_PRINTF_P(SER_ERASE_FLASH, eepFrom, eepTo);
@@ -957,9 +1079,12 @@ void IOTAppStory::eraseEEPROM(int eepFrom, int eepTo) {
     EEPROM.end();
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory eraseEEPROM
+
     Erase EEPROM (F)ull or (P)artial
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::eraseEEPROM(const char ea) {
     // erase eeprom after config (delete extra field data etc.)
     if(ea == 'F') {
@@ -984,9 +1109,12 @@ void IOTAppStory::eraseEEPROM(const char ea) {
     }
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory writeConfig
+
     Write the config struct to EEPROM
-*/
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::writeConfig(configStruct &config) {
     #if DEBUG_EEPROM_CONFIG == true
         DEBUG_PRINTLN("DEBUG_EEPROM\t| running writeConfig(...)");
@@ -996,10 +1124,13 @@ void IOTAppStory::writeConfig(configStruct &config) {
     EEPROM.end();
 }
 
-/**
+/*-----------------------------------------------------------------------------
+                        IOTAppStory readConfig
+
     Read the config struct from EEPROM
-*/
-void IOTAppStory::readConfig(configStruct &config) {
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::readConfig(configStruct& config) {
     #if DEBUG_EEPROM_CONFIG == true
         DEBUG_PRINTLN("DEBUG_EEPROM\t| running readConfig()");
     #endif
@@ -1028,6 +1159,10 @@ void IOTAppStory::readConfig(configStruct &config) {
     EEPROM.end();
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory loop
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::loop() {
     // wifi connector
     #if WIFI_MULTI_FORCE_RECONN_ANY == true
@@ -1067,14 +1202,26 @@ void IOTAppStory::loop() {
     #endif
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory buttonLoop
+
+*///---------------------------------------------------------------------------
 ModeButtonState IOTAppStory::buttonLoop() {
     return getModeButtonState();
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory isModeButtonPressed
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::isModeButtonPressed() {
     return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory getModeButtonState
+
+*///---------------------------------------------------------------------------
 ModeButtonState IOTAppStory::getModeButtonState() {
     while(true) {
         unsigned long buttonTime = millis() - _buttonEntry;
@@ -1122,12 +1269,12 @@ ModeButtonState IOTAppStory::getModeButtonState() {
                 }
                 continue;
             }
-#if CFG_INCLUDE == true
+        #if CFG_INCLUDE == true
             if(!isModeButtonPressed()) {
                 _appState = AppStateConfigMode;
                 continue;
             }
-#endif
+        #endif
             return ModeButtonLongPress;
 
         case AppStateVeryLongPress:
@@ -1144,7 +1291,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
             _appState = AppStateNoPress;
             this->callHome();
             continue;
-#if CFG_INCLUDE == true
+        #if CFG_INCLUDE == true
         case AppStateConfigMode:
             _appState = AppStateNoPress;
             #if DEBUG_LVL >= 1
@@ -1152,59 +1299,107 @@ ModeButtonState IOTAppStory::getModeButtonState() {
             #endif
             espRestart('C');
             continue;
-#endif
+        #endif
         }
     }
+
     return ModeButtonNoPress; // will never reach here (used just to avoid compiler warnings)
 }
 
-/**
-    callBacks
-*/
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirstBoot
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirstBoot(THandlerFunction value) {
     _firstBootCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onModeButtonNoPress
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
     _noPressCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onModeButtonShortPress
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
     _shortPressCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onModeButtonLongPress
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
     _longPressCallback = value;
 }
+
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onModeButtonVeryLongPress
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
     _veryLongPressCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareUpdateCheck
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
     _firmwareUpdateCheckCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareUpdateDownload
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
     _firmwareUpdateDownloadCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareUpdateProgress
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
     _firmwareUpdateProgressCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareUpdateError
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
     _firmwareUpdateErrorCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareUpdateSuccess
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateSuccess(THandlerFunction value) {
     _firmwareUpdateSuccessCallback = value;
 }
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory onConfigMode
+
+*///---------------------------------------------------------------------------
 void IOTAppStory::onConfigMode(THandlerFunction value) {
     _configModeCallback = value;
 }
 
-/** Handle root */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetHtmlRoot
+
+    Handle root
+
+*///---------------------------------------------------------------------------
 String IOTAppStory::strRetHtmlRoot() {
 
     String retHtml;
@@ -1224,7 +1419,12 @@ String IOTAppStory::strRetHtmlRoot() {
     return retHtml;
 }
 
-/** Handle device information */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetDevInfo
+
+    Handle device information
+
+*///---------------------------------------------------------------------------
 String IOTAppStory::strRetDevInfo() {
     #if DEBUG_LVL >= 3
         DEBUG_PRINTLN(SER_SERV_DEV_INFO);
@@ -1260,7 +1460,12 @@ String IOTAppStory::strRetDevInfo() {
     return retHtml;
 }
 
-/** Handle wifi scan */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetWifiScan
+
+    Handle wifi scan
+
+*///---------------------------------------------------------------------------
 String IOTAppStory::strRetWifiScan() {
 
     #if DEBUG_LVL >= 3
@@ -1312,7 +1517,12 @@ String IOTAppStory::strRetWifiScan() {
     return retHtml;
 }
 
-/** Handle wifi scan */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetWifiCred
+
+    Handle wifi scan
+
+*///---------------------------------------------------------------------------
 String IOTAppStory::strRetWifiCred() {
 
     #if DEBUG_LVL >= 3
@@ -1358,7 +1568,12 @@ String IOTAppStory::strRetWifiCred() {
     return retHtml;
 }
 
-/** Handle save wifi credentials */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory servSaveWifiCred
+
+    Handle save wifi credentials
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, const int apNr) {
 
     WiFiConnector WiFiConn;
@@ -1371,7 +1586,12 @@ bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, con
     return true;        // ok
 }
 
-/** Handle save wifi credentials */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory servSaveWifiCred
+
+    Handle save wifi credentials
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, String ip, String subnet, String gateway, String dnsserv) {
 
     WiFiConnector WiFiConn;
@@ -1384,7 +1604,12 @@ bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, Str
     return true;        // ok
 }
 
-/** Handle app / firmware information */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetAppInfo
+
+    Handle app / firmware information
+
+*///---------------------------------------------------------------------------
 String IOTAppStory::strRetAppInfo() {
     #if DEBUG_LVL >= 3
         DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
@@ -1462,10 +1687,12 @@ String IOTAppStory::strRetAppInfo() {
     return retHtml;
 }
 
-/**
-    Save new fingerprint
-    Only used if ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-*/
+/*-----------------------------------------------------------------------------
+                        IOTAppStory servSaveFngPrint
+
+    Handle app / firmware information
+
+*///---------------------------------------------------------------------------
 #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
 bool IOTAppStory::servSaveFngPrint(String fngprint) {
 
@@ -1490,8 +1717,13 @@ bool IOTAppStory::servSaveFngPrint(String fngprint) {
 }
 #endif
 
+/*-----------------------------------------------------------------------------
+                        IOTAppStory strRetCertScan
+
+    Get all root certificates
+
+*///---------------------------------------------------------------------------
 #if defined  ESP32
-/** Get all root certificates */
 String IOTAppStory::strRetCertScan(String path) {
 
     #if DEBUG_LVL >= 3
@@ -1599,7 +1831,12 @@ String IOTAppStory::strRetCertScan(String path) {
 }
 #endif
 
-/** Save App Settings */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory servSaveAppInfo
+
+    Save App Settings
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
     #if DEBUG_LVL >= 3
         DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
@@ -1667,7 +1904,12 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
     return false;
 }
 
-/** Save activation code */
+/*-----------------------------------------------------------------------------
+                        IOTAppStory servSaveActcode
+
+    Save activation code
+
+*///---------------------------------------------------------------------------
 bool IOTAppStory::servSaveActcode(String actcode) {
     #if DEBUG_LVL >= 3
         DEBUG_PRINT(SER_REC_ACT_CODE);
@@ -1686,3 +1928,7 @@ bool IOTAppStory::servSaveActcode(String actcode) {
 
     return false;
 }
+
+/*---------------------------------------------------------------------------*/
+/*                                    EOF                                    */
+/*---------------------------------------------------------------------------*/

@@ -1,14 +1,59 @@
+/*                          =======================
+============================   C/C++ SOURCE FILE   ============================
+                            =======================                       *//**
+  ConfigServer.cpp
+
+  Created by Onno Dirkzwager on 22.11.2018.
+  Copyright (c) 2018 IOTAppStory. All rights reserved.
+
+*///===========================================================================
+
 #if defined ESP8266 || defined ESP32
-    #include "configServer.h"
-    #include <IOTAppStory.h>
 
-    configServer::configServer(IOTAppStory &ias, configStruct &config) {
-        _ias = &ias;
-        _config = &config;
-    }
+/*---------------------------------------------------------------------------*/
+/*                                INCLUDES                                   */
+/*---------------------------------------------------------------------------*/
 
-/** config server */
-void configServer::run() {
+#include "ConfigServer.h"
+#include "IOTAppStory.h"
+
+/*---------------------------------------------------------------------------*/
+/*                        DEFINITIONS AND MACROS                             */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                        TYPEDEFS AND STRUCTURES                            */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                                PROTOTYPES                                 */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                            LOCAL VARIABLES                                */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                        FUNCTION IMPLEMENTATION                            */
+/*---------------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------------
+                        ConfigServer constructor
+
+    @param ias IOTAppStory &
+    @param config configStruct &
+
+*///---------------------------------------------------------------------------
+ConfigServer::ConfigServer(IOTAppStory& ias, configStruct& config) {
+    _ias = &ias;
+    _config = &config;
+}
+
+/*-----------------------------------------------------------------------------
+                        ConfigServer run
+
+*///---------------------------------------------------------------------------
+void ConfigServer::run() {
         bool exitConfig = false;
 
         #if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID || defined ESP32
@@ -378,30 +423,38 @@ void configServer::run() {
         #endif
 }
 
+/*-----------------------------------------------------------------------------
+                        ConfigServer onUpload
 
+Handle uploads
 
-/** Handle uploads */
-void configServer::onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-    if(!index){
+*///---------------------------------------------------------------------------
+void ConfigServer::onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+    if(!index) {
         Serial.printf("UploadStart: %s\n", filename.c_str());
     }
-    for(size_t i=0; i<len; i++){
+
+    for(size_t i=0; i<len; i++) {
         Serial.write(data[i]);
     }
-    if(final){
+
+    if(final) {
         Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
     }
 }
 
+/*-----------------------------------------------------------------------------
+                        ConfigServer hdlReturn
 
+Return page handler
 
-/** return page handler */
-void configServer::hdlReturn(AsyncWebServerRequest *request, String retHtml, String type) {
+*///---------------------------------------------------------------------------
+void ConfigServer::hdlReturn(AsyncWebServerRequest* request, String retHtml, String type) {
     #if CFG_AUTHENTICATE == true
     if(!request->authenticate("admin", _config->cfg_pass)) {
         return request->requestAuthentication();
     } else {
-    #endif
+    #endif // CFG_AUTHENTICATE
 
         AsyncWebServerResponse *response = request->beginResponse(200, type, retHtml);
         response->addHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
@@ -411,13 +464,20 @@ void configServer::hdlReturn(AsyncWebServerRequest *request, String retHtml, Str
 
     #if CFG_AUTHENTICATE == true
     }
-    #endif
+    #endif // CFG_AUTHENTICATE
 }
 
+/*-----------------------------------------------------------------------------
+                        ConfigServer hdlReturn
 
+Return page handler
 
-/** return page handler */
-void configServer::hdlReturn(AsyncWebServerRequest *request, int ret) {
+*///---------------------------------------------------------------------------
+void ConfigServer::hdlReturn(AsyncWebServerRequest *request, int ret) {
     this->hdlReturn(request, String(ret));
 }
-#endif
+
+/*---------------------------------------------------------------------------*/
+/*                                    EOF                                    */
+/*---------------------------------------------------------------------------*/
+#endif // ESP8266 || defined ESP32

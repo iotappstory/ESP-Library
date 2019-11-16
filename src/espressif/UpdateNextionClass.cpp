@@ -1,20 +1,19 @@
 /*                          =======================
 ============================   C/C++ SOURCE FILE   ============================
                             =======================                       *//**
-  BoardInfo.cpp
+  UpdateNextion.cpp
 
-  Created by Onno Dirkzwager on 22.11.2018.
-  Copyright (c) 2018 IOTAppStory. All rights reserved.
+  Created by Onno Dirkzwager on 10.02.2019.
+  Copyright (c) 2019 IOTAppStory. All rights reserved.
 
 *///===========================================================================
-
-#ifdef ESP8266
 
 /*---------------------------------------------------------------------------*/
 /*                                INCLUDES                                   */
 /*---------------------------------------------------------------------------*/
 
-#include "BoardInfo.h"
+#include <Arduino.h>
+#include "UpdateNextionClass.h"
 
 /*---------------------------------------------------------------------------*/
 /*                        DEFINITIONS AND MACROS                             */
@@ -32,55 +31,59 @@
 /*                            LOCAL VARIABLES                                */
 /*---------------------------------------------------------------------------*/
 
+UpdateNextionClass UpdateNextion;
+
 /*---------------------------------------------------------------------------*/
 /*                        FUNCTION IMPLEMENTATION                            */
 /*---------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
-                        BoardInfo constructor
-
-    @param bootTimes int &
-    @param boardMode char &
+                        UpdateNextionClass prepareUpdate
 
 *///---------------------------------------------------------------------------
-BoardInfo::BoardInfo(int& bootTimes, char& boardMode) {
-    _bootTimes = &bootTimes;
-    _boardMode = &boardMode;
-}
+bool UpdateNextionClass::prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command) {
 
-/*-----------------------------------------------------------------------------
-                        BoardInfo read
-
-*///---------------------------------------------------------------------------
-void BoardInfo::read() {
-    rtcMemDef rtcMem;
-
-    system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
-    if (rtcMem.markerFlag != MAGICBYTE) {
-        rtcMem.markerFlag = MAGICBYTE;
-        rtcMem.bootTimes = 0;
-        rtcMem.boardMode = 'N';
-        system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+    // prepare upload: setup serial connection, send update command and send the expected update size
+    if(!nextion.prepareUpload(upd_size)) {
+        (*_statusMessage) = nextion.statusMessage;
+        return false;
     }
-    (*_boardMode) = rtcMem.boardMode;
-    (*_bootTimes) = rtcMem.bootTimes;
+
+    return true;
 }
 
 /*-----------------------------------------------------------------------------
-                        BoardInfo write
+                        UpdateNextionClass update
 
 *///---------------------------------------------------------------------------
-void BoardInfo::write() {
-    rtcMemDef rtcMem;
+bool UpdateNextionClass::update(uint8_t *file_buf, size_t buf_size) {
 
-    rtcMem.boardMode = (*_boardMode);
-    rtcMem.bootTimes = (*_bootTimes);
+    // Write the buffered bytes to the nextion display. If this fails, return false.
+    if(!nextion.upload(file_buf, buf_size)) {
+        (*_statusMessage) = nextion.statusMessage;
+        return false;
+    }
 
-    rtcMem.markerFlag = MAGICBYTE;
-    system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
+    return true;
+}
+
+/*-----------------------------------------------------------------------------
+                        UpdateNextionClass end
+
+*///---------------------------------------------------------------------------
+bool UpdateNextionClass::end() {
+    // end: wait(delay) for the nextion to finish the update process, send nextion reset command and end the serial connection to the nextion
+    nextion.end();
+}
+
+/*-----------------------------------------------------------------------------
+                        UpdateNextionClass sm
+
+*///---------------------------------------------------------------------------
+void UpdateNextionClass::sm(String *statusMessage) {
+    _statusMessage = statusMessage;
 }
 
 /*---------------------------------------------------------------------------*/
 /*                                    EOF                                    */
 /*---------------------------------------------------------------------------*/
-#endif // ESP8266

@@ -1,33 +1,70 @@
-#ifdef  ESP8266
-    #ifndef boardInfo_h
-        #define boardInfo_h
+/*                          =======================
+============================   C/C++ HEADER FILE   ============================
+                            =======================                       *//**
+  BoardInfo.h
 
-        #define MAGICBYTE                           85
-        #define RTCMEMBEGIN                         68
+  Created by Onno Dirkzwager on 22.11.2018.
+  Copyright (c) 2018 IOTAppStory. All rights reserved.
 
-        extern "C" {
-            #include "user_interface.h"          // used by the RTC memory read/write functions
-        }
+*///===========================================================================
+#ifdef ESP8266
+#ifndef __BoardInfo_h__
+#define __BoardInfo_h__
 
-        /**
-            ------ ------ ------ ------ ------ ------ STRUCTURES ------ ------ ------ ------ ------ ------
-        **/
-        typedef struct {
-            uint8_t markerFlag;
-            int bootTimes;
-            char boardMode = 'N';                // Normal operation or Configuration mode?
-        } rtcMemDef __attribute__((aligned(4)));
+/*---------------------------------------------------------------------------*/
+/*                                    INCLUDES                               */
+/*---------------------------------------------------------------------------*/
 
-        class boardInfo {
-            public:
-                boardInfo(int &bootTimes, char &boardMode);
-                void read();
-                void write();
+extern "C" {
+#include "user_interface.h"          // used by the RTC memory read/write functions
+}
 
-            private:
-                int* _bootTimes;
-                char* _boardMode;
+/*---------------------------------------------------------------------------*/
+/*                            DEFINITIONS AND MACROS                         */
+/*---------------------------------------------------------------------------*/
 
-        };
-    #endif
-#endif
+#define MAGICBYTE 85
+#define RTCMEMBEGIN 68
+
+/*---------------------------------------------------------------------------*/
+/*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
+/*---------------------------------------------------------------------------*/
+
+/*                          =======================
+============================   STRUCT DEFINITION   =============================
+                            =======================                        *//**
+  rtcMemDef.
+
+*//*=========================================================================*/
+typedef struct {
+    uint8_t markerFlag;
+    int bootTimes;
+    char boardMode = 'N';                // Normal operation or Configuration mode?
+} rtcMemDef __attribute__((aligned(4)));
+
+/*                          =======================
+============================   CLASS DEFINITION    ============================
+                            =======================                       *//**
+  BoardInfo.
+
+*//*=========================================================================*/
+class BoardInfo {
+public:
+    BoardInfo(int &bootTimes, char &boardMode);
+    void read();
+    void write();
+
+private:
+    int* _bootTimes;
+    char* _boardMode;
+};
+
+/*---------------------------------------------------------------------------*/
+/*                                GLOBAL VARIABLES                           */
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*                                    EOF                                    */
+/*---------------------------------------------------------------------------*/
+#endif // __BoardInfo_h__
+#endif // ESP8266
