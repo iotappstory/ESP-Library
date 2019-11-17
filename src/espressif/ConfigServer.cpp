@@ -45,8 +45,8 @@
 
 *///---------------------------------------------------------------------------
 ConfigServer::ConfigServer(IOTAppStory& ias, configStruct& config) {
-    _ias = &ias;
-    _config = &config;
+    this->_ias = &ias;
+    this->_config = &config;
 }
 
 /*-----------------------------------------------------------------------------
@@ -69,9 +69,9 @@ void ConfigServer::run() {
         #endif
 
         // Start the AsyncWebServer | We use the std::unique_ptr below because the usual AsyncWebServer server(80); causes crashed on the esp32 when the run() method is finished
-        server.reset(new AsyncWebServer(80));
+        this->server.reset(new AsyncWebServer(80));
 
-        if(_ias->_connected) {
+        if(this->_ias->_connected) {
             // when there is wifi setup server in STA mode
             WiFi.mode(WIFI_STA);
             #if DEBUG_LVL >= 2
@@ -92,10 +92,10 @@ void ConfigServer::run() {
                 WiFi.beginSmartConfig();
             #endif
             WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-            WiFi.softAP(_config->deviceName);
+            WiFi.softAP(this->_config->deviceName);
 
             #if DEBUG_LVL >= 2
-                DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, _config->deviceName);
+                DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, this->_config->deviceName);
             #endif
 
             WiFi.scanNetworks(true);
@@ -103,25 +103,25 @@ void ConfigServer::run() {
 
         #if CFG_STORAGE == ST_SPIFFS
             // serv SPIFFS files from the /www/ directory
-            server->serveStatic("/", SPIFFS, "/www/");
+            this->server->serveStatic("/", SPIFFS, "/www/");
         #endif
         #if CFG_STORAGE == ST_CLOUD || CFG_STORAGE == ST_HYBRID
             // serv the index page or force wifi setup
-            server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->strRetHtmlRoot()); });
+            this->server->on("/", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->strRetHtmlRoot()); });
         #endif
         #if CFG_PAGE_INFO == true
             // serv this device information in json format (first page in config)
-            server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->strRetDevInfo(), F("text/json")); });
+            this->server->on("/i", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->strRetDevInfo(), F("text/json")); });
         #endif
 
         // serv the wifi scan results
-        server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->strRetWifiScan(), F("text/json")); });
+        this->server->on("/wsc", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->strRetWifiScan(), F("text/json")); });
 
         // serv the wifi credentials
-        server->on("/wc", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->strRetWifiCred(), F("text/json")); });
+        this->server->on("/wc", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->strRetWifiCred(), F("text/json")); });
 
         // save the received ssid & pass for the received APnr(i) ans serv results
-        server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request) {
+        this->server->on("/wsa", HTTP_POST, [&](AsyncWebServerRequest *request) {
             #if DEBUG_LVL >= 3
                 DEBUG_PRINTLN(request->getParam("s", true)->value());
                 DEBUG_PRINTLN(request->getParam("p", true)->value());
@@ -142,7 +142,7 @@ void ConfigServer::run() {
             if(postAPnr > 0) {
                 hdlReturn(
                     request,
-                    _ias->servSaveWifiCred(
+                    this->_ias->servSaveWifiCred(
                         charSSID,
                         charPass,
                         #if WIFI_DHCP_ONLY == true
@@ -173,11 +173,11 @@ void ConfigServer::run() {
                             DEBUG_PRINTLN("configServer debug:\tTrying to connect: failed");
                         #endif
 
-                    } else if(_ias->_connected) {
+                    } else if(this->_ias->_connected) {
                         _connChangeMode = true;
                         _tryToConn = false;
 
-                        _ias->servSaveWifiCred(
+                        this->_ias->servSaveWifiCred(
                             charSSID,
                             charPass
                             #if WIFI_DHCP_ONLY == false
@@ -208,20 +208,20 @@ void ConfigServer::run() {
 
         // save the received fingerprint and serv results
         #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
-            server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->servSaveFngPrint(request->getParam("f", true)->value())); });
+            this->server->on("/fp", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->servSaveFngPrint(request->getParam("f", true)->value())); });
         #endif
 
         // serv cert scan in json format
-        server->on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request) {
+        this->server->on("/csr", HTTP_GET, [&](AsyncWebServerRequest *request) {
             if(request->hasParam("d")) {
-                hdlReturn(request, _ias->strRetCertScan(request->getParam("d")->value()), F("text/json"));
+                hdlReturn(request, this->_ias->strRetCertScan(request->getParam("d")->value()), F("text/json"));
             } else {
-                hdlReturn(request, _ias->strRetCertScan(), F("text/json"));
+                hdlReturn(request, this->_ias->strRetCertScan(), F("text/json"));
             }
         });
 
         // upload a file to /certupl
-        server->on("/certupl", HTTP_POST, [](AsyncWebServerRequest *request) {
+        this->server->on("/certupl", HTTP_POST, [](AsyncWebServerRequest *request) {
             request->send(200);
         },
             [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -279,7 +279,7 @@ void ConfigServer::run() {
 
         // locally upload new firmware
         #if OTA_LOCAL_UPDATE == true
-            server->on("/update", HTTP_POST, [&](AsyncWebServerRequest *request) {
+            this->server->on("/update", HTTP_POST, [&](AsyncWebServerRequest *request) {
                 bool result = false;
                 if(!Update.hasError()) {
                     // update is success
@@ -287,8 +287,8 @@ void ConfigServer::run() {
 
                     // save new app name & version
                     {
-                    request->getParam("n", true)->value().toCharArray(_config->appName, 33);
-                    String("(local)").toCharArray(_config->appVersion, 12);
+                    request->getParam("n", true)->value().toCharArray(this->_config->appName, 33);
+                    String("(local)").toCharArray(this->_config->appVersion, 12);
                     }
 
                 }
@@ -332,32 +332,32 @@ void ConfigServer::run() {
         #endif
 
         // serv the app fields in json format
-        server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->strRetAppInfo(), F("text/json")); });
+        this->server->on("/app", HTTP_GET, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->strRetAppInfo(), F("text/json")); });
 
         // save the received app fields and serv results
-        server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->servSaveAppInfo(request)); });
+        this->server->on("/as", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->servSaveAppInfo(request)); });
 
         // save the received device activation code
-        server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, _ias->servSaveActcode(request->getParam("ac", true)->value())); });
+        this->server->on("/ds", HTTP_POST, [&](AsyncWebServerRequest *request) { hdlReturn(request, this->_ias->servSaveActcode(request->getParam("ac", true)->value())); });
 
         // close and exit the web server
-        server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request) { exitConfig = true; });
+        this->server->on("/close", HTTP_GET, [&](AsyncWebServerRequest *request) { exitConfig = true; });
 
 
         // serv 404 page
-        server->onNotFound([](AsyncWebServerRequest *request) {
+        this->server->onNotFound([](AsyncWebServerRequest *request) {
             request->send(404);
         });
 
         // start the server
-        server->begin();
+        this->server->begin();
 
         // server loop
         while(exitConfig == false) {
 
             yield();
 
-            if(_ias->_connected) {
+            if(this->_ias->_connected) {
                 //DEBUG_PRINTLN("Configserver connected loop part");
 
                 // when succesfully added wifi cred in AP mode change to STA mode
@@ -379,7 +379,7 @@ void ConfigServer::run() {
                 #if WIFI_SMARTCONFIG == true
                     if(WiFi.smartConfigDone()) {
                         WiFi.mode(WIFI_AP_STA);
-                        _ias->WiFiConnectToAP();
+                        this->_ias->WiFiConnectToAP();
                     }
                 #endif
 
@@ -405,10 +405,10 @@ void ConfigServer::run() {
                     #endif
 
                     if(retries > 0) {
-                        _ias->_connected = true;
+                        this->_ias->_connected = true;
                         _connFail = false;
                     } else {
-                        _ias->_connected = false;
+                        this->_ias->_connected = false;
                         _connFail = true;
                     }
 
@@ -451,7 +451,7 @@ Return page handler
 *///---------------------------------------------------------------------------
 void ConfigServer::hdlReturn(AsyncWebServerRequest* request, String retHtml, String type) {
     #if CFG_AUTHENTICATE == true
-    if(!request->authenticate("admin", _config->cfg_pass)) {
+    if(!request->authenticate("admin", this->_config->cfg_pass)) {
         return request->requestAuthentication();
     } else {
     #endif // CFG_AUTHENTICATE

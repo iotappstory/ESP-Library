@@ -39,8 +39,7 @@
 
 *///---------------------------------------------------------------------------
 IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
-: _compDate(compDate)
-, _modeButton(modeButton) {
+: _compDate(compDate), _modeButton(modeButton) {
     #if DEBUG_LVL >= 1
         Serial.begin(SERIAL_SPEED);
         while (!Serial){
@@ -53,7 +52,8 @@ IOTAppStory::IOTAppStory(const char *compDate, const int modeButton)
 /*-----------------------------------------------------------------------------
                         IOTAppStory firstBoot
 
-    THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO DEFAULT SETTINGS)
+    THIS ONLY RUNS ON THE FIRST BOOT OF A JUST INSTALLED APP (OR AFTER RESET TO
+    DEFAULT SETTINGS)
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::firstBoot() {
@@ -62,12 +62,12 @@ void IOTAppStory::firstBoot() {
         DEBUG_PRINTLN(F(" First boot sequence..."));
     #endif
 
-    if (_firstBootCallback) {
+    if (this->_firstBootCallback) {
 
         #if DEBUG_LVL >= 3
             DEBUG_PRINTLN(SER_CALLBACK_FIRST_BOOT);
         #endif
-        _firstBootCallback();
+        this->_firstBootCallback();
         delay(100);
     }
 
@@ -76,13 +76,13 @@ void IOTAppStory::firstBoot() {
     this->readConfig(config);
 
     // reset boardMode & bootTimes
-    boardMode = 'N';
-    bootTimes = 0;
-    BoardInfo boardInfo(bootTimes, boardMode);
+    this->boardMode = 'N';
+    this->bootTimes = 0;
+    BoardInfo boardInfo(this->bootTimes, this->boardMode);
     boardInfo.write();
 
     // overwrite save compile date with the current compile date
-    strcpy(config.compDate, _compDate);
+    strcpy(config.compDate, this->_compDate);
 
     // write config to eeprom
     this->writeConfig(config);
@@ -103,10 +103,10 @@ void IOTAppStory::preSetAppName(String appName) {
     configStruct config;
     this->readConfig(config);
 
-    _setPreSet = false;
-    SetConfigValueCharArray(config.appName, appName, 33, _setPreSet);
+    this->_setPreSet = false;
+    this->SetConfigValueCharArray(config.appName, appName, 33, this->_setPreSet);
 
-    if(_setPreSet) {
+    if(this->_setPreSet) {
         // write config to EEPROM
         this->writeConfig(config);
     }
@@ -121,10 +121,10 @@ void IOTAppStory::preSetAppVersion(String appVersion) {
     configStruct config;
     this->readConfig(config);
 
-    _setPreSet = false;
-    SetConfigValueCharArray(config.appVersion, appVersion, 11, _setPreSet);
+    this->_setPreSet = false;
+    this->SetConfigValueCharArray(config.appVersion, appVersion, 11, this->_setPreSet);
 
-    if(_setPreSet){
+    if(this->_setPreSet) {
         // write config to EEPROM
         this->writeConfig(config);
     }
@@ -139,10 +139,10 @@ void IOTAppStory::preSetDeviceName(String deviceName) {
     configStruct config;
     this->readConfig(config);
 
-    _setPreSet = false;
-    SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, _setPreSet);
+    this->_setPreSet = false;
+    this->SetConfigValueCharArray(config.deviceName, deviceName, STRUCT_BNAME_SIZE, this->_setPreSet);
 
-    if(_setPreSet){
+    if(this->_setPreSet) {
         // write config to EEPROM
         this->writeConfig(config);
     }
@@ -153,7 +153,7 @@ void IOTAppStory::preSetDeviceName(String deviceName) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetAutoUpdate(bool automaticUpdate) {
-    _updateOnBoot = automaticUpdate;
+    this->_updateOnBoot = automaticUpdate;
 }
 
 /*-----------------------------------------------------------------------------
@@ -161,17 +161,17 @@ void IOTAppStory::preSetAutoUpdate(bool automaticUpdate) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetAutoConfig(bool automaticConfig) {
-    _automaticConfig = automaticConfig;
+    this->_automaticConfig = automaticConfig;
 }
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory preSetWifi
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::preSetWifi(const char *ssid, const char *password) {
+void IOTAppStory::preSetWifi(const char* ssid, const char* password) {
     // Save Wifi presets if newer
     WiFiConnector WiFiConn;
-    if(strcmp(WiFiConn.getSSIDfromEEPROM(1), ssid) != 0){
+    if(strcmp(WiFiConn.getSSIDfromEEPROM(1), ssid) != 0) {
         WiFiConn.addAPtoEEPROM(ssid, password, 1);
     }
 }
@@ -187,7 +187,7 @@ void IOTAppStory::setCallHome(bool callHome) {} // <----- deprecated left for co
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::setCallHomeInterval(unsigned long interval) {
-    _callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
+    this->_callHomeInterval = interval * 1000; //Convert to millis so users can pass seconds to this function
 }
 
 /*-----------------------------------------------------------------------------
@@ -210,7 +210,7 @@ void IOTAppStory::begin() {
         this->readConfig(config);
 
         // on first boot of the app run the firstBoot() function
-        if(strcmp(config.compDate, _compDate) != 0) {
+        if(strcmp(config.compDate, this->_compDate) != 0) {
             this->firstBoot();
         }
 
@@ -224,14 +224,14 @@ void IOTAppStory::begin() {
 
             #if DEBUG_LVL >= 2
                 DEBUG_PRINTLN(FPSTR(SER_DEV));
-                DEBUG_PRINTF_P(SER_MODE_SEL_BTN, _modeButton, config.deviceName, _updateOnBoot);
+                DEBUG_PRINTF_P(SER_MODE_SEL_BTN, this->_modeButton, config.deviceName, this->_updateOnBoot);
             #endif
 
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
 
         // set the input pin for Config/Update mode selection
-        pinMode(_modeButton, INPUT_PULLUP);
+        pinMode(this->_modeButton, INPUT_PULLUP);
 
         // set the "hard" reset(power) pin for the Nextion display
         // and turn the display on
@@ -242,44 +242,44 @@ void IOTAppStory::begin() {
 
         {
         // Read the "bootTime" & "boardMode" from the Non-volatile storage on ESP32 processor
-        BoardInfo boardInfo(bootTimes, boardMode);
+        BoardInfo boardInfo(this->bootTimes, this->boardMode);
         boardInfo.read();
 
         // BOOT STATISTICS read and increase boot statistics (optional)
         #if BOOTSTATISTICS == true && DEBUG_LVL >= 1
-            bootTimes++;
+            this->bootTimes++;
             boardInfo.write();
 
             #if DEBUG_LVL >= 1
-                printBoardInfo();
+                this->printBoardInfo();
             #endif
         #endif
         }
 
         // --------- START WIFI --------------------------
         // Setup wifi with cred etc connect to AP
-        WiFiSetupAndConnect();
+        this->WiFiSetupAndConnect();
 
         // Synchronize time useing SNTP. This is necessary to verify that
         // the TLS certificates offered by servers are currently valid.
         #if SNTP_INT_CLOCK_UPD == true
-            if(_connected) {
+            if(this->_connected) {
                 this->setClock();
             }
         #endif
 
         //---------- SELECT BOARD MODE -----------------------------
         #if CFG_INCLUDE == true
-            if(boardMode == 'C') {
+            if(this->boardMode == 'C') {
                 {
                     // callback entered config mode
-                    if(_configModeCallback) {
-                        _configModeCallback();
+                    if(this->_configModeCallback) {
+                        this->_configModeCallback();
                     }
 
                     // notifi IAS & enduser this device went to config mode (also sends localIP)
                     #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                        if(_connected) {
+                        if(this->_connected) {
                             this->iasLog("1");
                         }
                     #endif
@@ -296,7 +296,7 @@ void IOTAppStory::begin() {
 
                 // notifi IAS & enduser this device has left config mode (also sends localIP)
                 #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                    if(_connected) {
+                    if(this->_connected) {
                         this->iasLog("0");
                     }
                 #endif
@@ -308,12 +308,12 @@ void IOTAppStory::begin() {
     }
 
     // --------- if connection & automaticUpdate Update --------------------------
-    if(_connected && _updateOnBoot == true) {
+    if(this->_connected && this->_updateOnBoot == true) {
         this->callHome();
     }
 
-    _buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
-    _appState = AppStateNoPress;
+    this->_buttonEntry = millis() + MODE_BUTTON_VERY_LONG_PRESS;    // make sure the timedifference during startup is bigger than 10 sec. Otherwise it will go either in config mode or calls home
+    this->_appState = AppStateNoPress;
 
     #if DEBUG_FREE_HEAP == true
         DEBUG_PRINTLN(" end of IAS::begin");
@@ -333,7 +333,7 @@ void IOTAppStory::begin() {
 *///---------------------------------------------------------------------------
 #if DEBUG_LVL >= 1
 void IOTAppStory::printBoardInfo() {
-    DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, bootTimes, boardMode);
+    DEBUG_PRINTF_P(SER_BOOTTIMES_UPDATE, this->bootTimes, this->boardMode);
     DEBUG_PRINTLN(FPSTR(SER_DEV));
 }
 #endif
@@ -352,7 +352,7 @@ void IOTAppStory::iasLog(String msg) {
 
     // notifi IAS & enduser about the localIP
     CallServer callServer(config, U_LOGGER);
-    callServer.sm(&statusMessage);
+    callServer.sm(&this->statusMessage);
     msg.replace(" ", "_");
     msg = "msg="+msg;
 
@@ -360,7 +360,7 @@ void IOTAppStory::iasLog(String msg) {
         DEBUG_PRINT(SER_UPDATE_IASLOG);
         if(!callServer.get(OTA_LOG_FILE, msg)) {
             DEBUG_PRINTLN(SER_FAILED_COLON);
-            DEBUG_PRINTLN(" " + statusMessage);
+            DEBUG_PRINTLN(" " + this->statusMessage);
         }
     #else
         callServer.get(OTA_LOG_FILE, msg);
@@ -389,14 +389,14 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
     // connect to access point
     if(!WiFiConn.connectToAP(".")) {
-        _connected = false;
+        this->_connected = false;
         // FAILED
         // if conditions are met, set to config mode (C)
-        if(_automaticConfig || boardMode == 'C') {
+        if(this->_automaticConfig || this->boardMode == 'C') {
 
-            if(boardMode == 'N') {
-                boardMode = 'C';
-                BoardInfo boardInfo(bootTimes, boardMode);
+            if(this->boardMode == 'N') {
+                this->boardMode = 'C';
+                BoardInfo boardInfo(this->bootTimes, this->boardMode);
                 boardInfo.write();
             }
 
@@ -413,7 +413,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
         }
 
     } else {
-        _connected = true;
+        this->_connected = true;
         // SUCCES
         // Show connection details if debug level is set
         #if DEBUG_LVL >= 1
@@ -472,7 +472,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiDisconnect() {
     WiFi.disconnect();
-    _connected = false;
+    this->_connected = false;
     #if DEBUG_LVL >= 2
         DEBUG_PRINTLN(F(" WiFi disconnected!"));
         DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -510,16 +510,16 @@ void IOTAppStory::setClock() {
     if(retries > 0) {
         struct tm timeinfo;
         gmtime_r(&now, &timeinfo);
-        _timeSet        = true;
-        _lastTimeSet    = millis();
+        this->_timeSet        = true;
+        this->_lastTimeSet    = millis();
 
         #if DEBUG_LVL >= 3
             DEBUG_PRINT(F("\n Current time: "));
             DEBUG_PRINT(asctime(&timeinfo));
         #endif
     } else {
-        _timeSet        = false;
-        _lastTimeSet    = 0;
+        this->_timeSet        = false;
+        this->_lastTimeSet    = 0;
 
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(SER_FAILED_EXCL);
@@ -544,28 +544,22 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
         DEBUG_PRINTLN(SER_CALLING_HOME);
     #endif
 
-    if (_firmwareUpdateCheckCallback) {
-        _firmwareUpdateCheckCallback();
+    if (this->_firmwareUpdateCheckCallback) {
+        this->_firmwareUpdateCheckCallback();
     }
 
-    {
-        // try to update sketch from IOTAppStory
-        iotUpdater();
-    }
+    // try to update sketch from IOTAppStory
+    this->iotUpdater();
 
     // try to update spiffs from IOTAppStory
     #if OTA_UPD_CHECK_SPIFFS == true
         if(spiffs) {
-            {
-                iotUpdater(U_SPIFFS);
-            }
+            this->iotUpdater(U_SPIFFS);
         }
     #endif
 
     #if OTA_UPD_CHECK_NEXTION == true
-        {
-            iotUpdater(U_NEXTION);
-        }
+        this->iotUpdater(U_NEXTION);
     #endif
 
     #if DEBUG_LVL >= 2
@@ -576,7 +570,7 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
     #endif
 
     // update last time called home
-    _lastCallHomeTime = millis();
+    this->_lastCallHomeTime = millis();
 }
 
 /*-----------------------------------------------------------------------------
@@ -593,76 +587,74 @@ bool IOTAppStory::iotUpdater(int command) {
     yield();
 
     bool result = false;
-    {
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINT(F("\n"));
-        #endif
-        #if DEBUG_LVL >= 1
-            DEBUG_PRINT(SER_CHECK_FOR);
-        #endif
-        #if DEBUG_LVL >= 1
-            if(command == U_FLASH) {
-                DEBUG_PRINT(SER_APP_SKETCH);
+    #if DEBUG_LVL >= 2
+        DEBUG_PRINT(F("\n"));
+    #endif
+    #if DEBUG_LVL >= 1
+        DEBUG_PRINT(SER_CHECK_FOR);
+    #endif
+    #if DEBUG_LVL >= 1
+        if(command == U_FLASH) {
+            DEBUG_PRINT(SER_APP_SKETCH);
 
-            } else if(command == U_SPIFFS) {
-                DEBUG_PRINT(SER_SPIFFS);
+        } else if(command == U_SPIFFS) {
+            DEBUG_PRINT(SER_SPIFFS);
 
-            }
-            #if OTA_UPD_CHECK_NEXTION == true
-                else if(command == U_NEXTION) {
-                    DEBUG_PRINT(SER_NEXTION);
-                }
-            #endif
-        #endif
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINT(SER_UPDATES_FROM);
-        #endif
-        #if DEBUG_LVL == 1
-            DEBUG_PRINT(SER_UPDATES);
-        #endif
-        #if DEBUG_LVL >= 2
-            #if HTTPS == true
-                DEBUG_PRINT(F("https://"));
-            #else
-                DEBUG_PRINT(F("http://"));
-            #endif
-            DEBUG_PRINT(OTA_HOST);
-            DEBUG_PRINTLN(OTA_UPD_FILE);
-        #endif
-        #if DEBUG_LVL == 1
-            DEBUG_PRINTLN("");
-        #endif
-
-        firmwareStruct  firmwareStruct;
-        CallServer callServer(config, command);
-        callServer.sm(&statusMessage);
-
-        Stream &clientStream = callServer.getStream(&firmwareStruct);
-        yield();
-
-        if(!firmwareStruct.success) {
-            #if DEBUG_LVL >= 2
-                DEBUG_PRINTLN(" " + statusMessage);
-            #endif
-
-            return false;
-        }
-
-        if (_firmwareUpdateDownloadCallback) {
-            _firmwareUpdateDownloadCallback();
-        }
-
-        if(command == U_FLASH || command == U_SPIFFS) {
-            // sketch / spiffs
-            result = espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
         }
         #if OTA_UPD_CHECK_NEXTION == true
-            if(command == U_NEXTION) {
-                // nextion display
-                espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
+            else if(command == U_NEXTION) {
+                DEBUG_PRINT(SER_NEXTION);
             }
         #endif
+    #endif
+    #if DEBUG_LVL >= 2
+        DEBUG_PRINT(SER_UPDATES_FROM);
+    #endif
+    #if DEBUG_LVL == 1
+        DEBUG_PRINT(SER_UPDATES);
+    #endif
+    #if DEBUG_LVL >= 2
+        #if HTTPS == true
+            DEBUG_PRINT(F("https://"));
+        #else
+            DEBUG_PRINT(F("http://"));
+        #endif
+        DEBUG_PRINT(OTA_HOST);
+        DEBUG_PRINTLN(OTA_UPD_FILE);
+    #endif
+    #if DEBUG_LVL == 1
+        DEBUG_PRINTLN("");
+    #endif
+
+    firmwareStruct  firmwareStruct;
+    CallServer callServer(config, command);
+    callServer.sm(&this->statusMessage);
+
+    Stream &clientStream = callServer.getStream(&firmwareStruct);
+    yield();
+
+    if(!firmwareStruct.success) {
+        #if DEBUG_LVL >= 2
+            DEBUG_PRINTLN(" " + this->statusMessage);
+        #endif
+
+        return false;
     }
+
+    if (this->_firmwareUpdateDownloadCallback) {
+        this->_firmwareUpdateDownloadCallback();
+    }
+
+    if(command == U_FLASH || command == U_SPIFFS) {
+        // sketch / spiffs
+        result = this->espInstaller(clientStream, &firmwareStruct, UpdateESP, command);
+    }
+    #if OTA_UPD_CHECK_NEXTION == true
+        if(command == U_NEXTION) {
+            // nextion display
+            this->espInstaller(clientStream, &firmwareStruct, UpdateNextion, command);
+        }
+    #endif
 
     if(result && (command == U_FLASH || command == U_NEXTION)) {
 
@@ -684,12 +676,12 @@ bool IOTAppStory::iotUpdater(int command) {
 
 *///---------------------------------------------------------------------------
 bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
-    devObj.sm(&statusMessage);
+    devObj.sm(&this->statusMessage);
     bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
 
     if(!result) {
         #if DEBUG_LVL >= 2
-            DEBUG_PRINTLN(statusMessage);
+            DEBUG_PRINTLN(this->statusMessage);
         #endif
     } else {
 
@@ -724,8 +716,8 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
                         updTodo -= c;
                     }
 
-                    if (_firmwareUpdateProgressCallback) {
-                        _firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
+                    if (this->_firmwareUpdateProgressCallback) {
+                        this->_firmwareUpdateProgressCallback((*firmwareStruct).xlength - updTodo, (*firmwareStruct).xlength);
                         //DEBUG_PRINTF(" Free heap: %u\n", ESP.getFreeHeap());
                     }
                 }
@@ -736,7 +728,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
         if(!result) {
             #if DEBUG_LVL >= 2
                 DEBUG_PRINT(SER_UPDATEDERROR);
-                DEBUG_PRINTLN(statusMessage);
+                DEBUG_PRINTLN(this->statusMessage);
             #endif
         } else {
 
@@ -771,17 +763,17 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
                 this->writeConfig(config);
 
 
-                if (_firmwareUpdateSuccessCallback) {
-                    _firmwareUpdateSuccessCallback();
+                if (this->_firmwareUpdateSuccessCallback) {
+                    this->_firmwareUpdateSuccessCallback();
                 }
 
             }else{
                 // update failed
                 #if DEBUG_LVL >= 2
-                    DEBUG_PRINTLN(" " + statusMessage);
+                    DEBUG_PRINTLN(" " + this->statusMessage);
                 #endif
-                if(_firmwareUpdateErrorCallback) {
-                    _firmwareUpdateErrorCallback();
+                if(this->_firmwareUpdateErrorCallback) {
+                    this->_firmwareUpdateErrorCallback();
                 }
             }
         }
@@ -799,8 +791,8 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
     // get config from EEPROM
     configStruct config;
     this->readConfig(config);
-    if(strcmp(config.compDate, _compDate) == 0) {
-        if(_nrXF >= MAXNUMEXTRAFIELDS) {
+    if(strcmp(config.compDate, this->_compDate) == 0) {
+        if(this->_nrXF >= MAXNUMEXTRAFIELDS) {
             // if MAXNUMEXTRAFIELDS is reached return an error
             #if DEBUG_LVL >= 1
                 DEBUG_PRINTLN(SER_PROC_ERROR);
@@ -808,7 +800,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
         } else {
             #if DEBUG_LVL >= 1
                 // if this is the first field being processed display header
-                if(_nrXF == 0){
+                if(this->_nrXF == 0){
 
                     #if DEBUG_LVL >= 2
                         DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -829,21 +821,21 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
             addFieldStruct fieldStruct;
 
             // calculate EEPROM addresses
-            const int eepStartAddress = FIELD_EEP_START_ADDR + (_nrXF * sizeof(fieldStruct));
+            const int eepStartAddress = FIELD_EEP_START_ADDR + (this->_nrXF * sizeof(fieldStruct));
             const int eepEndAddress = eepStartAddress + sizeof(fieldStruct);
             const int magicBytesBegin = eepEndAddress - 3;
             int eepFieldStart;
 
-            if(_nrXF == 0) {
-                eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + _nrXFlastAdd;
+            if(this->_nrXF == 0) {
+                eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
             } else {
-                eepFieldStart = _nrXFlastAdd;
+                eepFieldStart = this->_nrXFlastAdd;
             }
-            _nrXFlastAdd = eepFieldStart + length + 1;
+            this->_nrXFlastAdd = eepFieldStart + length + 1;
 
 
             #if DEBUG_LVL >= 2
-                DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), _nrXF+1, fieldLabel, length, eepFieldStart, _nrXFlastAdd, defaultVal);
+                DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), this->_nrXF+1, fieldLabel, length, eepFieldStart, this->_nrXFlastAdd, defaultVal);
             #endif
 
             // EEPROM begin
@@ -869,7 +861,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 
                 // put the field value to EEPROM
                 unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < _nrXFlastAdd; e++) {
+                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
                     EEPROM.write(e, eepVal[ee]);
                     ee++;
                 }
@@ -883,7 +875,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 
                 // read field value from EEPROM and store it in eepVal buffer
                 unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < _nrXFlastAdd; e++) {
+                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
                     eepVal[ee] = EEPROM.read(e);
                     ee++;
                 }
@@ -959,7 +951,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
             delay(200);
 
             // increase added xtra field count
-            _nrXF++;
+            this->_nrXF++;
         }
     }
 }
@@ -1056,10 +1048,10 @@ int IOTAppStory::dPinConv(String orgVal) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::espRestart(char mmode) {
-    //while (isModeButtonPressed()) yield();    // wait till GPIOo released
+    //while (this->isModeButtonPressed()) yield();    // wait till GPIOo released
     delay(500);
-    boardMode = mmode;
-    BoardInfo boardInfo(bootTimes, boardMode);
+    this->boardMode = mmode;
+    BoardInfo boardInfo(this->bootTimes, this->boardMode);
     boardInfo.write();
     ESP.restart();
 }
@@ -1167,7 +1159,7 @@ void IOTAppStory::loop() {
     // wifi connector
     #if WIFI_MULTI_FORCE_RECONN_ANY == true
     if(WiFi.status() == WL_NO_SSID_AVAIL) {
-        _connected = false;
+        this->_connected = false;
         WiFi.disconnect(false);
         delay(10);
         #if DEBUG_LVL >= 1
@@ -1183,18 +1175,18 @@ void IOTAppStory::loop() {
     #endif
     // Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
     #if SNTP_INT_CLOCK_UPD == true
-        if(_connected && millis() - _lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
+        if(this->_connected && millis() - this->_lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
             this->setClock();
         }
     #endif
 
     // Call home and check for updates every _callHomeInterval
-    if(_connected && _callHomeInterval > 0 && millis() - _lastCallHomeTime > _callHomeInterval) {
+    if(this->_connected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
         this->callHome();
     }
 
     // handle button presses: short, long, xlong
-    this->buttonLoop();
+    this->getModeButtonState();
 
     #if DEBUG_FREE_HEAP == true
         DEBUG_PRINTLN(" end of IAS::loop");
@@ -1206,16 +1198,16 @@ void IOTAppStory::loop() {
                         IOTAppStory buttonLoop
 
 *///---------------------------------------------------------------------------
-ModeButtonState IOTAppStory::buttonLoop() {
-    return getModeButtonState();
-}
+// ModeButtonState IOTAppStory::buttonLoop() {
+//     return this->getModeButtonState();
+// }
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory isModeButtonPressed
 
 *///---------------------------------------------------------------------------
 bool IOTAppStory::isModeButtonPressed() {
-    return digitalRead(_modeButton) == LOW; // LOW means flash button IS pressed
+    return digitalRead(this->_modeButton) == LOW; // LOW means flash button IS pressed
 }
 
 /*-----------------------------------------------------------------------------
@@ -1224,80 +1216,80 @@ bool IOTAppStory::isModeButtonPressed() {
 *///---------------------------------------------------------------------------
 ModeButtonState IOTAppStory::getModeButtonState() {
     while(true) {
-        unsigned long buttonTime = millis() - _buttonEntry;
-        switch(_appState) {
+        unsigned long buttonTime = millis() - this->_buttonEntry;
+        switch(this->_appState) {
         case AppStateNoPress:
-            if(isModeButtonPressed()) {
-                _buttonEntry = millis();
-                _appState = AppStateWaitPress;
+            if(this->isModeButtonPressed()) {
+                this->_buttonEntry = millis();
+                this->_appState = AppStateWaitPress;
                 continue;
             }
             return ModeButtonNoPress;
 
         case AppStateWaitPress:
             if(buttonTime > MODE_BUTTON_SHORT_PRESS) {
-                _appState = AppStateShortPress;
-                if(_shortPressCallback) {
-                    _shortPressCallback();
+                this->_appState = AppStateShortPress;
+                if(this->_shortPressCallback) {
+                    this->_shortPressCallback();
                 }
                 continue;
             }
-            if(!isModeButtonPressed()) {
-                _appState = AppStateNoPress;
+            if(!this->isModeButtonPressed()) {
+                this->_appState = AppStateNoPress;
             }
             return ModeButtonNoPress;
 
         case AppStateShortPress:
             if(buttonTime > MODE_BUTTON_LONG_PRESS) {
-                _appState = AppStateLongPress;
-                if(_longPressCallback) {
-                    _longPressCallback();
+                this->_appState = AppStateLongPress;
+                if(this->_longPressCallback) {
+                    this->_longPressCallback();
                 }
                 continue;
             }
-            if(!isModeButtonPressed()) {
-                _appState = AppStateFirmwareUpdate;
+            if(!this->isModeButtonPressed()) {
+                this->_appState = AppStateFirmwareUpdate;
                 continue;
             }
             return ModeButtonShortPress;
 
         case AppStateLongPress:
             if(buttonTime > MODE_BUTTON_VERY_LONG_PRESS) {
-                _appState = AppStateVeryLongPress;
-                if (_veryLongPressCallback) {
-                    _veryLongPressCallback();
+                this->_appState = AppStateVeryLongPress;
+                if (this->_veryLongPressCallback) {
+                    this->_veryLongPressCallback();
                 }
                 continue;
             }
         #if CFG_INCLUDE == true
-            if(!isModeButtonPressed()) {
-                _appState = AppStateConfigMode;
+            if(!this->isModeButtonPressed()) {
+                this->_appState = AppStateConfigMode;
                 continue;
             }
         #endif
             return ModeButtonLongPress;
 
         case AppStateVeryLongPress:
-            if(!isModeButtonPressed()) {
-                _appState = AppStateNoPress;
-                if(_noPressCallback) {
-                    _noPressCallback();
+            if(!this->isModeButtonPressed()) {
+                this->_appState = AppStateNoPress;
+                if(this->_noPressCallback) {
+                    this->_noPressCallback();
                 }
                 continue;
             }
             return ModeButtonVeryLongPress;
 
         case AppStateFirmwareUpdate:
-            _appState = AppStateNoPress;
+            this->_appState = AppStateNoPress;
             this->callHome();
             continue;
         #if CFG_INCLUDE == true
         case AppStateConfigMode:
-            _appState = AppStateNoPress;
+            this->_appState = AppStateNoPress;
             #if DEBUG_LVL >= 1
                 DEBUG_PRINTLN(SER_CONFIG_ENTER);
             #endif
-            espRestart('C');
+            this->espRestart('C');
             continue;
         #endif
         }
@@ -1311,7 +1303,7 @@ ModeButtonState IOTAppStory::getModeButtonState() {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirstBoot(THandlerFunction value) {
-    _firstBootCallback = value;
+    this->_firstBootCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1319,7 +1311,7 @@ void IOTAppStory::onFirstBoot(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
-    _noPressCallback = value;
+    this->_noPressCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1327,7 +1319,7 @@ void IOTAppStory::onModeButtonNoPress(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
-    _shortPressCallback = value;
+    this->_shortPressCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1335,7 +1327,7 @@ void IOTAppStory::onModeButtonShortPress(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
-    _longPressCallback = value;
+    this->_longPressCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1343,7 +1335,7 @@ void IOTAppStory::onModeButtonLongPress(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
-    _veryLongPressCallback = value;
+    this->_veryLongPressCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1351,7 +1343,7 @@ void IOTAppStory::onModeButtonVeryLongPress(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
-    _firmwareUpdateCheckCallback = value;
+    this->_firmwareUpdateCheckCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1359,7 +1351,7 @@ void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
-    _firmwareUpdateDownloadCallback = value;
+    this->_firmwareUpdateDownloadCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1367,7 +1359,7 @@ void IOTAppStory::onFirmwareUpdateDownload(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
-    _firmwareUpdateProgressCallback = value;
+    this->_firmwareUpdateProgressCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1375,7 +1367,7 @@ void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
-    _firmwareUpdateErrorCallback = value;
+    this->_firmwareUpdateErrorCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1383,7 +1375,7 @@ void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onFirmwareUpdateSuccess(THandlerFunction value) {
-    _firmwareUpdateSuccessCallback = value;
+    this->_firmwareUpdateSuccessCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1391,7 +1383,7 @@ void IOTAppStory::onFirmwareUpdateSuccess(THandlerFunction value) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::onConfigMode(THandlerFunction value) {
-    _configModeCallback = value;
+    this->_configModeCallback = value;
 }
 
 /*-----------------------------------------------------------------------------
@@ -1405,13 +1397,13 @@ String IOTAppStory::strRetHtmlRoot() {
     String retHtml;
     retHtml += FPSTR(HTTP_TEMP_START);
 
-    if(_connected) {
+    if(this->_connected) {
         retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
     } else {
 
         retHtml.replace("{h}", FPSTR(HTTP_AP_CSS));
         retHtml += FPSTR(HTTP_WIFI_FORM);
-        retHtml.replace("{r}", strRetWifiScan());
+        retHtml.replace("{r}", this->strRetWifiScan());
         retHtml += FPSTR(HTTP_AP_JS);
     }
 
@@ -1449,7 +1441,7 @@ String IOTAppStory::strRetDevInfo() {
     retHtml.replace(F("{fs}"), String(ESP.getFlashChipSize()));
     retHtml.replace(F("{ab}"), ARDUINO_BOARD);
     retHtml.replace(F("{mc}"), WiFi.macAddress());
-    retHtml.replace(F("{xf}"), String(_nrXF));
+    retHtml.replace(F("{xf}"), String(this->_nrXF));
 
     if(String(config.actCode) == "000000" || String(config.actCode) == "") {
         retHtml.replace(F("{ac}"), "0");
@@ -1618,10 +1610,10 @@ String IOTAppStory::strRetAppInfo() {
     // EEPROM begin
     EEPROM.begin(EEPROM_SIZE);
 
-    _nrXFlastAdd = 0;
+    this->_nrXFlastAdd = 0;
 
     String retHtml = F("[");
-    for(unsigned int i = 0; i < _nrXF; ++i) {
+    for(unsigned int i = 0; i < this->_nrXF; ++i) {
 
         // return html results from the wifi scan
         if(i > 0) {
@@ -1639,18 +1631,18 @@ String IOTAppStory::strRetAppInfo() {
         EEPROM.get(eepStartAddress, fieldStruct);
 
         if(i == 0) {
-            eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(addFieldStruct)) + _nrXFlastAdd;
+            eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(addFieldStruct)) + this->_nrXFlastAdd;
         } else {
-            eepFieldStart = _nrXFlastAdd;
+            eepFieldStart = this->_nrXFlastAdd;
         }
-        _nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
+        this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
 
         // temp buffer
         char eepVal[fieldStruct.length + 1];
 
         // read field value from EEPROM and store it in eepVal buffer
         unsigned int ee = 0;
-        for(unsigned int e=eepFieldStart; e < _nrXFlastAdd; e++) {
+        for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
             eepVal[ee] = EEPROM.read(e);
             ee++;
         }
@@ -1842,14 +1834,14 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
         DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
     #endif
 
-    if(_nrXF) {
+    if(this->_nrXF) {
         // EEPROM begin
         EEPROM.begin(EEPROM_SIZE);
-        _nrXFlastAdd = 0;
+        this->_nrXFlastAdd = 0;
         // init fieldStruct
         addFieldStruct fieldStruct;
 
-        for(unsigned int i = 0; i < _nrXF; i++) {
+        for(unsigned int i = 0; i < this->_nrXF; i++) {
             if(request->hasParam(String(i), true)) {
                 // calculate EEPROM addresses
                 const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(fieldStruct));
@@ -1858,15 +1850,15 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
                 EEPROM.get(eepStartAddress, fieldStruct);
 
                 if(i == 0) {
-                    eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + _nrXFlastAdd;
+                    eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
                 } else {
-                    eepFieldStart = _nrXFlastAdd;
+                    eepFieldStart = this->_nrXFlastAdd;
                 }
-                _nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
+                this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
                 char eepVal[fieldStruct.length + 1];
                 // read field value from EEPROM and store it in eepVal buffer
                 unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < _nrXFlastAdd; e++) {
+                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
                     eepVal[ee] = EEPROM.read(e);
                     ee++;
                 }
@@ -1877,7 +1869,7 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
                     request->getParam(String(i), true)->value().toCharArray(saveEepVal, fieldStruct.length+1);
                     // write the field value to EEPROM
                     unsigned int ee = 0;
-                    for(unsigned int e=eepFieldStart; e < _nrXFlastAdd; e++) {
+                    for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
                         EEPROM.write(e, saveEepVal[ee]);
                         ee++;
                     }
@@ -1888,7 +1880,7 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
                     DEBUG_PRINT("EEPROM from: ");
                     DEBUG_PRINT(eepFieldStart);
                     DEBUG_PRINT(" to ");
-                    DEBUG_PRINTLN(_nrXFlastAdd);
+                    DEBUG_PRINTLN(this->_nrXFlastAdd);
                 } else {
                     DEBUG_PRINTLN("No need to overwrite current value");
                 #endif

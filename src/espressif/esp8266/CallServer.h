@@ -67,7 +67,7 @@ private:
     #else
         WiFiClient _client;
     #endif
-    String *_statusMessage;
+    String* _statusMessage;
 
     configStruct* _config;
     int _command;

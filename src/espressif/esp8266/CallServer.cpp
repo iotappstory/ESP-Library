@@ -44,8 +44,8 @@
 
 *///---------------------------------------------------------------------------
 CallServer::CallServer(configStruct &config, int command) {
-    _config = &config;
-    _command = command;
+    this->_config = &config;
+    this->_command = command;
 }
 
 /*-----------------------------------------------------------------------------
@@ -53,9 +53,9 @@ CallServer::CallServer(configStruct &config, int command) {
 
 *///---------------------------------------------------------------------------
 Stream& CallServer::getStream(firmwareStruct *firmwareStruct) {
-    if(!this->get(_callFile, "")) {
+    if(!this->get(this->_callFile, "")) {
         (*firmwareStruct).success = false;
-        return _client;
+        return this->_client;
     }
 
     (*firmwareStruct).xlength = 0;
@@ -66,9 +66,9 @@ Stream& CallServer::getStream(firmwareStruct *firmwareStruct) {
         DEBUG_PRINTLN(F(" ---------------------"));
     #endif
 
-    while(_client.available()) {
+    while(this->_client.available()) {
 
-        String line = _client.readStringUntil('\n');
+        String line = this->_client.readStringUntil('\n');
 
         #if DEBUG_LVL >= 3
             // Read all the lines of the reply from server and print them to Serial
@@ -81,11 +81,11 @@ Stream& CallServer::getStream(firmwareStruct *firmwareStruct) {
 
             if(code != 200) {
                 line.remove(0, 4);
-                (*_statusMessage) = line;
+                (*this->_statusMessage) = line;
 
                 //return false;
                 (*firmwareStruct).success = false;
-                return _client;
+                return this->_client;
             } else {
                 #if DEBUG_LVL >= 1
                     DEBUG_PRINT(SER_DOWNLOADING);
@@ -131,11 +131,11 @@ Stream& CallServer::getStream(firmwareStruct *firmwareStruct) {
 
     if(code == 200 && (*firmwareStruct).xlength > 0 && (*firmwareStruct).xname != "" && (*firmwareStruct).xver != "" && (*firmwareStruct).xmd5 != "") {
         (*firmwareStruct).success = true;
-        return _client;
+        return this->_client;
     } else {
-        (*_statusMessage) = SER_CALLHOME_HDR_FAILED;
+        (*this->_statusMessage) = SER_CALLHOME_HDR_FAILED;
         (*firmwareStruct).success = false;
-        return _client;
+        return this->_client;
     }
 }
 
@@ -162,14 +162,14 @@ bool CallServer::get(const char* url, String args) {
 
                 // Start SPIFFS and load partition
                 if(!SPIFFS.begin()) {
-                   (*_statusMessage) = SER_SPIFFS_PART_NOT_FOUND;
+                   (*this->_statusMessage) = SER_SPIFFS_PART_NOT_FOUND;
                    return false;
                 }
 
                 // Get root certificate file from SPIFFS
                 File file = SPIFFS.open("/cert/iasRootCa.cer", "r");
                 if(!file) {
-                   (*_statusMessage) = SER_CERTIFICATE_NOT_FOUND;
+                   (*this->_statusMessage) = SER_CERTIFICATE_NOT_FOUND;
                     return false;
                 }
 
@@ -179,8 +179,8 @@ bool CallServer::get(const char* url, String args) {
                 #endif
 
                 // Load root certificate (from SPIFFS)
-                if(!_client.loadCACert(file, file.size()) || file.size() == 0) {
-                   (*_statusMessage) = SER_CERTIFICATE_NOT_LOADED;
+                if(!this->_client.loadCACert(file, file.size()) || file.size() == 0) {
+                   (*this->_statusMessage) = SER_CERTIFICATE_NOT_LOADED;
                     return false;
                 }
 
@@ -188,10 +188,10 @@ bool CallServer::get(const char* url, String args) {
 
             #else
                 // Set root certificate (from const char ROOT_CA[] PROGMEM)
-                _client.setCACert(ROOT_CA);
+                this->_client.setCACert(ROOT_CA);
             #endif
 
-            _client.connect(_callHost, 443);
+            this->_client.connect(this->_callHost, 443);
 
             #if DEBUG_FREE_HEAP == true
                 DEBUG_PRINTLN(" after _client.connect");
@@ -199,57 +199,57 @@ bool CallServer::get(const char* url, String args) {
             #endif
 
             // check connection return false if connection failed
-            if (!_client.connected()) {
+            if (!this->_client.connected()) {
                 // Error: connection failed
-                (*_statusMessage) = SER_CALLHOME_FAILED;
+                (*this->_statusMessage) = SER_CALLHOME_FAILED;
                 return false;
             }
 
         #elif HTTPS_8266_TYPE == FNGPRINT
-            _client.setFingerprint(_config->sha1);
+            this->_client.setFingerprint(this->_config->sha1);
 
-            if(!_client.connect(_callHost, 443)) {
+            if(!this->_client.connect(this->_callHost, 443)) {
                 // Error: connection failed
-                (*_statusMessage) = SER_CALLHOME_FAILED;
+                (*this->_statusMessage) = SER_CALLHOME_FAILED;
                 return false;
             }
 
-            if(!_client.verify(_config->sha1, _callHost)) {
+            if(!this->_client.verify(this->_config->sha1, this->_callHost)) {
                 //ERROR: certificate verification failed!
-                (*_statusMessage) = SER_CALLHOME_CERT_FAILED;
+                (*this->_statusMessage) = SER_CALLHOME_CERT_FAILED;
                 return false;
             }
         #endif
     #else
-        _client.connect(_callHost, 80);
+        this->_client.connect(this->_callHost, 80);
     #endif
 
     String mode, md5;
-    if(_command == U_LOGGER) {
+    if(this->_command == U_LOGGER) {
         mode = F("log");
         md5 = ESP.getSketchMD5();
-    } else if(_command == U_FLASH) {
+    } else if(this->_command == U_FLASH) {
         mode = F("sketch");
         md5 = ESP.getSketchMD5();
-    } else if(_command == U_SPIFFS) {
+    } else if(this->_command == U_SPIFFS) {
         mode = F("spiffs");
         md5 = ESP.getSketchMD5();
     }
     #if OTA_UPD_CHECK_NEXTION == true
-        else if(_command == U_NEXTION) {
+        else if(this->_command == U_NEXTION) {
             mode = F("nextion");
-            md5 = _config->next_md5;
+            md5 = this->_config->next_md5;
         }
     #endif
 
     // This will send the request to the server
-    _client.print(String("GET ") + url + "?" + args + F(" HTTP/1.1\r\n") +
-               F("Host: ") + _callHost +
+    this->_client.print(String("GET ") + url + "?" + args + F(" HTTP/1.1\r\n") +
+               F("Host: ") + this->_callHost +
 
                F("\r\nUser-Agent: ESP-http-Update") +
 
                F("\r\nx-ESP-STA-MAC: ") + WiFi.macAddress() +
-               F("\r\nx-ESP-ACT-ID: ") + _config->actCode +
+               F("\r\nx-ESP-ACT-ID: ") + this->_config->actCode +
                F("\r\nx-ESP-LOCIP: ") + WiFi.localIP().toString() +
                F("\r\nx-ESP-FREE-SPACE: ") + ESP.getFreeSketchSpace() +
                F("\r\nx-ESP-SKETCH-SIZE: ") + ESP.getSketchSize() +
@@ -261,7 +261,7 @@ bool CallServer::get(const char* url, String args) {
                F("\r\nx-ESP-CORE-VERSION: ") + ESP.getCoreVersion() +
 
                F("\r\nx-ESP-FLASHCHIP-SIZE: ") + ESP.getFlashChipSize() +
-               F("\r\nx-ESP-VERSION: ") + _config->appName + " v" + _config->appVersion +
+               F("\r\nx-ESP-VERSION: ") + this->_config->appName + " v" + this->_config->appVersion +
 
                F("\r\nx-ESP-MODE: ") + mode +
 
@@ -270,10 +270,10 @@ bool CallServer::get(const char* url, String args) {
 
     // return false and set statusMessage on timeout
     unsigned long timeout = millis();
-    while(_client.available() == 0) {
+    while(this->_client.available() == 0) {
         if(millis() - timeout > 5000) {
-            (*_statusMessage) = SER_CALLHOME_TIMEOUT;
-            _client.stop();
+            (*this->_statusMessage) = SER_CALLHOME_TIMEOUT;
+            this->_client.stop();
             return false;
         }
     }
@@ -285,7 +285,7 @@ bool CallServer::get(const char* url, String args) {
 
 *///---------------------------------------------------------------------------
 void CallServer::sm(String *statusMessage) {
-    _statusMessage = statusMessage;
+    this->_statusMessage = statusMessage;
 }
 
 /*---------------------------------------------------------------------------*/

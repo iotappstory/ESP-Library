@@ -93,9 +93,10 @@ public:
 private:
     void WiFiCredStructToEEPROM(WiFiCredStruct config, const int apNr = 0);
 
-    bool _connected         = false;    // wifi connection status bool
-    bool _static            = false;
-    int _configCount        = 0;
+    bool _connected = false; // wifi connection status bool
+    // TODO: USELESS
+    // bool _static = false;
+    int _configCount = 0;
 };
 
 /*---------------------------------------------------------------------------*/

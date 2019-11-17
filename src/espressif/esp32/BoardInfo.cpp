@@ -44,8 +44,8 @@
 
 *///---------------------------------------------------------------------------
 BoardInfo::BoardInfo(int &bootTimes, char &boardMode) {
-    _bootTimes = &bootTimes;
-    _boardMode = &boardMode;
+    this->_bootTimes = &bootTimes;
+    this->_boardMode = &boardMode;
 }
 
 /*-----------------------------------------------------------------------------
@@ -59,10 +59,10 @@ void BoardInfo::read() {
     preferences.begin("boardInfo", false);
 
     // Get the boardMode value, if the key does not exist, return a default value of 'N'
-    (*_boardMode)   = preferences.getUInt("boardMode", 'N');
+    (*this->_boardMode)   = preferences.getUInt("boardMode", 'N');
 
     // Get the bootTimes value, if the key does not exist, return a default value of 0
-    (*_bootTimes)   = preferences.getUInt("bootTimes", 0);
+    (*this->_bootTimes)   = preferences.getUInt("bootTimes", 0);
 
     // Close the Preferences
     preferences.end();
@@ -79,10 +79,10 @@ void BoardInfo::write() {
     preferences.begin("boardInfo", false);
 
     // Store the boardMode value
-    preferences.putUInt("boardMode", (*_boardMode));
+    preferences.putUInt("boardMode", (*this->_boardMode));
 
     // Store the bootTimes value
-    preferences.putUInt("bootTimes", (*_bootTimes));
+    preferences.putUInt("bootTimes", (*this->_bootTimes));
 
     // Close the Preferences
     preferences.end();

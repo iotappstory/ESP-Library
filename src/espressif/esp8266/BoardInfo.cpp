@@ -44,8 +44,8 @@
 
 *///---------------------------------------------------------------------------
 BoardInfo::BoardInfo(int& bootTimes, char& boardMode) {
-    _bootTimes = &bootTimes;
-    _boardMode = &boardMode;
+    this->_bootTimes = &bootTimes;
+    this->_boardMode = &boardMode;
 }
 
 /*-----------------------------------------------------------------------------
@@ -62,8 +62,8 @@ void BoardInfo::read() {
         rtcMem.boardMode = 'N';
         system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
     }
-    (*_boardMode) = rtcMem.boardMode;
-    (*_bootTimes) = rtcMem.bootTimes;
+    (*this->_boardMode) = rtcMem.boardMode;
+    (*this->_bootTimes) = rtcMem.bootTimes;
 }
 
 /*-----------------------------------------------------------------------------
@@ -73,8 +73,8 @@ void BoardInfo::read() {
 void BoardInfo::write() {
     rtcMemDef rtcMem;
 
-    rtcMem.boardMode = (*_boardMode);
-    rtcMem.bootTimes = (*_bootTimes);
+    rtcMem.boardMode = (*this->_boardMode);
+    rtcMem.bootTimes = (*this->_bootTimes);
 
     rtcMem.markerFlag = MAGICBYTE;
     system_rtc_mem_write(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));

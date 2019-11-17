@@ -57,7 +57,7 @@ public:
 private:
     IOTAppStory* _ias;
     configStruct* _config;
-    std::unique_ptr<AsyncWebServer>     server;
+    std::unique_ptr<AsyncWebServer> server;
 
     bool _tryToConn         = false;        // is the wifi connector busy? (trying to connect)
     bool _connFail          = false;        // did the last connection attempt faile

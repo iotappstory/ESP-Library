@@ -76,7 +76,7 @@ void WiFiConnector::getAPfromEEPROM(WiFiCredStruct& config, const int apNr) {
 const char* WiFiConnector::getSSIDfromEEPROM(const int apNr) {
     EEPROM.begin(EEPROM_SIZE);
     WiFiCredStruct config;
-    getAPfromEEPROM(config, apNr);
+    this->getAPfromEEPROM(config, apNr);
     return config.ssid;
 }
 
@@ -86,11 +86,11 @@ const char* WiFiConnector::getSSIDfromEEPROM(const int apNr) {
 *///---------------------------------------------------------------------------
 void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, const int apNr) {
     if(apNr > 0) {
-        _configCount = apNr - 1;
+        this->_configCount = apNr - 1;
     }
 
     #if WIFI_MULTI == false
-        if(_configCount >= 1){
+        if(this->_configCount >= 1){
             #if WIFICONNECTOR_DEBUG == true
                 Serial.println(F("WIFICONNECTOR_DEBUG\t| Currently WIFI_MULTI is set to false. Which limits you to 1 AP. Ignoring ALL other config."));
             #endif
@@ -111,8 +111,8 @@ void WiFiConnector::addAPtoEEPROM(const char *ssid, const char *password, const 
     strncpy(config.password, password, STRUCT_PASSWORD_SIZE);
 
     config.dhcp     = true;
-    _configCount++;
-    this->WiFiCredStructToEEPROM(config, _configCount);
+    this->_configCount++;
+    this->WiFiCredStructToEEPROM(config, this->_configCount);
 
     #if WIFI_MULTI == false
         }
@@ -186,10 +186,10 @@ void WiFiConnector::addAndShiftAPinEEPROM(const char *ssid, const char *password
 
             // move AP2 to position 3
             this->WiFiCredStructToEEPROM(ap2, 3);
-            _configCount = 3;
+            this->_configCount = 3;
 
         }else{
-            _configCount = 2;
+            this->_configCount = 2;
         }
 
         // move AP1 to position 2
@@ -332,7 +332,8 @@ bool WiFiConnector::setup() {
                             i = 3;
                         }
                     #endif
-                    _static = true;
+                    // TODO: USELESS
+                    // this->_static = true;
                 }
             #endif
 
@@ -388,10 +389,10 @@ bool WiFiConnector::connectToAP(const char *waitChar) {
     }
 
     if(retries > 0) {
-        _connected = true;
+        this->_connected = true;
         return true;
     } else {
-        _connected = false;
+        this->_connected = false;
         return false;
     }
 }
@@ -405,7 +406,7 @@ bool WiFiConnector::connectToAP(const char *waitChar) {
 *///---------------------------------------------------------------------------
 bool WiFiConnector::connectLoop(const char *waitChar) {
     if(WiFi.status() == WL_NO_SSID_AVAIL) {
-        _connected = false;
+        this->_connected = false;
         WiFi.disconnect(false);
         delay(10);
 
@@ -424,7 +425,7 @@ bool WiFiConnector::connectLoop(const char *waitChar) {
 *///---------------------------------------------------------------------------
 void WiFiConnector::disconnect() {
     WiFi.disconnect();
-    _connected = false;
+    this->_connected = false;
 }
 
 /*-----------------------------------------------------------------------------
