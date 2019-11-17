@@ -39,11 +39,11 @@
 /*-----------------------------------------------------------------------------
                         CallServer constructor
 
-    @param config configStruct &
+    @param config ConfigStruct &
     @param command int
 
 *///---------------------------------------------------------------------------
-CallServer::CallServer(configStruct &config, int command) {
+CallServer::CallServer(ConfigStruct &config, int command) {
     this->_config = &config;
     this->_command = command;
 }
@@ -52,7 +52,7 @@ CallServer::CallServer(configStruct &config, int command) {
                         CallServer getStream
 
 *///---------------------------------------------------------------------------
-Stream& CallServer::getStream(firmwareStruct *firmwareStruct) {
+Stream& CallServer::getStream(FirmwareStruct *firmwareStruct) {
     if(!this->get(this->_callFile, "")) {
         (*firmwareStruct).success = false;
         return this->_client;

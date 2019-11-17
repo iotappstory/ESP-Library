@@ -53,7 +53,7 @@ BoardInfo::BoardInfo(int& bootTimes, char& boardMode) {
 
 *///---------------------------------------------------------------------------
 void BoardInfo::read() {
-    rtcMemDef rtcMem;
+    RtcMemDef rtcMem;
 
     system_rtc_mem_read(RTCMEMBEGIN, &rtcMem, sizeof(rtcMem));
     if (rtcMem.markerFlag != MAGICBYTE) {
@@ -71,7 +71,7 @@ void BoardInfo::read() {
 
 *///---------------------------------------------------------------------------
 void BoardInfo::write() {
-    rtcMemDef rtcMem;
+    RtcMemDef rtcMem;
 
     rtcMem.boardMode = (*this->_boardMode);
     rtcMem.bootTimes = (*this->_bootTimes);

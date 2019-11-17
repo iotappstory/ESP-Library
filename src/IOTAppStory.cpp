@@ -72,7 +72,7 @@ void IOTAppStory::firstBoot() {
     }
 
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     // reset boardMode & bootTimes
@@ -100,7 +100,7 @@ void IOTAppStory::firstBoot() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetAppName(String appName) {
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     this->_setPreSet = false;
@@ -118,7 +118,7 @@ void IOTAppStory::preSetAppName(String appName) {
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetAppVersion(String appVersion) {
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     this->_setPreSet = false;
@@ -136,7 +136,7 @@ void IOTAppStory::preSetAppVersion(String appVersion) {
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetDeviceName(String deviceName) {
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     this->_setPreSet = false;
@@ -206,7 +206,7 @@ void IOTAppStory::begin() {
     {
 
         // get config from EEPROM
-        configStruct config;
+        ConfigStruct config;
         this->readConfig(config);
 
         // on first boot of the app run the firstBoot() function
@@ -347,7 +347,7 @@ void IOTAppStory::printBoardInfo() {
 void IOTAppStory::iasLog(String msg) {
 
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     // notifi IAS & enduser about the localIP
@@ -433,7 +433,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
             // WiFi.hostname(hostNameWifi);
 
             // get config from EEPROM
-            configStruct config;
+            ConfigStruct config;
             this->readConfig(config);
 
             if(MDNS.begin(config.deviceName)) {
@@ -582,7 +582,7 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 bool IOTAppStory::iotUpdater(int command) {
 
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
     yield();
 
@@ -626,7 +626,7 @@ bool IOTAppStory::iotUpdater(int command) {
         DEBUG_PRINTLN("");
     #endif
 
-    firmwareStruct  firmwareStruct;
+    FirmwareStruct  firmwareStruct;
     CallServer callServer(config, command);
     callServer.sm(&this->statusMessage);
 
@@ -675,7 +675,7 @@ bool IOTAppStory::iotUpdater(int command) {
     espInstaller
 
 *///---------------------------------------------------------------------------
-bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
+bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command) {
     devObj.sm(&this->statusMessage);
     bool result = devObj.prepareUpdate((*firmwareStruct).xlength, (*firmwareStruct).xmd5, command);
 
@@ -743,7 +743,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
                 #endif
 
                 // get config from EEPROM
-                configStruct config;
+                ConfigStruct config;
                 this->readConfig(config);
 
                 if(command == U_FLASH) {
@@ -789,7 +789,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct
 *///---------------------------------------------------------------------------
 void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type) {
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
     if(strcmp(config.compDate, this->_compDate) == 0) {
         if(this->_nrXF >= MAXNUMEXTRAFIELDS) {
@@ -818,7 +818,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
             #endif
 
             // init fieldStruct
-            addFieldStruct fieldStruct;
+            AddFieldStruct fieldStruct;
 
             // calculate EEPROM addresses
             const int eepStartAddress = FIELD_EEP_START_ADDR + (this->_nrXF * sizeof(fieldStruct));
@@ -1107,7 +1107,7 @@ void IOTAppStory::eraseEEPROM(const char ea) {
     Write the config struct to EEPROM
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::writeConfig(configStruct &config) {
+void IOTAppStory::writeConfig(ConfigStruct &config) {
     #if DEBUG_EEPROM_CONFIG == true
         DEBUG_PRINTLN("DEBUG_EEPROM\t| running writeConfig(...)");
     #endif
@@ -1122,7 +1122,7 @@ void IOTAppStory::writeConfig(configStruct &config) {
     Read the config struct from EEPROM
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::readConfig(configStruct& config) {
+void IOTAppStory::readConfig(ConfigStruct& config) {
     #if DEBUG_EEPROM_CONFIG == true
         DEBUG_PRINTLN("DEBUG_EEPROM\t| running readConfig()");
     #endif
@@ -1423,7 +1423,7 @@ String IOTAppStory::strRetDevInfo() {
     #endif
 
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     String retHtml;
@@ -1621,17 +1621,17 @@ String IOTAppStory::strRetAppInfo() {
         }
 
         // init fieldStruct
-        addFieldStruct fieldStruct;
+        AddFieldStruct fieldStruct;
 
         // calculate EEPROM addresses
-        const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(addFieldStruct));
+        const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(AddFieldStruct));
         int eepFieldStart;
 
         // get the fieldStruct from EEPROM
         EEPROM.get(eepStartAddress, fieldStruct);
 
         if(i == 0) {
-            eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(addFieldStruct)) + this->_nrXFlastAdd;
+            eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(AddFieldStruct)) + this->_nrXFlastAdd;
         } else {
             eepFieldStart = this->_nrXFlastAdd;
         }
@@ -1689,7 +1689,7 @@ String IOTAppStory::strRetAppInfo() {
 bool IOTAppStory::servSaveFngPrint(String fngprint) {
 
     // get config from EEPROM
-    configStruct config;
+    ConfigStruct config;
     this->readConfig(config);
 
     #if DEBUG_LVL >= 3
@@ -1839,7 +1839,7 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
         EEPROM.begin(EEPROM_SIZE);
         this->_nrXFlastAdd = 0;
         // init fieldStruct
-        addFieldStruct fieldStruct;
+        AddFieldStruct fieldStruct;
 
         for(unsigned int i = 0; i < this->_nrXF; i++) {
             if(request->hasParam(String(i), true)) {
@@ -1910,7 +1910,7 @@ bool IOTAppStory::servSaveActcode(String actcode) {
 
     if(actcode != "") {
         // get config from EEPROM
-        configStruct config;
+        ConfigStruct config;
         this->readConfig(config);
         actcode.toCharArray(config.actCode, 7);
         // write config to EEPROM

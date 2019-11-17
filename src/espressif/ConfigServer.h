@@ -40,7 +40,7 @@
 /*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
 /*---------------------------------------------------------------------------*/
 
-struct configStruct;
+struct ConfigStruct;
 class IOTAppStory;
 
 /*                          =======================
@@ -51,12 +51,12 @@ class IOTAppStory;
 *//*=========================================================================*/
 class ConfigServer {
 public:
-    ConfigServer(IOTAppStory& ias, configStruct& config);
+    ConfigServer(IOTAppStory& ias, ConfigStruct& config);
     void run();
 
 private:
     IOTAppStory* _ias;
-    configStruct* _config;
+    ConfigStruct* _config;
     std::unique_ptr<AsyncWebServer> server;
 
     bool _tryToConn         = false;        // is the wifi connector busy? (trying to connect)

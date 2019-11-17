@@ -103,7 +103,7 @@
 // For a tighter & dynamic EEPROM layout use the commented out formulas behind the static values.
 #define WIFI_EEP_START_ADDR         0
 #define CFG_EEP_START_ADDR          500     // WIFI_EEP_START_ADDR + ((sizeof(WiFiCredStruct) * WIFI_MULTI_MAX) + 2)
-#define FIELD_EEP_START_ADDR        720     // CFG_EEP_START_ADDR + sizeof(configStruct) + 2
+#define FIELD_EEP_START_ADDR        720     // CFG_EEP_START_ADDR + sizeof(ConfigStruct) + 2
 
 /**
     ------ ------ ------ ------ ------ ------ internal DEFINES for library ------ ------ ------ ------ ------ ------

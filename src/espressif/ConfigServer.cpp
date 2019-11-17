@@ -41,10 +41,10 @@
                         ConfigServer constructor
 
     @param ias IOTAppStory &
-    @param config configStruct &
+    @param config ConfigStruct &
 
 *///---------------------------------------------------------------------------
-ConfigServer::ConfigServer(IOTAppStory& ias, configStruct& config) {
+ConfigServer::ConfigServer(IOTAppStory& ias, ConfigStruct& config) {
     this->_ias = &ias;
     this->_config = &config;
 }

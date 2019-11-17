@@ -40,7 +40,7 @@ typedef struct {
     uint8_t markerFlag;
     int bootTimes;
     char boardMode = 'N';                // Normal operation or Configuration mode?
-} rtcMemDef __attribute__((aligned(4)));
+} RtcMemDef __attribute__((aligned(4)));
 
 /*                          =======================
 ============================   CLASS DEFINITION    ============================

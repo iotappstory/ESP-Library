@@ -50,10 +50,10 @@
 /*                          =======================
 ============================   STRUCT DEFINITION   =============================
                             =======================                        *//**
-  addFieldStruct.
+  AddFieldStruct.
 
 *//*=========================================================================*/
-struct addFieldStruct {
+struct AddFieldStruct {
     const char* fieldLabel;
     int length;
     char type;
@@ -64,10 +64,10 @@ struct addFieldStruct {
 /*                          =======================
 ============================   STRUCT DEFINITION   =============================
                             =======================                        *//**
-  configStruct.
+  ConfigStruct.
 
 *//*=========================================================================*/
-struct configStruct {
+struct ConfigStruct {
     char actCode[7] = ""; // saved IotAppStory activation code
     char appName[33] = "";
     char appVersion[12] = "";
@@ -90,10 +90,10 @@ struct configStruct {
 /*                          =======================
 ============================   STRUCT DEFINITION   =============================
                             =======================                        *//**
-  firmwareStruct.
+  FirmwareStruct.
 
 *//*=========================================================================*/
-struct firmwareStruct {
+struct FirmwareStruct {
     bool        success;
     uint32_t    xlength = 0;
     String      xname;
@@ -177,8 +177,8 @@ public:
     void loop();
 
 
-    void writeConfig(configStruct &config);
-    void readConfig(configStruct &config);
+    void writeConfig(ConfigStruct &config);
+    void readConfig(ConfigStruct &config);
     void espRestart(char mmode);
     void eraseEEPROM(int eepFrom, int eepTo);
     void eraseEEPROM(const char ea);
@@ -189,7 +189,7 @@ public:
 
     void callHome(bool spiffs = true);
     bool iotUpdater(int command = U_FLASH);
-    bool espInstaller(Stream &streamPtr, firmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
+    bool espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct, UpdateClassVirt& devObj, int command = U_FLASH);
 
     void iasLog(String msg);
     int dPinConv(String orgVal);

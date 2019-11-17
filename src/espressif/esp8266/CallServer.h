@@ -38,8 +38,8 @@
 /*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
 /*---------------------------------------------------------------------------*/
 
-struct configStruct;
-struct firmwareStruct;
+struct ConfigStruct;
+struct FirmwareStruct;
 
 /*                          =======================
 ============================   CLASS DEFINITION    ============================
@@ -49,9 +49,9 @@ struct firmwareStruct;
 *//*=========================================================================*/
 class CallServer {
 public:
-    CallServer(configStruct &config, int command = U_FLASH);
+    CallServer(ConfigStruct &config, int command = U_FLASH);
 
-    Stream& getStream(firmwareStruct *firmwareStruct);
+    Stream& getStream(FirmwareStruct *firmwareStruct);
 
     bool get(const char* url, String args);
 
@@ -69,7 +69,7 @@ private:
     #endif
     String* _statusMessage;
 
-    configStruct* _config;
+    ConfigStruct* _config;
     int _command;
     const char* _callHost = OTA_HOST;       // ota update host | Set in config.h
     const char* _callFile = OTA_UPD_FILE;   // file at host that handles esp updates
