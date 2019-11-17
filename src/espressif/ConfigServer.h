@@ -64,6 +64,7 @@ private:
     bool _connChangeMode    = false;        // flag to notify the loop to change from AP to STA mode
 
     void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+    void hdlReturn(AsyncWebServerRequest *request, int ret);
     void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
 
 };
