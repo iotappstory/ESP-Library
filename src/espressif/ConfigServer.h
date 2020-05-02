@@ -1,48 +1,72 @@
 /*                          =======================
 ============================   C/C++ HEADER FILE   ============================
                             =======================                       *//**
-  UpdateClassVirt.h
+  ConfigServer.h
 
-  Created by Onno Dirkzwager on 10.02.2019.
-  Copyright (c) 2019 IOTAppStory. All rights reserved.
+  Created by Onno Dirkzwager on 22.11.2018.
+  Copyright (c) 2018 IOTAppStory. All rights reserved.
 
 *///===========================================================================
 
-#ifndef __UpdateClassVirt_h__
-#define __UpdateClassVirt_h__
+#if defined ESP8266 || defined ESP32
+
+#ifndef __ConfigServer_h__
+#define __ConfigServer_h__
 
 /*---------------------------------------------------------------------------*/
 /*                                    INCLUDES                               */
 /*---------------------------------------------------------------------------*/
 
+#include "IOTAppStory.h"
+
+#ifdef ESP32
+    #include <AsyncTCP.h> // https://github.com/me-no-dev/AsyncTCP
+    #include <FS.h> // esp32 core SPIFFS library
+    #include <SPIFFS.h>
+#elif defined  ESP8266 // ESP32
+    #include <ESPAsyncTCP.h> // https://github.com/me-no-dev/ESPAsyncTCP
+    #include <FS.h> // esp8266 core SPIFFS library
+    #define FILE_WRITE  "w"
+    #define FILE_APPEND "a"
+#endif // ESP8266
+
+#include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
+
 /*---------------------------------------------------------------------------*/
 /*                            DEFINITIONS AND MACROS                         */
 /*---------------------------------------------------------------------------*/
-
-#define U_FLASH   0
-#define U_SPIFFS  100
-#define U_AUTH    200
-#define U_NEXTION 300
 
 /*---------------------------------------------------------------------------*/
 /*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
 /*---------------------------------------------------------------------------*/
 
+struct ConfigStruct;
+class IOTAppStory;
+
 /*                          =======================
 ============================   CLASS DEFINITION    ============================
                             =======================                       *//**
-  UpdateClassVirt.
+  ConfigServer.
 
 *//*=========================================================================*/
-class UpdateClassVirt {
+class ConfigServer {
 public:
-    virtual bool prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command);
+    ConfigServer(IOTAppStory& ias, ConfigStruct& config);
+    void run();
 
-    virtual bool update(uint8_t *file_buf, size_t buf_size);
+private:
+    IOTAppStory* _ias;
+    ConfigStruct* _config;
+    std::unique_ptr<AsyncWebServer> server;
 
-    virtual bool end(void);
+    bool _tryToConn         = false;        // is the wifi connector busy? (trying to connect)
+    bool _connFail          = false;        // did the last connection attempt faile
+    bool _connChangeMode    = false;        // flag to notify the loop to change from AP to STA mode
 
-    virtual void sm(String *statusMessage);
+    void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+    void hdlReturn(AsyncWebServerRequest *request, int ret);
+    void hdlReturn(AsyncWebServerRequest *request, String retHtml, String type = "text/html");
+
 };
 
 /*---------------------------------------------------------------------------*/
@@ -52,4 +76,5 @@ public:
 /*---------------------------------------------------------------------------*/
 /*                                    EOF                                    */
 /*---------------------------------------------------------------------------*/
-#endif // __UpdateClassVirt_h__
+#endif // __ConfigServer_h__
+#endif // ESP8266 || defined ESP32

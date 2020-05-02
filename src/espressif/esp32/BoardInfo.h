@@ -1,28 +1,26 @@
 /*                          =======================
 ============================   C/C++ HEADER FILE   ============================
                             =======================                       *//**
-  UpdateClassVirt.h
+  BoardInfo.h
 
-  Created by Onno Dirkzwager on 10.02.2019.
-  Copyright (c) 2019 IOTAppStory. All rights reserved.
+  Created by Onno Dirkzwager on 22.11.2018.
+  Copyright (c) 2018 IOTAppStory. All rights reserved.
 
 *///===========================================================================
 
-#ifndef __UpdateClassVirt_h__
-#define __UpdateClassVirt_h__
+#ifdef ESP32
+#ifndef __BoardInfo_h__
+#define __BoardInfo_h__
 
 /*---------------------------------------------------------------------------*/
 /*                                    INCLUDES                               */
 /*---------------------------------------------------------------------------*/
 
+#include <Preferences.h>
+
 /*---------------------------------------------------------------------------*/
 /*                            DEFINITIONS AND MACROS                         */
 /*---------------------------------------------------------------------------*/
-
-#define U_FLASH   0
-#define U_SPIFFS  100
-#define U_AUTH    200
-#define U_NEXTION 300
 
 /*---------------------------------------------------------------------------*/
 /*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
@@ -31,18 +29,18 @@
 /*                          =======================
 ============================   CLASS DEFINITION    ============================
                             =======================                       *//**
-  UpdateClassVirt.
+  BoardInfo.
 
 *//*=========================================================================*/
-class UpdateClassVirt {
+class BoardInfo {
 public:
-    virtual bool prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command);
+    BoardInfo(int &bootTimes, char &boardMode);
+    void read();
+    void write();
 
-    virtual bool update(uint8_t *file_buf, size_t buf_size);
-
-    virtual bool end(void);
-
-    virtual void sm(String *statusMessage);
+private:
+    int* _bootTimes;
+    char* _boardMode;
 };
 
 /*---------------------------------------------------------------------------*/
@@ -52,4 +50,5 @@ public:
 /*---------------------------------------------------------------------------*/
 /*                                    EOF                                    */
 /*---------------------------------------------------------------------------*/
-#endif // __UpdateClassVirt_h__
+#endif // __BoardInfo_h__
+#endif // ESP32
