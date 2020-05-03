@@ -1,63 +1,66 @@
-/*                          =======================
-============================   C/C++ HEADER FILE   ============================
-                            =======================                       *//**
-  UpdateNextionClass.h
-
-  Created by Onno Dirkzwager on 10.02.2019.
-  Copyright (c) 2019 IOTAppStory. All rights reserved.
-
-*///===========================================================================
-
-#ifndef __UpdateNextionClass_h__
-#define __UpdateNextionClass_h__
-
-/*---------------------------------------------------------------------------*/
-/*                                    INCLUDES                               */
-/*---------------------------------------------------------------------------*/
-
 #include "../config.h"
-#include "UpdateClassVirt.h"
-#include <ESPNexUpload.h>
+#if OTA_UPD_CHECK_NEXTION == true
+	/*                          =======================
+	============================   C/C++ HEADER FILE   ============================
+								=======================                       *//**
+	  UpdateNextionClass.h
 
-/*---------------------------------------------------------------------------*/
-/*                            DEFINITIONS AND MACROS                         */
-/*---------------------------------------------------------------------------*/
+	  Created by Onno Dirkzwager on 10.02.2019.
+	  Copyright (c) 2019 IOTAppStory. All rights reserved.
 
-/*---------------------------------------------------------------------------*/
-/*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
-/*---------------------------------------------------------------------------*/
+	*///===========================================================================
 
-/*                          =======================
-============================   CLASS DEFINITION    ============================
-                            =======================                       *//**
-  UpdateNextionClass.
+	#ifndef __UpdateNextionClass_h__
+		#define __UpdateNextionClass_h__
 
-*//*=========================================================================*/
-class UpdateNextionClass : public UpdateClassVirt {
-public:
-    ~UpdateNextionClass() {};
+		/*---------------------------------------------------------------------------*/
+		/*                                    INCLUDES                               */
+		/*---------------------------------------------------------------------------*/
 
-    virtual bool prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command);
+		
+		#include "UpdateClassVirt.h"
+		#include <ESPNexUpload.h>
 
-    virtual bool update(uint8_t *file_buf, size_t buf_size);
+		/*---------------------------------------------------------------------------*/
+		/*                            DEFINITIONS AND MACROS                         */
+		/*---------------------------------------------------------------------------*/
 
-    virtual bool end(void);
+		/*---------------------------------------------------------------------------*/
+		/*                        TYPEDEFS, CLASSES AND STRUCTURES                   */
+		/*---------------------------------------------------------------------------*/
 
-    virtual void sm(String *statusMessage);
+		/*                          =======================
+		============================   CLASS DEFINITION    ============================
+									=======================                       *//**
+		  UpdateNextionClass.
 
-    ESPNexUpload nextion{NEXT_BAUD};
+		*//*=========================================================================*/
+		class UpdateNextionClass : public UpdateClassVirt {
+			public:
+				~UpdateNextionClass() {};
 
-private:
-    String* _statusMessage;
-};
+				virtual bool prepareUpdate(uint32_t upd_size, String &upd_md5, uint16_t command);
 
-/*---------------------------------------------------------------------------*/
-/*                                GLOBAL VARIABLES                           */
-/*---------------------------------------------------------------------------*/
+				virtual bool update(uint8_t *file_buf, size_t buf_size);
 
-extern UpdateNextionClass UpdateNextion;
+				virtual bool end(void);
 
-/*---------------------------------------------------------------------------*/
-/*                                    EOF                                    */
-/*---------------------------------------------------------------------------*/
-#endif // __UpdateNextionClass_h__
+				virtual void sm(String *statusMessage);
+
+				ESPNexUpload nextion{NEXT_BAUD};
+
+			private:
+				String* _statusMessage;
+		};
+
+		/*---------------------------------------------------------------------------*/
+		/*                                GLOBAL VARIABLES                           */
+		/*---------------------------------------------------------------------------*/
+
+		extern UpdateNextionClass UpdateNextion;
+
+		/*---------------------------------------------------------------------------*/
+		/*                                    EOF                                    */
+		/*---------------------------------------------------------------------------*/
+	#endif // __UpdateNextionClass_h__
+#endif
