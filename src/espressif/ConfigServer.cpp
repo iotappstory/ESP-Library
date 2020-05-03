@@ -356,6 +356,9 @@ void ConfigServer::run() {
         while(exitConfig == false) {
 
             yield();
+            #if defined  ESP8266
+                MDNS.update();
+            #endif
 
             if(this->_ias->_connected) {
                 //DEBUG_PRINTLN("Configserver connected loop part");
