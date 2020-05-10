@@ -7,7 +7,7 @@ Wifi & OTA update manager for IOT devices (ESP8266 and ESP32). ESP8266's need at
 https://github.com/iotappstory/ESP-Library/releases/latest
 </br></br>
 
-## Arduino IDE librairy manager
+## Arduino IDE [![arduino-library-badge](https://www.ardu-badge.com/badge/IOTAppStory-ESP.svg?)](https://www.ardu-badge.com/IOTAppStory-ESP)
 <img src="https://github.com/iotappstory/ESP8266-Library/blob/master/arduinoIDE_lib_manager.jpg"/>
 </br>
 
