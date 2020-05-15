@@ -465,6 +465,31 @@ void IOTAppStory::WiFiSetupAndConnect() {
 }
 
 /*-----------------------------------------------------------------------------
+                        IOTAppStory WiFiConnectToAp
+
+    Connect to last used wifi Acces Point
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::WiFiConnectToAp(){
+    WiFiConnector WiFiConn;
+		WiFiConn.setup();
+    // connect to access point
+    if(!WiFiConn.connectToAP(".")){
+        _connected = false;
+        #if DEBUG_LVL >= 2
+            DEBUG_PRINTLN(F(" WiFi connection failed!"));
+            DEBUG_PRINTLN(FPSTR(SER_DEV));
+        #endif
+    }else{
+        _connected = true;
+        #if DEBUG_LVL >= 2
+            DEBUG_PRINTLN(F(" WiFi connected!"));
+            DEBUG_PRINTLN(FPSTR(SER_DEV));
+        #endif
+    }
+}
+
+/*-----------------------------------------------------------------------------
                         IOTAppStory WiFiDisconnect
 
     Disconnect wifi
@@ -478,6 +503,9 @@ void IOTAppStory::WiFiDisconnect() {
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
 }
+
+
+
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory setClock
