@@ -184,6 +184,7 @@ public:
     void eraseEEPROM(const char ea);
 
     void WiFiSetupAndConnect();
+    void WiFiConnectToAp();
     void WiFiDisconnect();
     void setClock();
 
