@@ -234,6 +234,7 @@ bool CallServer::get(const char* url, String args) {
                F("\r\nx-ESP-FLASHCHIP-ID: ") + ESP_GETFLASHCHIPID +
                F("\r\nx-ESP-CHIP-ID: ") + ESP_GETCHIPID +
                F("\r\nx-ESP-CORE-VERSION: ") + ESP.getSdkVersion() +
+               F("\r\nx-ESP_IASLIB: ") + IASLIB +
 
                F("\r\nx-ESP-FLASHCHIP-SIZE: ") + ESP.getFlashChipSize() +
                F("\r\nx-ESP-VERSION: ") + this->_config->appName + " v" + this->_config->appVersion +

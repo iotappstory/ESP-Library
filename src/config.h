@@ -131,10 +131,11 @@
 
 #define FNGPRINT    0
 #define CERTIFICATE 1
+#define IASLIB      "2.1.0-RC3"
 
 // used for storing the config struct to eeprom
-#define MAGICBYTES                  "CFG"
-#define MAGICEEP                    "%"
+#define MAGICBYTES  "CFG"
+#define MAGICEEP    "%"
 
 #if WIFI_DHCP_ONLY == false && WIFI_MULTI == true
     #undef WIFI_MULTI
