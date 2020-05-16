@@ -980,6 +980,7 @@ void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int 
 
             // increase added xtra field count
             this->_nrXF++;
+            this->eepFreeFrom = this->_nrXFlastAdd;
         }
     }
 }

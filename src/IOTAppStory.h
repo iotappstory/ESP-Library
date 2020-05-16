@@ -151,7 +151,8 @@ public:
         ------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
     */
     int bootTimes;
-    char boardMode = 'N';                    // Normal operation or Configuration mode?
+    char boardMode = 'N';                   // Normal operation or Configuration mode?
+    unsigned int eepFreeFrom;               // From where can I use eeprom?
     String statusMessage = "";
 
 
@@ -240,7 +241,7 @@ private:
     const char* _compDate;
     const int _modeButton;                          // which gpio is used for selecting modes
     unsigned int _nrXF                  = 0;        // nr of extra fields required in the config manager
-    unsigned int _nrXFlastAdd           = 0;        // nr of extra fields required in the config manager
+    unsigned int _nrXFlastAdd           = 0;        // current EEPROM position counter used by the addFields method
     bool _updateOnBoot                  = true;     // update on boot? (end of begin();)
     bool _automaticConfig               = true;     // automaticly go to config on boot if there is no wifi connection present
     bool _setPreSet                     = false;    // ;) have there been any preSets set?
