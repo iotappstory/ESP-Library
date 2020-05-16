@@ -465,16 +465,16 @@ void IOTAppStory::WiFiSetupAndConnect() {
 }
 
 /*-----------------------------------------------------------------------------
-                        IOTAppStory WiFiConnectToAp
+                        IOTAppStory WiFiConnect
 
     Connect to last used wifi Acces Point
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::WiFiConnectToAp(){
+void IOTAppStory::WiFiConnect(){
     WiFiConnector WiFiConn;
 		WiFiConn.setup();
     // connect to access point
-    if(!WiFiConn.connectToAP(".")){
+    if(!WiFiConn.connect(".")){
         _connected = false;
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(F(" WiFi connection failed!"));
