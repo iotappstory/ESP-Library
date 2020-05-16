@@ -465,12 +465,12 @@ void IOTAppStory::WiFiSetupAndConnect() {
 }
 
 /*-----------------------------------------------------------------------------
-                        IOTAppStory WiFiConnectToAp
+                        IOTAppStory WiFiConnect
 
     Connect to last used wifi Acces Point
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::WiFiConnectToAp(){
+void IOTAppStory::WiFiConnect(){
     WiFiConnector WiFiConn;
 		WiFiConn.setup();
     // connect to access point
