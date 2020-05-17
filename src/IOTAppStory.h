@@ -151,8 +151,8 @@ public:
         ------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
     */
     int bootTimes;
-    char boardMode = 'N';                   // Normal operation or Configuration mode?
-    unsigned int eepFreeFrom;               // From where can I use eeprom?
+    char boardMode = 'N';                             // Normal operation or Configuration mode?
+    unsigned int eepFreeFrom = FIELD_EEP_START_ADDR;  // From where can I use eeprom?
     String statusMessage = "";
 
 
