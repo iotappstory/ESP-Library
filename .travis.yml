@@ -17,7 +17,7 @@ install:
   # - arduino --install-boards esp8266:esp8266
   - arduino --pref "compiler.warning_level=all" --save-prefs
   # link project directory into Arduino libraries area.
-  - ln -s $PWD /usr/local/share/arduino/libraries/ESP-Library
+  - ln -s $PWD /usr/local/share/arduino/libraries/IOTAppStory-ESP
 
 script:
   # uno
