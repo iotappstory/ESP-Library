@@ -29,4 +29,8 @@ https://github.com/iotappstory/ESP-Library/releases/latest
 https://iotappstory.com/wiki/arduino-esp</br></br>
 
 ## Contributions and thanks
-Thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP-Library/graphs/contributors)
+Thankyou to all of you who made a [pull request](https://github.com/iotappstory/ESP-Library/graphs/contributors)</br>
+
+## Donation
+Consider supporting IOTAppStory.com by contributing to its development.</br>
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5LQHCDGKDMW38)
