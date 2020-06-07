@@ -48,6 +48,7 @@ espRestart	KEYWORD2
 eraseEEPROM	KEYWORD2
 
 WiFiSetupAndConnect	KEYWORD2
+WiFiConnect KEYWORD2
 WiFiDisconnect	KEYWORD2
 setClock	KEYWORD2
 

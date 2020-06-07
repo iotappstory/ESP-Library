@@ -4,7 +4,7 @@
   - Automaticly connecting to the strongest AP from the list on boot
   - And optionally: go to config mode if a WiFi connection can not be made
 
-  This often brings up the question: 
+  This often brings up the question:
   How can I as a programmer take control over wifi in my sketch whithout breaking the builtin options?
 
   This example demonstrates how to:
@@ -27,7 +27,7 @@
   VirginSoil sketch [Andreas Spiess]
   WiFiEvents ESP8266 [Markus Sattler & Ivan Grokhotkov]
   WiFiEvents ESP32 [me-no-dev]
-  
+
   Copyright (c) [2019] [Onno Dirkzwager]
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,7 +48,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  WiFiConnections V0.0.1
+  WiFiConnections V0.0.2
 */
 
 #define COMPDATE __DATE__ __TIME__
@@ -67,19 +67,20 @@ unsigned long connEntry;                    // Last time switched
 unsigned long connTime = 10000;             // Every 10 seconds
 bool oddEven = true;                        // Switch between 2 options
 
-
+char* LEDpin    = "2";
 
 // ================================================ SETUP ================================================
 void setup() {
   // setup the built in led for output. As this led is used in the wifi events. We need to add it before IAS.begin.
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-  
+  IAS.addField(LEDpin, "ledpin", 2, 'P');                   // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
+  pinMode(IAS.dPinConv(LEDpin), OUTPUT);
+  digitalWrite(IAS.dPinConv(LEDpin), HIGH);
+
   // create a unique deviceName for classroom situations (deviceName-123)
   chipId      = String(ESP_GETCHIPID);
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
-  
+
   IAS.preSetDeviceName(deviceName);         // preset deviceName this is also your MDNS responder: http://wifi-connections-123.local
   IAS.preSetAutoConfig(true);               // Set whether or not the device should go into config mode after after failing to connect to a Wifi AP. The default is true
   // IAS.preSetWifi("MyWifiAP", "My Pass")  // Set the WiFi credentials without going to the config pages. For development only! Make sure to delete this preSet when you publish your App.
@@ -96,11 +97,11 @@ void setup() {
     IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
   });
   */
-  
+
   IAS.begin();                              // Run IOTAppStory
   IAS.setCallHomeInterval(60);              // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
-  
-  
+
+
   //-------- Your Setup starts from here ---------------
 
 }
@@ -118,16 +119,16 @@ void loop() {
   //-------- Your Sketch starts from here ---------------
   // Once every connTime (dis)connect
   if (millis() - connEntry > connTime){
-    
+
     if(oddEven == true){
       // Disconnect WiFi
       IAS.WiFiDisconnect();
     }else{
       // Connect WiFi | If you added multiple WiFi access points in de config pages. Connect to the strongest AP from the list.
-      IAS.WiFiConnectToAP();
+      IAS.WiFiConnect();
       Serial.println(F("*-------------------------------------------------------------------------*"));
     }
-    
+
     oddEven = !oddEven;
     connEntry = millis();
   }
@@ -138,22 +139,22 @@ void loop() {
 // ================================================ OTHER FUNCTIONS =================================================
 #if defined  ESP8266
   void WiFiEvent(WiFiEvent_t event){
-    //Serial.printf("[WiFi-event] event: %d\n", event);
-    
+  //  Serial.printf("[WiFi-event] event: %d\n", event);
+
     if(event == WL_CONNECTED){
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(IAS.dPinConv(LEDpin), LOW);
     }else{
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(IAS.dPinConv(LEDpin), HIGH);
     }
   }
 #elif defined ESP32
   void WiFiEvent(WiFiEvent_t event){
-    //Serial.printf("[WiFi-event] event: %d\n", event);
-    
+  //  Serial.printf("[WiFi-event] event: %d\n", event);
+
     if(event == SYSTEM_EVENT_STA_CONNECTED){
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(IAS.dPinConv(LEDpin), LOW);
     }else{
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(IAS.dPinConv(LEDpin), HIGH);
     }
   }
 #endif
