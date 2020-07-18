@@ -1,6 +1,6 @@
 /*
   This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
-  Your code can be added wherever it is marked. 
+  Your code can be added wherever it is marked.
 
   You will need the button & OLED shields!
 
@@ -32,6 +32,8 @@
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <ezTime.h>                                       // https://github.com/ropg/ezTime
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn
+#include <LOLIN_I2C_BUTTON.h>                             // Wemos button library https://github.com/wemos/LOLIN_OLED_I2C_Button_Library
+I2C_BUTTON button; //I2C address 0x31
 
 
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
@@ -80,17 +82,14 @@ void setup() {
   chipId      = String(ESP_GETCHIPID);
   chipId      = "-"+chipId.substring(chipId.length()-3);
   deviceName += chipId;
-  
+
   IAS.preSetDeviceName(deviceName);                       // preset deviceName this is also your MDNS responder: http://deviceName.local
-
-
   IAS.addField(updInt, "Update every", 8, 'I');           // These fields are added to the config wifimanager and saved to eeprom. Updated values are returned to the original variable.
   IAS.addField(timeZone, "Timezone", 48, 'Z');            // reference to org variable | field label value | max char return | Optional "special field" char
-                                                          
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
-  
+
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -104,7 +103,12 @@ void setup() {
   });
 
   IAS.onConfigMode([]() {
-    dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-" + chipId);
+    //  if wifi clientmode display ip addr
+    if(WiFi.isConnected()){
+      dispTemplate_threeLineV1(F("Connect to"), String(WiFi.SSID()) , WiFi.localIP().toString() );
+      }else{
+      dispTemplate_threeLineV2(F("Connect to"), F("Wi-Fi"), "xxxxx-" + chipId);
+      }
   });
 
   IAS.onFirmwareUpdateCheck([]() {
@@ -113,11 +117,12 @@ void setup() {
 
   IAS.onFirmwareUpdateDownload([]() {
     dispTemplate_threeLineV2(F("Download"), F("&"), F("Install App"));
+    delay(1000);
   });
 
   IAS.onFirmwareUpdateProgress([](int written, int total){
     String perc = String(written / (total / 100)) + "%";
-    dispTemplate_threeLineV2(F("Installing"), perc, F("Done"));
+    dispTemplate_progressBarV1(F("Installing"), perc, written, total );
     Serial.print(".");
   });
 
@@ -129,14 +134,14 @@ void setup() {
     IAS.eraseEEPROM('P');                   // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
   });
   */
-  
+
   IAS.begin();                                            // Run IOTAppStory
   IAS.setCallHomeInterval(atoi(updInt));                  // Call home interval in seconds(disabled by default), 0 = off, use 60s only for development. Please change it to at least 2 hours in production
-  
-  
+
+
   //-------- Your Setup starts from here ---------------
-  
-  
+
+
   delay(500);
   Serial.print(F(" Time zone set to: "));                 // display timeZone
   Serial.print(timeZone);
@@ -159,13 +164,13 @@ void loop() {
 
 
   //-------- Your Sketch starts from here ---------------
+buttonLoop();
 
-  
   if (millis() > loopEntry + 1000 && digitalRead(MODEBUTTON) == HIGH) {
     drawFace();
     drawArms(myTZ.dateTime("H").toInt(), myTZ.dateTime("i").toInt(), myTZ.dateTime("s").toInt());
     display.display();
-    
+
     loopEntry = millis();
   }
 }
@@ -178,8 +183,10 @@ void dispTemplate_threeLineV1(String str1, String str2, String str3) {
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.drawString(32, 15, str1);
-  display.drawString(32, 30, str2);
-  display.drawString(32, 45, str3);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 32, str2);
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  display.drawString(96, 51, str3);
   display.display();
 }
 
@@ -238,4 +245,100 @@ void drawArms(int h, int m, int s)
   x3 = ( clockCenterX + ( sin(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
   y3 = ( clockCenterY - ( cos(angle) * ( clockRadius - ( clockRadius / 2 ) ) ) );
   display.drawLine( clockCenterX + x , clockCenterY + y , x3 + x , y3 + y);
+}
+
+
+void dispTemplate_progressBarV1(String str1, String str2, int written , int total) {
+  int progress = (written / (total / 100));
+  display.clear();
+  if(progress < 100){
+    display.setFont(ArialMT_Plain_10);
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(32, 13, str1);
+    display.setFont(ArialMT_Plain_24);
+    display.setTextAlignment(TEXT_ALIGN_CENTER);
+    display.drawString(64, 24, str2);
+    display.drawProgressBar(32, 56, 63, 6, progress);
+
+    }else if(progress == 100){
+      display.setFont(ArialMT_Plain_10);
+      display.setTextAlignment(TEXT_ALIGN_CENTER);
+      display.drawString(64, 48, "rebooting");
+      //display.drawXbm(46, 14, IAS_Logo_width, IAS_Logo_height, IAS_Logo_36_bits);
+      rebootScreen(46,14,F("rebooting"),"/xbm/36.WBMP");
+    }
+  display.display();
+}
+   // 0 None
+   // 1 Short Press
+   // 2 Long Press
+   // 3 Double Press
+   // 4 Hold
+void buttonLoop() {
+  if (button.get() == 0)
+  {
+    //  if button A has been pressed once
+    if (button.BUTTON_A == 1)
+    {
+      dispTemplate_threeLineV1(F("Press twice"), F("for"), F("call home"));
+    }
+    //  if button A has been double pressed
+    if (button.BUTTON_A == 3)
+    {
+      IAS.callHome();           //  check the IAS server for updates
+    }
+    //  if button B has been pressed once
+    if (button.BUTTON_B == 1)
+    {
+      dispTemplate_threeLineV1(F("Press twice"), F("for"), F("config mode"));
+    }
+    //  if button B has been double pressed
+    if (button.BUTTON_B == 3)
+    {
+      IAS.espRestart('C');      //  restart in config mode
+    }
+  }
+}
+
+
+void drawWbmp(uint8_t xMove, uint8_t yMove, Stream &file){
+  uint8_t data = file.read();               //  first byte 0 = wbmp
+          data = file.read();               //  second byte 0 = monochrome
+  uint8_t width = file.read();              //  3rd byte = img width max 255 px
+  uint8_t height = file.read();             //  4th byte = img height max 255 px
+    for(uint8_t y = 0; y < height; y++) {
+      for(uint8_t x = 0; x < width; x++ ) {
+        if (x & 7) {
+          data <<= 1; // Move a bit
+        } else {  // Read new data every 8 bit
+          data = file.read();
+        }
+        // if there is a bit draw it
+        if (data & 0x80) {
+          display.setPixel(xMove + x, yMove + y);
+        }
+      }
+    }
+}
+
+void rebootScreen(int8_t xMove, int8_t yMove,String str1, const String fileName){
+  if(!SPIFFS.begin()){
+     Serial.println(F("SPIFFS Mount Failed"));
+     return;
+  }
+  File file = SPIFFS.open(fileName,"r");
+  if (!file) {
+     Serial.println(F("Failed to open file"));
+     return;
+  }
+
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 48, "rebooting");
+  drawWbmp(xMove, yMove, file);
+  display.display();
+
+  file.close();
+  SPIFFS.end();
 }
