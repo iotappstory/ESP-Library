@@ -2,7 +2,7 @@
   This is an initial sketch to be used as a "blueprint" to create apps which can be used with IOTappstory.com infrastructure
   Your code can be added wherever it is marked.
 
-  You will need the button & OLED shields!
+  You will need either the button & OLED shields! or the LOLIN oled v2.1.0 shield!
 
   Copyright (c) [2018] [Andreas Spiess]
 
@@ -29,23 +29,23 @@
 #define MODEBUTTON D3
 
 
-#include <SSD1306.h>              // OLED library by Daniel Eichhorn
-#include <IOTAppStory.h>          // IotAppStory.com library
-#include <DHT.h>                  // Adafruit DHT Arduino library
-#include <PubSubClient.h>         // Arduino Client for MQTT by knolleary/pubsubclient
-#include <LOLIN_I2C_BUTTON.h>                             // Wemos button library https://github.com/wemos/LOLIN_OLED_I2C_Button_Library
-I2C_BUTTON button; //I2C address 0x31
+#include <SSD1306.h>                                    // OLED library by Daniel Eichhorn
+#include <IOTAppStory.h>                                // IotAppStory.com library
+#include <DHT.h>                                        // Adafruit DHT Arduino library
+#include <PubSubClient.h>                               // Arduino Client for MQTT by knolleary/pubsubclient
+#include <LOLIN_I2C_BUTTON.h>                           // Wemos button library for wemos lolin oled shield v2.1.0 https://github.com/wemos/LOLIN_OLED_I2C_Button_Library
+I2C_BUTTON button(0x31);                                // I2C address 0x31
 
 
-#define PIN_RESET 255             //
-#define DC_JUMPER 0               // I2C Addres: 0 - 0x3C, 1 - 0x3D
-#define DHTPIN D4                 // what pin we're connected to
+#define PIN_RESET 255                                   //
+#define DC_JUMPER 0                                     // I2C Addres: 0 - 0x3C, 1 - 0x3D
+#define DHTPIN D4                                       // what pin we're connected to
 
 
 // Uncomment whatever type you are using!
-#define DHTTYPE DHT11                                     // DHT 11
-//#define DHTTYPE DHT21                                   // DHT 21 (AM2301)
-//#define DHTTYPE DHT22                                   // DHT 22  (AM2302)
+#define DHTTYPE DHT11                                   // DHT 11
+//#define DHTTYPE DHT21                                 // DHT 21 (AM2301)
+//#define DHTTYPE DHT22                                 // DHT 22  (AM2302)
 
 
 WiFiClient espClient;
@@ -72,21 +72,18 @@ char msg[50]            = "field1=22.5&field2=65.7&status=MQTTPUBLISH";
 // Use functions like atoi() and atof() to transform the char array to integers or floats
 // Use IAS.dPinConv() to convert Dpin numbers to integers (D6 > 14)
 
-char* updInt      = "60";                                 // every x sec
-char* scale       = "0";                                  // 0 = Celsius, 1 = Fahrenheit
-char* apikey      = "";                                   // ThingSpeak Write API Key
+char* updInt      = "60";                               // every x sec
+char* scale       = "0";                                // 0 = Celsius, 1 = Fahrenheit
+char* apikey      = "";                                 // ThingSpeak Write API Key
 
 
 
 // ================================================ SETUP ================================================
 void setup() {
-  if(IAS.boardMode == 'N'){                                // setup OLED and show "Loading" Only in normal mode! Preserve heap for config mode.
+  if(IAS.boardMode == 'N'){                             // setup OLED and show "Loading" Only in normal mode! Preserve heap for config mode.
     display.init();
     display.flipScreenVertically();
-    display.clear();
-    display.setFont(ArialMT_Plain_16);
-    display.setTextAlignment(TEXT_ALIGN_CENTER);
-    display.drawString(64, 24, F("Loading"));
+    bootScreen(46, 14, F("Loading"),F("/wbmp/logo.WBMP"));
     display.display();
   }
 
@@ -107,12 +104,13 @@ void setup() {
   // You can configure callback functions that can give feedback to the app user about the current state of the application.
   // In this example we use serial print to demonstrate the call backs. But you could use leds etc.
 
+                                    //  default mode button not connected on LOLIN oled v2.1.0 shield
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     dispTemplate_threeLineV2(F("Release"), F("for"), F("Updates"));
   });
-
+                                  //  default mode button not connected on LOLIN oled v2.1.0 shield
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
@@ -198,7 +196,7 @@ void loop() {
 
   //-------- Your Sketch starts from here ---------------
 
-  buttonLoop();
+  buttonLoop(); // check wemos lolin oled shield v2.1.0 buttons for press event for wemos oled display shield
   if (millis() > tempEntry + 5000 && digitalRead(D3) == HIGH) { // Wait a few seconds between measurements.
     tempEntry = millis();
     // Reading temperature or humidity takes about 250 milliseconds!
@@ -263,7 +261,6 @@ void loop() {
       }
     }
   }
-
 }
 
 
@@ -378,7 +375,8 @@ void publishToThingspeak() {
 void dispTemplate_progressBarV1(String str1, String str2, int written , int total) {
   int progress = (written / (total / 100));
   display.clear();
-  if(progress < 100){
+
+  if(progress < 100) {
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     display.drawString(32, 13, str1);
@@ -387,13 +385,9 @@ void dispTemplate_progressBarV1(String str1, String str2, int written , int tota
     display.drawString(64, 24, str2);
     display.drawProgressBar(32, 56, 63, 6, progress);
 
-    }else if(progress == 100){
-      display.setFont(ArialMT_Plain_10);
-      display.setTextAlignment(TEXT_ALIGN_CENTER);
-      display.drawString(64, 48, "rebooting");
-      //display.drawXbm(46, 14, IAS_Logo_width, IAS_Logo_height, IAS_Logo_36_bits);
-      rebootScreen(46,14,F("rebooting"),"/xbm/36.WBMP");
-    }
+  }else if(progress == 100) {
+    bootScreen(46,14,F("rebooting"),F("/wbmp/logo.WBMP"));
+  }
   display.display();
 }
 
@@ -402,28 +396,24 @@ void dispTemplate_progressBarV1(String str1, String str2, int written , int tota
    // 2 Long Press
    // 3 Double Press
    // 4 Hold
+   // check wemos lolin oled shield v2.1.0 buttons for press event for wemos oled display shield
 void buttonLoop() {
-  if (button.get() == 0)
-  {
-    //  if button A has been pressed once
-    if (button.BUTTON_A == 1)
-    {
+  if (button.get() == 0) {
+                                                  //  if button A has been pressed once
+    if (button.BUTTON_A == 1) {
       dispTemplate_threeLineV1(F("Press twice"), F("for"), F("call home"));
     }
     //  if button A has been double pressed
-    if (button.BUTTON_A == 3)
-    {
-      IAS.callHome();           //  check the IAS server for updates
+    if (button.BUTTON_A == 3) {
+      IAS.callHome();                             //  check the IAS server for updates
     }
-    //  if button A has been pressed once
-    if (button.BUTTON_B == 1)
-    {
+                                                  //  if button B has been pressed once
+    if (button.BUTTON_B == 1) {
       dispTemplate_threeLineV1(F("Press twice"), F("for"), F("config mode"));
     }
-    //  if button B has been double pressed
-    if (button.BUTTON_B == 3)
-    {
-      IAS.espRestart('C');      //  restart in config mode
+                                                  //  if button B has been double pressed
+    if (button.BUTTON_B == 3) {
+      IAS.espRestart('C');                        //  restart in config mode
     }
   }
 }
@@ -449,21 +439,21 @@ void drawWbmp(uint8_t xMove, uint8_t yMove, Stream &file){
     }
 }
 
-void rebootScreen(int8_t xMove, int8_t yMove,String str1, const String fileName){
+void bootScreen(int8_t xMove, int8_t yMove,String str1, const String fileName){
   if(!SPIFFS.begin()){
-     Serial.println(F("SPIFFS Mount Failed"));
+     Serial.println(F("\n\n SPIFFS Mount Failed"));
      return;
   }
   File file = SPIFFS.open(fileName,"r");
   if (!file) {
-     Serial.println(F("Failed to open file"));
+     Serial.println(F("\n\n Failed to open file"));
      return;
   }
 
   display.clear();
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 48, "rebooting");
+  display.drawString(64, 48, str1);
   drawWbmp(xMove, yMove, file);
   display.display();
 

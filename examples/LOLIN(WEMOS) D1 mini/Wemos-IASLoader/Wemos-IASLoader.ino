@@ -2,7 +2,7 @@
   This is an initial sketch to get your device registered at IOTappstory.com
   You will need an account at IOTAppStory.com
 
-  You will need the LOLIN oled v2.1.0 shield!
+  You will need either the button & OLED shields! or the LOLIN oled v2.1.0 shield!
 
   Copyright (c) [2016] [Andreas Spiess]
 
@@ -32,8 +32,8 @@
 #include <IOTAppStory.h>                                  // IotAppStory.com library
 #include <SSD1306.h>                                      // OLED library by Daniel Eichhorn https://github.com/ThingPulse/esp8266-oled-ssd1306
 #include "logo.h"                                         // IOTAppStory.com logo in XBM format
-#include <LOLIN_I2C_BUTTON.h>                             // Wemos button library https://github.com/wemos/LOLIN_OLED_I2C_Button_Library
-I2C_BUTTON button; //I2C address 0x31
+#include <LOLIN_I2C_BUTTON.h>                             // Wemos button library for wemos lolin oled shield v2.1.0 https://github.com/wemos/LOLIN_OLED_I2C_Button_Library
+I2C_BUTTON button(0x31);                                  // I2C address 0x31
 
 IOTAppStory IAS(COMPDATE, MODEBUTTON);                    // Initialize IotAppStory
 SSD1306  display(0x3c, D2, D1, GEOMETRY_128_64);          // Initialize OLED
@@ -86,7 +86,7 @@ void setup() {
 
   IAS.onFirstBoot([]() {
     dispTemplate_threeLineV1(F("Welcome"), F("To"), F("IOTAppStory"));
-    IAS.eraseEEPROM('P');                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
+    IAS.eraseEEPROM('P');                                 // Optional! What to do with EEPROM on First boot of the app? 'F' Fully erase | 'P' Partial erase
     delay(3000);
   });
 
@@ -130,7 +130,7 @@ void loop() {
                 // reconnecting WiFi when the connection is lost,
                 // and setting the internal clock (ESP8266 for BearSSL)
 
-  buttonLoop(); // check buttons for press event
+  buttonLoop(); // check wemos lolin oled shield v2.1.0 buttons for press event for wemos oled display shield
 
   if (millis() - printEntry > (callHomeIntervall * 500) && digitalRead(D3) == HIGH) {
     // if the sketch reaches this point, you failed to activate your device at IotAppStory.com, did not create a project or did not add an app to your project
@@ -183,6 +183,7 @@ void dispTemplate_fourLineV1(String str1, String str2, String str3, String str4)
 void dispTemplate_progressBarV1(String str1, String str2, int written , int total) {
   int progress = (written / (total / 100));
   display.clear();
+
   if(progress < 100){
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -206,28 +207,24 @@ void dispTemplate_progressBarV1(String str1, String str2, int written , int tota
    // 2 Long Press
    // 3 Double Press
    // 4 Hold
+   // check wemos lolin oled shield v2.1.0 buttons for press event for wemos oled display shield
 void buttonLoop() {
-  if (button.get() == 0)
-  {
-    //  if button A has been pressed once
-    if (button.BUTTON_A == 1)
-    {
+  if (button.get() == 0) {
+                                                  //  if button A has been pressed once
+    if (button.BUTTON_A == 1) {
       dispTemplate_threeLineV1(F("Press twice"), F("for"), F("call home"));
     }
     //  if button A has been double pressed
-    if (button.BUTTON_A == 3)
-    {
-      IAS.callHome();           //  check the IAS server for updates
+    if (button.BUTTON_A == 3) {
+      IAS.callHome();                             //  check the IAS server for updates
     }
-    //  if button B has been pressed once
-    if (button.BUTTON_B == 1)
-    {
+                                                  //  if button B has been pressed once
+    if (button.BUTTON_B == 1) {
       dispTemplate_threeLineV1(F("Press twice"), F("for"), F("config mode"));
     }
-    //  if button B has been double pressed
-    if (button.BUTTON_B == 3)
-    {
-      IAS.espRestart('C');      //  restart in config mode
+                                                  //  if button B has been double pressed
+    if (button.BUTTON_B == 3) {
+      IAS.espRestart('C');                        //  restart in config mode
     }
   }
 }
