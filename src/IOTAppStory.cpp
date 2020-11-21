@@ -258,7 +258,11 @@ void IOTAppStory::begin() {
 
         // --------- START WIFI --------------------------
         // Setup wifi with cred etc connect to AP
-        this->WiFiSetupAndConnect();
+	// Only connect if not *already* connected from some action before the IOTAppStory::begin() call.
+	// This helps avoids wifi managers interfering with each other - it's a quick hack but *seems* to work just fine.
+        if(!this->_connected) {
+	    this->WiFiSetupAndConnect();
+        }
 
         // Synchronize time useing SNTP. This is necessary to verify that
         // the TLS certificates offered by servers are currently valid.
