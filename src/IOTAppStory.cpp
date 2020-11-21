@@ -260,7 +260,7 @@ void IOTAppStory::begin() {
         // Setup wifi with cred etc connect to AP
         this->WiFiSetupAndConnect();
 
-        // Synchronize time useing SNTP. This is necessary to verify that
+        // Synchronize time using SNTP. This is necessary to verify that
         // the TLS certificates offered by servers are currently valid.
         #if SNTP_INT_CLOCK_UPD == true
             if(this->_connected) {
