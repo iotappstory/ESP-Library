@@ -179,9 +179,9 @@ bool CallServer::get(const char* url, String args) {
         #endif
 
         // connect to host
-        if (!this->_client.connect(this->_callHost, 443)) {
+        if (!this->_client.connect(this->_callHost, OTA_HOST_HTTPS_PORT)) {
     #else
-        if (!this->_client.connect(this->_callHost, 80)) {
+        if (!this->_client.connect(this->_callHost, OTA_HOST_HTTP_PORT)) {
     #endif
         // Error: connection failed
         (*this->_statusMessage) = SER_CALLHOME_FAILED;
