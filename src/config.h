@@ -68,6 +68,8 @@
 #define OTA_HOST                    "iotappstory.com"   // OTA update host
 #define OTA_UPD_FILE                "/ota/updates.php"  // file at host that handles 8266 updates
 #define OTA_LOG_FILE                "/ota/logs.php"     // file at host that handles 8266 updates
+#define OTA_HOST_HTTP_PORT          80
+#define OTA_HOST_HTTPS_PORT         443
 #define OTA_LOCAL_UPDATE            false               // Update firmware by uploading a .bin file in config mode | Only when config is stored in SPIFFS. CFG_STORAGE (line 15)
 #define OTA_UPD_CHECK_SPIFFS        true                // Do you want to OTA update SPIFFS? | true / false
 #define OTA_UPD_CHECK_NEXTION       false               // Do you want to OTA update your Nextion display? | true / false
