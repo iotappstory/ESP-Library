@@ -191,7 +191,7 @@ bool CallServer::get(const char* url, String args) {
                 this->_client.setCACert(ROOT_CA);
             #endif
 
-            this->_client.connect(this->_callHost, 443);
+            this->_client.connect(this->_callHost, OTA_HOST_HTTPS_PORT);
 
             #if DEBUG_FREE_HEAP == true
                 DEBUG_PRINTLN(" after _client.connect");
@@ -208,7 +208,7 @@ bool CallServer::get(const char* url, String args) {
         #elif HTTPS_8266_TYPE == FNGPRINT
             this->_client.setFingerprint(this->_config->sha1);
 
-            if(!this->_client.connect(this->_callHost, 443)) {
+            if(!this->_client.connect(this->_callHost, OTA_HOST_HTTPS_PORT)) {
                 // Error: connection failed
                 (*this->_statusMessage) = SER_CALLHOME_FAILED;
                 return false;
@@ -221,7 +221,7 @@ bool CallServer::get(const char* url, String args) {
             }
         #endif
     #else
-        this->_client.connect(this->_callHost, 80);
+        this->_client.connect(this->_callHost, OTA_HOST_HTTP_PORT);
     #endif
 
     String mode, md5;
