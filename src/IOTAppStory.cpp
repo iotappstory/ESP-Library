@@ -165,13 +165,21 @@ void IOTAppStory::preSetAutoConfig(bool automaticConfig) {
 }
 
 /*-----------------------------------------------------------------------------
+                        IOTAppStory preSetWifiConnectOnBoot
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::preSetConnWifiOnBoot(bool automaticWifiConnectOnBoot) {
+    this->_automaticWifiConnectOnBoot = automaticWifiConnectOnBoot;
+}
+
+/*-----------------------------------------------------------------------------
                         IOTAppStory preSetWifi
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetWifi(const char* ssid, const char* password) {
     // Save Wifi presets if newer
     WiFiConnector WiFiConn;
-    if(strcmp(WiFiConn.getSSIDfromEEPROM(1), ssid) != 0) {
+    if(WiFiConn.getSSIDfromEEPROM(1) != String(ssid)) {
         WiFiConn.addAPtoEEPROM(ssid, password, 1);
     }
 }
@@ -257,20 +265,10 @@ void IOTAppStory::begin() {
         }
 
         // --------- START WIFI --------------------------
-        // Setup wifi with cred etc connect to AP
-	// Only connect if not *already* connected from some action before the IOTAppStory::begin() call.
-	// This helps avoids wifi managers interfering with each other - it's a quick hack but *seems* to work just fine.
-        if(!this->_connected) {
-	    this->WiFiSetupAndConnect();
-        }
-
-        // Synchronize time using SNTP. This is necessary to verify that
-        // the TLS certificates offered by servers are currently valid.
-        #if SNTP_INT_CLOCK_UPD == true
-            if(this->_connected) {
-                this->setClock();
-            }
-        #endif
+		if((_automaticWifiConnectOnBoot || this->boardMode == 'C') && !this->WiFiConnected){
+			// Setup wifi with cred etc connect to AP
+			this->WiFiSetupAndConnect();
+		}
 
         //---------- SELECT BOARD MODE -----------------------------
         #if CFG_INCLUDE == true
@@ -283,7 +281,19 @@ void IOTAppStory::begin() {
 
                     // notifi IAS & enduser this device went to config mode (also sends localIP)
                     #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                        if(this->_connected) {
+                        if(this->WiFiConnected) {
+							
+							#if SNTP_INT_CLOCK_UPD == true
+							if(!this->_timeSet){
+								if(!ntpSync()){
+									#if DEBUG_LVL >= 2
+										DEBUG_PRINTLN(F(" Failed: no time sync"));
+									#endif		
+									return;
+								}
+							}
+							#endif
+							
                             this->iasLog("1");
                         }
                     #endif
@@ -300,7 +310,7 @@ void IOTAppStory::begin() {
 
                 // notifi IAS & enduser this device has left config mode (also sends localIP)
                 #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                    if(this->_connected) {
+                    if(this->WiFiConnected) {
                         this->iasLog("0");
                     }
                 #endif
@@ -312,7 +322,7 @@ void IOTAppStory::begin() {
     }
 
     // --------- if connection & automaticUpdate Update --------------------------
-    if(this->_connected && this->_updateOnBoot == true) {
+    if(this->WiFiConnected && this->_updateOnBoot == true) {
         this->callHome();
     }
 
@@ -393,7 +403,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
     // connect to access point
     if(!WiFiConn.connectToAP(".")) {
-        this->_connected = false;
+        this->WiFiConnected = false;
         // FAILED
         // if conditions are met, set to config mode (C)
         if(this->_automaticConfig || this->boardMode == 'C') {
@@ -417,7 +427,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
         }
 
     } else {
-        this->_connected = true;
+        this->WiFiConnected = true;
         // SUCCES
         // Show connection details if debug level is set
         #if DEBUG_LVL >= 1
@@ -466,6 +476,16 @@ void IOTAppStory::WiFiSetupAndConnect() {
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
+	
+
+
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	#if SNTP_INT_CLOCK_UPD == true
+		if(this->WiFiConnected) {
+			this->setClock();
+		}
+	#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -476,20 +496,25 @@ void IOTAppStory::WiFiSetupAndConnect() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiConnect(){
     WiFiConnector WiFiConn;
-		WiFiConn.setup();
+	WiFiConn.setup();
+	
     // connect to access point
     if(!WiFiConn.connectToAP(".")){
-        _connected = false;
+        this->WiFiConnected = false;
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(F(" WiFi connection failed!"));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
     }else{
-        _connected = true;
+        this->WiFiConnected = true;
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(F(" WiFi connected!"));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
+		
+		if(!this->_lastTimeSet){
+			this->setClock();
+		}
     }
 }
 
@@ -501,7 +526,7 @@ void IOTAppStory::WiFiConnect(){
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiDisconnect() {
     WiFi.disconnect();
-    this->_connected = false;
+    this->WiFiConnected = false;
     #if DEBUG_LVL >= 2
         DEBUG_PRINTLN(F(" WiFi disconnected!"));
         DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -518,51 +543,60 @@ void IOTAppStory::WiFiDisconnect() {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::setClock() {
-    #if defined  ESP8266
-        int retries = WIFI_CONN_MAX_RETRIES;
-    #elif defined ESP32
-        int retries = (WIFI_CONN_MAX_RETRIES/2);
-    #endif
 
-    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    configTime(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_TIME_OFFSET, SNTP_INT_CLOCK_SERV_1, SNTP_INT_CLOCK_SERV_2);
 
     #if DEBUG_LVL >= 2
-        DEBUG_PRINT(SER_SYNC_TIME_NTP);
+        DEBUG_PRINT(SER_SNTP_SETUP);
     #endif
 
+    if(!this->ntpSync(10)){
+        this->_timeSet        = false;
+        this->_lastTimeSet    = 0;
+
+        #if DEBUG_LVL >= 2
+            DEBUG_PRINT(SER_FAILED_EXCL);
+            DEBUG_PRINTLN(SER_RETRY_LATER);
+        #endif
+    }
+    #if DEBUG_LVL >= 2
+        DEBUG_PRINTLN(FPSTR(SER_DEV));
+    #endif
+}
+
+
+bool IOTAppStory::ntpSync(int retries) {
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(SER_SNTP_SYNC_TIME);
+	#endif
+	
     time_t now = time(nullptr);
-    while(now < 8 * 3600 * 2 && retries-- > 0 ) {
+    while(now < 8 * 3600 * 2) {
         delay(500);
         #if DEBUG_LVL >= 2
             DEBUG_PRINT(F("."));
         #endif
         now = time(nullptr);
+		
+		retries--;
+		if(retries == 0){
+			return false;
+		}
     }
 
-    if(retries > 0) {
-        struct tm timeinfo;
-        gmtime_r(&now, &timeinfo);
-        this->_timeSet        = true;
-        this->_lastTimeSet    = millis();
+	struct tm timeinfo;
+	gmtime_r(&now, &timeinfo);
+	this->_timeSet        = true;
+	this->_lastTimeSet    = millis();
 
-        #if DEBUG_LVL >= 3
-            DEBUG_PRINT(F("\n Current time: "));
-            DEBUG_PRINT(asctime(&timeinfo));
-        #endif
-    } else {
-        this->_timeSet        = false;
-        this->_lastTimeSet    = 0;
 
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINTLN(SER_FAILED_EXCL);
-        #endif
-    }
-    #if DEBUG_LVL >= 2
-        DEBUG_PRINTLN(F(""));
-        DEBUG_PRINTLN(FPSTR(SER_DEV));
-    #endif
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(SER_SNTP_DISP_UTC);
+		DEBUG_PRINT(asctime(&timeinfo));
+	#endif
+	
+	return true;
 }
-
 /*-----------------------------------------------------------------------------
                         IOTAppStory callHome
 
@@ -579,6 +613,24 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
     if (this->_firmwareUpdateCheckCallback) {
         this->_firmwareUpdateCheckCallback();
     }
+	
+	if(!this->WiFiConnected){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F(" Failed: no wifi connection"));
+		#endif		
+		return;
+	}
+	
+	#if SNTP_INT_CLOCK_UPD == true
+	if(!this->_timeSet){
+		if(!ntpSync()){
+			#if DEBUG_LVL >= 2
+				DEBUG_PRINTLN(F(" Failed: no time sync"));
+			#endif		
+			return;
+		}
+	}
+	#endif
 
     // try to update sketch from IOTAppStory
     this->iotUpdater();
@@ -1192,7 +1244,7 @@ void IOTAppStory::loop() {
     // wifi connector
     #if WIFI_MULTI_FORCE_RECONN_ANY == true
     if(WiFi.status() == WL_NO_SSID_AVAIL) {
-        this->_connected = false;
+        this->WiFiConnected = false;
         WiFi.disconnect(false);
         delay(10);
         #if DEBUG_LVL >= 1
@@ -1208,13 +1260,13 @@ void IOTAppStory::loop() {
     #endif
     // Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
     #if SNTP_INT_CLOCK_UPD == true
-        if(this->_connected && millis() - this->_lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
+        if(this->WiFiConnected && millis() - this->_lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
             this->setClock();
         }
     #endif
 
     // Call home and check for updates every _callHomeInterval
-    if(this->_connected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
+    if(this->WiFiConnected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
         this->callHome();
     }
 
@@ -1430,7 +1482,7 @@ String IOTAppStory::strRetHtmlRoot() {
     String retHtml;
     retHtml += FPSTR(HTTP_TEMP_START);
 
-    if(this->_connected) {
+    if(this->WiFiConnected) {
         retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
     } else {
 
@@ -1862,6 +1914,7 @@ String IOTAppStory::strRetCertScan(String path) {
     Save App Settings
 
 *///---------------------------------------------------------------------------
+#ifndef ARDUINO_SAMD_VARIANT_COMPLIANCE
 bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
     #if DEBUG_LVL >= 3
         DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
@@ -1928,6 +1981,7 @@ bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
 
     return false;
 }
+#endif
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory servSaveActcode
