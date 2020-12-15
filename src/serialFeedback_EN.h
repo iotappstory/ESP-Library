@@ -39,6 +39,7 @@
 #define SER_CONFIG_AP_MODE              " AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"
 #define SER_CONFIG_STA_MODE             " STA mode. Open "
 #define SER_CONFIG_STA_MODE_CHANGE      " Changed to STA mode. Reconnect to: "
+#define SER_CONFIG_TIMEOUT              " Timeout due to inactivity"
 #define SER_CONFIG_EXIT                 " Exit config"
 #define SER_CONFIG_ENTER                " Entering in Configuration Mode"
 
