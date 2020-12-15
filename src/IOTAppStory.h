@@ -190,7 +190,7 @@ public:
     void WiFiConnect();
     void WiFiDisconnect();
     void setClock();
-    bool ntpSync();
+    bool ntpSync(int retries = SNTP_CONN_MAX_RETRIES);
 
     void callHome(bool spiffs = true);
     bool iotUpdater(int command = U_FLASH);
@@ -234,15 +234,6 @@ private:
     /**
         ------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
     */
-    // TODO: NOT IN USE
-    // #if WIFI_MULTI == true
-    //     #ifdef ESP32
-    //         WiFiMulti wifiMulti;
-    //     #elif defined ESP8266
-    //         ESP8266WiFiMulti wifiMulti;
-    //     #endif
-    // #endif
-
     const char* _compDate;
     const int _modeButton;                          // which gpio is used for selecting modes
     unsigned int _nrXF                  = 0;        // nr of extra fields required in the config manager
