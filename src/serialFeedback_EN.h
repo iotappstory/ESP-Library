@@ -39,18 +39,25 @@
 #define SER_CONFIG_AP_MODE              " AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"
 #define SER_CONFIG_STA_MODE             " STA mode. Open "
 #define SER_CONFIG_STA_MODE_CHANGE      " Changed to STA mode. Reconnect to: "
+#define SER_CONFIG_TIMEOUT              " Timeout due to inactivity"
 #define SER_CONFIG_EXIT                 " Exit config"
 #define SER_CONFIG_ENTER                " Entering in Configuration Mode"
 
 #define SER_REC_ACT_CODE                "\n Received activation code from browser"
+#define SER_REC_CREDENTIALS             "Received credentials: "
 
 #define SER_CONN_SAVE_EEPROM            " Connected. Saving config to eeprom"
 #define SER_CONNECTING                  " Connecting to WiFi AP"
-#define SER_CONN_NONE_GO_CFG            " Going into Configuration Mode\n"
+#define SER_CONN_NONE_GO_CFG            "No creds or AP's available. Going into Configuration Mode\n"
 #define SER_CONN_NONE_CONTINU           "\n Continu without WiFi\n"
 #define SER_CONN_LOST_RECONN            " Connection lost! Reconnecting"
 #define SER_CONNECTED                   " WiFi connected\n"
-#define SER_SYNC_TIME_NTP               " Synchronising time with NTP server\n "
+
+#define SER_SNTP_SETUP                  " Setup NTP server\n"
+#define SER_SNTP_SYNC_TIME              " Sync time with NTP server\n "
+#define SER_SNTP_DISP_UTC               "\n UTC: "
+
+#define SER_RETRY_LATER                 " Retry later"
 
 #define SER_DEV_MAC                     " Device MAC: "
 #define SER_DEV_IP                      " IP Address: "

@@ -55,6 +55,7 @@ ConfigServer::ConfigServer(IOTAppStory& ias, ConfigStruct& config) {
 *///---------------------------------------------------------------------------
 void ConfigServer::run() {
         bool exitConfig = false;
+        this->_lastAction = millis();
 
         #if CFG_STORAGE == ST_SPIFFS || CFG_STORAGE == ST_HYBRID || defined ESP32
             if(!ESP_SPIFFSBEGIN) {
@@ -71,7 +72,7 @@ void ConfigServer::run() {
         // Start the AsyncWebServer | We use the std::unique_ptr below because the usual AsyncWebServer server(80); causes crashed on the esp32 when the run() method is finished
         this->server.reset(new AsyncWebServer(80));
 
-        if(this->_ias->_connected) {
+        if(this->_ias->WiFiConnected) {
             // when there is wifi setup server in STA mode
             WiFi.mode(WIFI_STA);
             #if DEBUG_LVL >= 2
@@ -91,8 +92,9 @@ void ConfigServer::run() {
             #if WIFI_SMARTCONFIG == true
                 WiFi.beginSmartConfig();
             #endif
-            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-            WiFi.softAP(this->_config->deviceName);
+            WiFi.softAP(this->_config->deviceName);                     // 1
+            delay(500);                                                 // <<-- temp workaround between 1 & 2 to prevent crashes on the ESP32 when connecting
+            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0)); // 2
 
             #if DEBUG_LVL >= 2
                 DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, this->_config->deviceName);
@@ -173,7 +175,7 @@ void ConfigServer::run() {
                             DEBUG_PRINTLN("configServer debug:\tTrying to connect: failed");
                         #endif
 
-                    } else if(this->_ias->_connected) {
+                    } else if(this->_ias->WiFiConnected) {
                         _connChangeMode = true;
                         _tryToConn = false;
 
@@ -289,6 +291,8 @@ void ConfigServer::run() {
                     {
                     request->getParam("n", true)->value().toCharArray(this->_config->appName, 33);
                     String("(local)").toCharArray(this->_config->appVersion, 12);
+
+                    this->_ias->writeConfig(*(this->_config));
                     }
 
                 }
@@ -354,13 +358,20 @@ void ConfigServer::run() {
 
         // server loop
         while(exitConfig == false) {
+			
+            if(millis() - this->_lastAction > CFG_TIMEOUT){
+              #if DEBUG_LVL >= 2
+                DEBUG_PRINTLN(SER_CONFIG_TIMEOUT);
+              #endif
+              exitConfig = true;
+            }
 
             yield();
             #if defined  ESP8266
                 MDNS.update();
             #endif
 
-            if(this->_ias->_connected) {
+            if(this->_ias->WiFiConnected) {
                 //DEBUG_PRINTLN("Configserver connected loop part");
 
                 // when succesfully added wifi cred in AP mode change to STA mode
@@ -408,10 +419,10 @@ void ConfigServer::run() {
                     #endif
 
                     if(retries > 0) {
-                        this->_ias->_connected = true;
+                        this->_ias->WiFiConnected = true;
                         _connFail = false;
                     } else {
-                        this->_ias->_connected = false;
+                        this->_ias->WiFiConnected = false;
                         _connFail = true;
                     }
 
@@ -453,6 +464,8 @@ Return page handler
 
 *///---------------------------------------------------------------------------
 void ConfigServer::hdlReturn(AsyncWebServerRequest* request, String retHtml, String type) {
+    this->_lastAction = millis();
+	
     #if CFG_AUTHENTICATE == true
     if(!request->authenticate("admin", this->_config->cfg_pass)) {
         return request->requestAuthentication();

@@ -51,6 +51,7 @@ WiFiSetupAndConnect	KEYWORD2
 WiFiConnect KEYWORD2
 WiFiDisconnect	KEYWORD2
 setClock	KEYWORD2
+ntpSync	KEYWORD2
 
 callHome	KEYWORD2
 iotUpdater	KEYWORD2
