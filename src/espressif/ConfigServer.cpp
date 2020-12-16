@@ -92,8 +92,9 @@ void ConfigServer::run() {
             #if WIFI_SMARTCONFIG == true
                 WiFi.beginSmartConfig();
             #endif
-            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-            WiFi.softAP(this->_config->deviceName);
+            WiFi.softAP(this->_config->deviceName);                     // 1
+            delay(500);                                                 // <<-- temp workaround between 1 & 2 to prevent crashes on the ESP32 when connecting
+            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0)); // 2
 
             #if DEBUG_LVL >= 2
                 DEBUG_PRINTF_P(SER_CONFIG_AP_MODE, this->_config->deviceName);
