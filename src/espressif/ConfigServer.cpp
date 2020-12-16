@@ -358,7 +358,7 @@ void ConfigServer::run() {
         // server loop
         while(exitConfig == false) {
 			
-            if(millis() - this->_lastAction > 60 * 1000 * 1){
+            if(millis() - this->_lastAction > CFG_TIMEOUT){
               #if DEBUG_LVL >= 2
                 DEBUG_PRINTLN(SER_CONFIG_TIMEOUT);
               #endif
