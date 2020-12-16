@@ -280,7 +280,7 @@ void IOTAppStory::begin() {
                     }
 
                     // notifi IAS & enduser this device went to config mode (also sends localIP)
-                    #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
+                    #if CFG_ANNOUNCE == true
                         if(this->WiFiConnected) {
 							
 							#if SNTP_INT_CLOCK_UPD == true
@@ -309,9 +309,10 @@ void IOTAppStory::begin() {
                 delay(100);
 
                 // notifi IAS & enduser this device has left config mode (also sends localIP)
-                #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
+                #if CFG_ANNOUNCE == true
                     if(this->WiFiConnected) {
                         this->iasLog("0");
+						delay(100);
                     }
                 #endif
 
