@@ -44,6 +44,7 @@
 #define SER_CONFIG_ENTER                " Entering in Configuration Mode"
 
 #define SER_REC_ACT_CODE                "\n Received activation code from browser"
+#define SER_REC_CREDENTIALS             "Received credentials: "
 
 #define SER_CONN_SAVE_EEPROM            " Connected. Saving config to eeprom"
 #define SER_CONNECTING                  " Connecting to WiFi AP"
