@@ -139,7 +139,7 @@
 
 #define FNGPRINT    0
 #define CERTIFICATE 1
-#define IASLIB      "2.1.0-RC3"
+#define IASLIB      "2.1.0-RC4"
 
 // used for storing the config struct to eeprom
 #define MAGICBYTES  "CFG"
