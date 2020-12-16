@@ -38,7 +38,7 @@
 #define CFG_PAGE_INFO               true        // include the info page in Config mode
 #define CFG_PAGE_IAS                true        // include the IAS page in Config mode
 #define CFG_ANNOUNCE                true        // Announce to IAS on which ip this device is during Config mode.
-#define CFG_TIMEOUT                 30000       // Exit Config mode after X time of inactivity.
+#define CFG_TIMEOUT                 300000       // Exit Config mode after X time of inactivity.
 
 // Wifi defines
 #define WIFI_SMARTCONFIG            false       // Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (+/- 2%) of program storage space and +/- 1%) of dynamic memory
