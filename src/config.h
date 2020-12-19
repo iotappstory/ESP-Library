@@ -57,11 +57,9 @@
    #define SNTP_INT_CLOCK_UPD           false           // The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
 #endif
 
-#define SNTP_INT_CLOCK_TIME_ZONE    0                   // Ntp time zone
-#define SNTP_INT_CLOCK_TIME_OFFSET  0                   // Ntp time offset
+#define SNTP_INT_CLOCK_TIME_ZONE    TZ_Etc_GMT          // Ntp time zone
 #define SNTP_INT_CLOCK_SERV_1       "pool.ntp.org"      // Ntp server 1
 #define SNTP_INT_CLOCK_SERV_2       "time.nist.gov"     // Ntp server 2
-#define SNTP_INT_CLOCK_UPD_INTERVAL 43200000            // Clock update internal in miliseconds (default 43200000 = 12 hour)
 #define SNTP_CONN_MAX_RETRIES       200                 // NTP sync is important! But we cannot wait forever...
 
 // HTTPS defines
