@@ -285,12 +285,7 @@ void IOTAppStory::begin() {
 							
 							#if SNTP_INT_CLOCK_UPD == true
 							if(!this->_timeSet){
-								if(!ntpSync()){
-									#if DEBUG_LVL >= 2
-										DEBUG_PRINTLN(F(" Failed: no time sync"));
-									#endif		
-									return;
-								}
+								this->ntpWaitForSync();
 							}
 							#endif
 							
@@ -389,7 +384,13 @@ void IOTAppStory::iasLog(String msg) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiSetupAndConnect() {
-
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	#if SNTP_INT_CLOCK_UPD == true
+		this->setClock();
+	#endif
+	
+	
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(SER_CONNECTING);
     #endif
@@ -477,16 +478,6 @@ void IOTAppStory::WiFiSetupAndConnect() {
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
-	
-
-
-	// Synchronize time useing SNTP. This is necessary to verify that
-	// the TLS certificates offered by servers are currently valid.
-	#if SNTP_INT_CLOCK_UPD == true
-		if(this->WiFiConnected) {
-			this->setClock();
-		}
-	#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -512,10 +503,6 @@ void IOTAppStory::WiFiConnect(){
             DEBUG_PRINTLN(F(" WiFi connected!"));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
-		
-		if(!this->_lastTimeSet){
-			this->setClock();
-		}
     }
 }
 
@@ -545,59 +532,59 @@ void IOTAppStory::WiFiDisconnect() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::setClock() {
 
-    configTime(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_TIME_OFFSET, SNTP_INT_CLOCK_SERV_1, SNTP_INT_CLOCK_SERV_2);
+	settimeofday_cb([this]{
+		this->_timeSet = true;
+	});
+	
+	configTime(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_SERV_1);
 
     #if DEBUG_LVL >= 2
         DEBUG_PRINT(SER_SNTP_SETUP);
     #endif
+	
+    #if DEBUG_LVL >= 2  //<!-- will be debug level 3 when released
+        DEBUG_PRINT(F(" - "));
+        DEBUG_PRINTLN(SNTP_INT_CLOCK_TIME_ZONE);
+		DEBUG_PRINT(F(" - "));
+        DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_1);
+    #endif
 
-    if(!this->ntpSync(10)){
-        this->_timeSet        = false;
-        this->_lastTimeSet    = 0;
-
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINT(SER_FAILED_EXCL);
-            DEBUG_PRINTLN(SER_RETRY_LATER);
-        #endif
-    }
     #if DEBUG_LVL >= 2
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
 }
 
 
-bool IOTAppStory::ntpSync(int retries) {
+bool IOTAppStory::ntpWaitForSync(int retries) {
 	#if DEBUG_LVL >= 2
 		DEBUG_PRINT(SER_SNTP_SYNC_TIME);
 	#endif
 	
-    time_t now = time(nullptr);
-    while(now < 8 * 3600 * 2) {
+    
+    while(!this->_timeSet) {
         delay(500);
         #if DEBUG_LVL >= 2
             DEBUG_PRINT(F("."));
         #endif
-        now = time(nullptr);
 		
 		retries--;
 		if(retries == 0){
 			return false;
 		}
     }
-
-	struct tm timeinfo;
-	gmtime_r(&now, &timeinfo);
-	this->_timeSet        = true;
-	this->_lastTimeSet    = millis();
-
+	
+	time_t now = time(nullptr);
 
 	#if DEBUG_LVL >= 2
-		DEBUG_PRINT(SER_SNTP_DISP_UTC);
-		DEBUG_PRINT(asctime(&timeinfo));
+		DEBUG_PRINT(F("\n "));
+		DEBUG_PRINT(SNTP_INT_CLOCK_TIME_ZONE);
+		DEBUG_PRINT(F(": "));
+		DEBUG_PRINT(ctime(&now));
 	#endif
 	
 	return true;
 }
+
 /*-----------------------------------------------------------------------------
                         IOTAppStory callHome
 
@@ -621,17 +608,13 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
 		#endif		
 		return;
 	}
-	
+
 	#if SNTP_INT_CLOCK_UPD == true
 	if(!this->_timeSet){
-		if(!ntpSync()){
-			#if DEBUG_LVL >= 2
-				DEBUG_PRINTLN(F(" Failed: no time sync"));
-			#endif		
-			return;
-		}
+		this->ntpWaitForSync();
 	}
 	#endif
+	
 
     // try to update sketch from IOTAppStory
     this->iotUpdater();
@@ -1258,12 +1241,6 @@ void IOTAppStory::loop() {
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
     }
-    #endif
-    // Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
-    #if SNTP_INT_CLOCK_UPD == true
-        if(this->WiFiConnected && millis() - this->_lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
-            this->setClock();
-        }
     #endif
 
     // Call home and check for updates every _callHomeInterval
