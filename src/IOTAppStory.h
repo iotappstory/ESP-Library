@@ -190,7 +190,7 @@ public:
     void WiFiConnect();
     void WiFiDisconnect();
     void setClock();
-    bool ntpSync(int retries = SNTP_CONN_MAX_RETRIES);
+    bool ntpWaitForSync(int retries = SNTP_CONN_MAX_RETRIES);
 
     void callHome(bool spiffs = true);
     bool iotUpdater(int command = U_FLASH);
@@ -244,7 +244,6 @@ private:
     bool _setPreSet                     = false;    // ;) have there been any preSets set?
 
     bool _timeSet                       = false;    // maby?<---------------
-    unsigned long _lastTimeSet          = 0;
     unsigned long _lastCallHomeTime     = 0;        // Time when we last called home
     unsigned long _callHomeInterval     = 0;        // Interval we want to call home at in milliseconds. 0 = off
 
