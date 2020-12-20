@@ -151,11 +151,11 @@ public:
         ------ ------ ------ ------ ------ ------ VARIABLES ------ ------ ------ ------ ------ ------
     */
     int bootTimes;
-    char boardMode = 'N';                   			// Normal operation or Configuration mode?
+    char boardMode = 'N';                               // Normal operation or Configuration mode?
     unsigned int eepFreeFrom = FIELD_EEP_START_ADDR;    // From where can I use eeprom?
     String statusMessage = "";
-    bool WiFiConnected = false;    						// wifi connection status bool
-
+    bool WiFiConnected = false;                         // wifi connection status bool
+    NtpTimeSync NtpHelper;
 
     /**
         ------ ------ ------ ------ ------ ------ FUCNTION DEFINITIONS ------ ------ ------ ------ ------ ------
