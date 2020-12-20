@@ -53,11 +53,13 @@
 // Internal clock
 #if defined  ESP8266
    #define SNTP_INT_CLOCK_UPD           true            // Synchronize the internal clock useing SNTP? BearSSL: This is necessary to verify that the TLS certificates offered by servers are currently valid.
+   #define SNTP_INT_CLOCK_TIME_ZONE     TZ_Etc_GMT      // Ntp time zone
 #elif defined ESP32
    #define SNTP_INT_CLOCK_UPD           false           // The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
+   #define SNTP_INT_CLOCK_TIME_ZONE     PSTR("GMT0")    // Ntp time zone
 #endif
 
-#define SNTP_INT_CLOCK_TIME_ZONE    TZ_Etc_GMT          // Ntp time zone
+
 #define SNTP_INT_CLOCK_SERV_1       "pool.ntp.org"      // Ntp server 1
 #define SNTP_INT_CLOCK_SERV_2       "time.nist.gov"     // Ntp server 2
 #define SNTP_CONN_MAX_RETRIES       200                 // NTP sync is important! But we cannot wait forever...
