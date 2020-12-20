@@ -283,11 +283,11 @@ void IOTAppStory::begin() {
                     #if CFG_ANNOUNCE == true
                         if(this->WiFiConnected) {
 							
-							#if SNTP_INT_CLOCK_UPD == true
-							if(!this->_timeSet){
-								this->ntpWaitForSync();
-							}
-							#endif
+                            #if SNTP_INT_CLOCK_UPD == true
+                              if(!this->_timeSet){
+                                this->ntpWaitForSync();
+                              }
+                            #endif
 							
                             this->iasLog("1");
                         }
@@ -386,7 +386,8 @@ void IOTAppStory::iasLog(String msg) {
 void IOTAppStory::WiFiSetupAndConnect() {
 	// Synchronize time useing SNTP. This is necessary to verify that
 	// the TLS certificates offered by servers are currently valid.
-	#if SNTP_INT_CLOCK_UPD == true
+	// ESP8266 setClock BEFORE wifi for faster sync
+	#if SNTP_INT_CLOCK_UPD == true && defined ESP8266
 		this->setClock();
 	#endif
 	
@@ -444,10 +445,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
         // Register host name in WiFi and mDNS
         #if WIFI_USE_MDNS == true
-
-            // wifi_station_set_hostname(config.deviceName);
-            // WiFi.hostname(hostNameWifi);
-
+		
             // get config from EEPROM
             ConfigStruct config;
             this->readConfig(config);
@@ -478,6 +476,13 @@ void IOTAppStory::WiFiSetupAndConnect() {
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
+	
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	// ESP32 setClock AFTER wifi as stated in the docs & to prevent crashes
+	#if SNTP_INT_CLOCK_UPD == true && defined ESP32
+		this->setClock();
+	#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -532,25 +537,23 @@ void IOTAppStory::WiFiDisconnect() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::setClock() {
 
-	settimeofday_cb([this]{
-		this->_timeSet = true;
-	});
-	
-	configTime(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_SERV_1);
+    NtpHelper.ServerSetup(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_SERV_1, SNTP_INT_CLOCK_SERV_2);
 
     #if DEBUG_LVL >= 2
-        DEBUG_PRINT(SER_SNTP_SETUP);
+		  DEBUG_PRINT(SER_SNTP_SETUP);
     #endif
 	
-    #if DEBUG_LVL >= 2  //<!-- will be debug level 3 when released
-        DEBUG_PRINT(F(" - "));
-        DEBUG_PRINTLN(SNTP_INT_CLOCK_TIME_ZONE);
-		DEBUG_PRINT(F(" - "));
-        DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_1);
+    #if DEBUG_LVL >= 3  //<!-- will be debug level 3 when released
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_TIME_ZONE);
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_1);
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_2);
     #endif
 
     #if DEBUG_LVL >= 2
-        DEBUG_PRINTLN(FPSTR(SER_DEV));
+		  DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
 }
 
@@ -560,22 +563,13 @@ bool IOTAppStory::ntpWaitForSync(int retries) {
 		DEBUG_PRINT(SER_SNTP_SYNC_TIME);
 	#endif
 	
-    
-    while(!this->_timeSet) {
-        delay(500);
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINT(F("."));
-        #endif
-		
-		retries--;
-		if(retries == 0){
-			return false;
-		}
-    }
-	
+	if(!NtpHelper.WaitForSync(retries, ".")){
+		return false;
+	}
+	this->_timeSet = true;
 	time_t now = time(nullptr);
 
-	#if DEBUG_LVL >= 2
+	#if DEBUG_LVL >= 3
 		DEBUG_PRINT(F("\n "));
 		DEBUG_PRINT(SNTP_INT_CLOCK_TIME_ZONE);
 		DEBUG_PRINT(F(": "));
