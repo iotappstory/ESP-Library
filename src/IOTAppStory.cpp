@@ -699,6 +699,9 @@ bool IOTAppStory::iotUpdater(int command) {
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(" " + this->statusMessage);
         #endif
+        if(this->_firmwareNoUpdateCallback) {
+            this->_firmwareNoUpdateCallback(this->statusMessage);
+        }
 
         return false;
     }
@@ -835,7 +838,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct
                     DEBUG_PRINTLN(" " + this->statusMessage);
                 #endif
                 if(this->_firmwareUpdateErrorCallback) {
-                    this->_firmwareUpdateErrorCallback();
+                    this->_firmwareUpdateErrorCallback(this->statusMessage);
                 }
             }
         }
@@ -1404,6 +1407,14 @@ void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
 }
 
 /*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareNoUpdate
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::onFirmwareNoUpdate(THandlerFunctionStr value) {
+    this->_firmwareNoUpdateCallback = value;
+}
+
+/*-----------------------------------------------------------------------------
                         IOTAppStory onFirmwareUpdateDownload
 
 *///---------------------------------------------------------------------------
@@ -1423,7 +1434,7 @@ void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
                         IOTAppStory onFirmwareUpdateError
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
+void IOTAppStory::onFirmwareUpdateError(THandlerFunctionStr value) {
     this->_firmwareUpdateErrorCallback = value;
 }
 
