@@ -53,8 +53,8 @@
 #define SER_CONN_LOST_RECONN            " Connection lost! Reconnecting"
 #define SER_CONNECTED                   " WiFi connected\n"
 
-#define SER_SNTP_SETUP                  " Setup NTP server\n"
-#define SER_SNTP_SYNC_TIME              " Sync time with NTP server\n "
+#define SER_SNTP_SETUP                  " Set NTP server settings\n"
+#define SER_SNTP_SYNC_TIME              " Wait for background NTP sync\n "
 #define SER_SNTP_DISP_UTC               "\n UTC: "
 
 #define SER_RETRY_LATER                 " Retry later"
