@@ -137,6 +137,7 @@ enum AppState {
 // callback template definition
 typedef std::function<void(void)> THandlerFunction;
 typedef std::function<void(int, int)> THandlerFunctionArg;
+typedef std::function<void(String)> THandlerFunctionStr;
 
 /*                          =======================
 ============================   CLASS DEFINITION    ============================
@@ -207,9 +208,13 @@ public:
     void onModeButtonVeryLongPress(THandlerFunction fn);    // called when state is changed to very long press
     void onConfigMode(THandlerFunction fn);                 // called when the app is about to enter in configuration mode
     void onFirmwareUpdateCheck(THandlerFunction fn);        // called when the app checks for firmware updates
+    void onFirmwareNoUpdate(THandlerFunctionStr fn);        // called when no updates are available. 
+                                                            // This could have multiple reasons: not necessary, not selected, no file, unknown device or account, not compatible etc.
+                                                            // this callback returns a var String statusMessage
     void onFirmwareUpdateDownload(THandlerFunction fn);     // called when firmware download starts
     void onFirmwareUpdateProgress(THandlerFunctionArg fn);  // called during update process
-    void onFirmwareUpdateError(THandlerFunction fn);        // called when firmware update ends in an error
+    void onFirmwareUpdateError(THandlerFunctionStr fn);     // called when firmware update ends in an error 
+                                                            // this callback returns a var String statusMessage
     void onFirmwareUpdateSuccess(THandlerFunction fn);      // called when firmware update ends in success
 
 
@@ -259,9 +264,10 @@ private:
     THandlerFunction _veryLongPressCallback;
     THandlerFunction _configModeCallback;
     THandlerFunction _firmwareUpdateCheckCallback;
+    THandlerFunctionStr _firmwareNoUpdateCallback;
     THandlerFunction _firmwareUpdateDownloadCallback;
     THandlerFunctionArg _firmwareUpdateProgressCallback;
-    THandlerFunction _firmwareUpdateErrorCallback;
+    THandlerFunctionStr _firmwareUpdateErrorCallback;
     THandlerFunction _firmwareUpdateSuccessCallback;
 
     /**
