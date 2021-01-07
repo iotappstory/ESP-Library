@@ -1232,7 +1232,7 @@ void IOTAppStory::loop() {
             DEBUG_PRINTLN(SER_CONN_LOST_RECONN);
         #endif
         WiFiConnector WiFiConn;
-        WiFiConn.WiFiConnectToAP(".");
+        WiFiConn.connectToAP(".");
         #if DEBUG_LVL >= 1
             DEBUG_PRINTLN(F(""));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
