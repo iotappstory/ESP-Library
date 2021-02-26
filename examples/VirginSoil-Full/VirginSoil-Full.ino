@@ -140,7 +140,7 @@ void setup() {
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
 
-  IAS.onFirmwareUpdateError([]() {
+  IAS.onFirmwareUpdateError([](String statusMessage) {
     Serial.println(F(" Update failed...Check your logs"));
     Serial.println(F("*-------------------------------------------------------------------------*"));
   });
