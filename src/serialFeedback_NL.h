@@ -86,7 +86,7 @@
 
 #define SER_PROC_ERROR                  "Teveel velden! Verander MAXNUMEXTRAFIELDS in config.h;"
 #define SER_PROC_FIELDS                 " Verwerken toegevoegde velden"
-#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT WAARDE                  | HUIDIGE WAARDE                  | STATUS\n"
+#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM HDR  |  EEPROM VAL  | DEFAULT WAARDE                  | HUIDIGE WAARDE                  | STATUS\n"
 #define SER_PROC_TBL_OVRW               "%-30s | OVERSCHREVEN"
 #define SER_PROC_TBL_DEF                "%-30s | DEFAULT"
 #define SER_PROC_TBL_WRITE              "%-30s | SCHRIJVEN NAAR EEPROM"

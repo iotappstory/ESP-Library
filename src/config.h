@@ -96,6 +96,8 @@
 #endif
 
 // EERPOM & max nr of addable fields
+#define EEPROM_STORAGE_STYLE        EEP_NEW	// EEP_OLD / EEP_NEW
+
 #if defined  ESP8266
     #define EEPROM_SIZE             4096    // EEPROM_SIZE depending on device
     #define MAXNUMEXTRAFIELDS       8       // wifimanger | max num of fields that can be added
@@ -141,6 +143,10 @@
 #define FNGPRINT    0
 #define CERTIFICATE 1
 #define IASLIB      "2.1.0-RC4"
+
+// define storage types (internal use)
+#define EEP_OLD     0
+#define EEP_NEW     1
 
 // used for storing the config struct to eeprom
 #define MAGICBYTES  "CFG"
