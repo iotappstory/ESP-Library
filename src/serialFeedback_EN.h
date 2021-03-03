@@ -66,8 +66,8 @@
 #define SER_DEV_MDNS_FAIL               " MDNS responder failed to start"
 
 #define SER_CALLING_HOME                " Calling Home"
-#define SER_CALLHOME_FAILED             "Error: connection failed"
-#define SER_CALLHOME_TIMEOUT            "Error: connection timeout"
+#define SER_CALLHOME_FAILED             "ERROR: connection failed"
+#define SER_CALLHOME_TIMEOUT            "ERROR: connection timeout"
 #define SER_CALLHOME_CERT_FAILED        " ERROR: certificate verification failed!"
 #define SER_CALLHOME_HDR_FAILED         " ERROR: file header verification failed!"
 #define SER_RET_FROM_IAS                "\n Returning from IOTAppStory.com"
@@ -78,21 +78,23 @@
 #define SER_UPDATES_FROM                " updates from: "
 #define SER_UPDATES                     " updates"
 #define SER_UPDATEDTO                   "\n Updated to: "
-#define SER_UPDATEDERROR                "\n Error updating device: "
+#define SER_UPDATEDERROR                "\n ERROR: updating device: "
 
 #define SER_DOWNLOADING                 " Downloading..."
 #define SER_INSTALLING                  " Installing..."
 #define SER_REBOOT_NEC                  " Reboot necessary!"
 
-#define SER_PROC_ERROR                  "To many fields! Change MAXNUMEXTRAFIELDS in config.h;"
+#define SER_PROC_ERROR                  " ERROR: Added fields size > EEPROM size."
 #define SER_PROC_FIELDS                 " Processing added fields"
-#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"
+#define SER_LAST_FIELD_ENDS_AT          " Last field ends at: "
+#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM HDR  |  EEPROM VAL  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"
 #define SER_PROC_TBL_OVRW               "%-30s | OVERWRITTEN"
 #define SER_PROC_TBL_DEF                "%-30s | DEFAULT"
 #define SER_PROC_TBL_WRITE              "%-30s | WRITTING TO EEPROM"
 
 #define SER_EEPROM_FOUND                " EEPROM Configuration found"
 #define SER_EEPROM_NOT_FOUND            " EEPROM Configuration NOT FOUND!!!!"
+#define SER_EEPROM_SIZE            		" EEPROM_SIZE: "
 
 #define SER_SPIFFS_MOUNTING             "Mounting SPIFFS..."
 #define SER_SPIFFS_PART_NOT_FOUND       "SPIFFS Partition Not Found"
