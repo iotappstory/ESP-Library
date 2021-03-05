@@ -1203,6 +1203,131 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct
 		}
 	}
 #endif
+
+
+bool IOTAppStory::eepFieldsConvertOldToNew(){
+	
+	if(EEPROM_STORAGE_STYLE == EEP_OLD){
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(" ERROR: eepFieldsConvertOldToNew() will only work if config.h EEPROM_STORAGE_STYLE is set to EEP_NEW");
+		#endif
+		
+		return false;
+	}else{
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN("\n Running: eepFieldsConvertOldToNew()\n\n Scanning old storage style");
+		#endif
+	}
+	
+	// EEPROM begin
+	EEPROM.begin(EEPROM_SIZE);
+	
+	unsigned int eepCurrAt 		= 0;
+	unsigned int eepValFound 	= 0;
+	AddFieldStruct eepHdrArray[MAXNUMEXTRAFIELDS];
+	String eepValArray[MAXNUMEXTRAFIELDS];
+	
+	{
+		for(unsigned int i = 0; i < MAXNUMEXTRAFIELDS; ++i) {
+
+			// calculate EEPROM addresses
+			const int eepStartAddress 	= FIELD_EEP_START_ADDR + (eepValFound * sizeof(eepHdrArray[eepValFound]));
+			const int magicBytesBegin 	= eepStartAddress + sizeof(eepHdrArray[eepValFound]) - 3;
+			int eepFieldStart;
+			
+			if(EEPROM.read(magicBytesBegin) == MAGICEEP[0]) {
+
+				// get the fieldStruct from EEPROM
+				EEPROM.get(eepStartAddress, eepHdrArray[eepValFound]);
+
+				if(eepValFound == 0) {
+					eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(eepHdrArray[eepValFound])) + eepCurrAt;
+				} else {
+					eepFieldStart = eepCurrAt;
+				}
+				eepCurrAt = eepFieldStart + eepHdrArray[eepValFound].length + 1;
+
+				// temp buffer
+				char eepVal[eepHdrArray[eepValFound].length + 1];
+
+				// read field value from EEPROM and store it in eepVal buffer
+				unsigned int ee = 0;
+				for(unsigned int e=eepFieldStart; e < eepCurrAt; e++) {
+					eepVal[ee] = EEPROM.read(e);
+					ee++;
+				}
+				
+				// update eepValArray
+				eepValArray[eepValFound] = eepVal;
+				eepValFound++;
+			}
+		}
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT("\n Found values: ");
+			DEBUG_PRINT(eepValFound);
+			DEBUG_PRINT("\n");
+		#endif
+		
+		for(unsigned int i = 0; i < eepValFound; ++i) {
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN(String(eepValArray[i]));
+			#endif
+		}
+	}
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN("\n Write found headers & values to the new style");
+	#endif
+	unsigned int eepLastWritten = 0;
+	
+	for(unsigned int i = 0; i < eepValFound; ++i) {
+		
+		// calculate EEPROM addresses
+		int eepFieldHdrStart = eepLastWritten;
+		if(eepFieldHdrStart == 0) {
+			eepFieldHdrStart 		= FIELD_EEP_START_ADDR;
+		}
+		
+		const int eepFieldHdrEnd 	= eepFieldHdrStart + sizeof(eepHdrArray[i]);
+		const int magicBytesBegin 	= eepFieldHdrEnd - 3;
+		const int eepFieldValStart	= eepFieldHdrEnd;
+		
+
+		// put the fieldStruct to EEPROM
+		EEPROM.put(eepFieldHdrStart, eepHdrArray[i]);
+
+		const int eepFieldValEnd	= eepFieldValStart + eepHdrArray[i].length + 1;
+		
+		// temp buffer
+		char eepVal[eepHdrArray[i].length + 1];
+		
+		// write temp stored string to char array
+		eepValArray[i].toCharArray(eepVal, eepHdrArray[i].length+1);
+		
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTF_P(PSTR(" %02d | %03d | %04d to %04d | %04d to %04d | %-30s | "), i+1, eepHdrArray[i].length, eepFieldHdrStart, eepFieldHdrEnd, eepFieldValStart, eepFieldValEnd, eepVal);
+			DEBUG_PRINTLN("");
+		#endif
+		
+		// put the field value to EEPROM
+		unsigned int ee = 0;
+		for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+			EEPROM.write(e, eepVal[ee]);
+			ee++;
+		}
+		
+		
+		eepLastWritten = eepFieldValEnd;
+	}
+	
+	// EEPROM end
+	EEPROM.end();
+	delay(500);
+	DEBUG_PRINTLN("\n Done!");
+}
+
+
 /*-----------------------------------------------------------------------------
                         IOTAppStory dPinConv
 
