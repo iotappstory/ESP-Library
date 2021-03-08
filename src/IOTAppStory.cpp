@@ -1205,6 +1205,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct
 #endif
 
 
+
 bool IOTAppStory::eepFieldsConvertOldToNew(){
 	
 	if(EEPROM_STORAGE_STYLE == EEP_OLD){
@@ -1213,11 +1214,10 @@ bool IOTAppStory::eepFieldsConvertOldToNew(){
 		#endif
 		
 		return false;
-	}else{
-		#if DEBUG_LVL >= 1
-			DEBUG_PRINTLN("\n Running: eepFieldsConvertOldToNew()\n\n Scanning old storage style");
-		#endif
 	}
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN("\n Running: eepFieldsConvertOldToNew()\n\n Scanning storage style");
+	#endif
 	
 	// EEPROM begin
 	EEPROM.begin(EEPROM_SIZE);
@@ -1228,11 +1228,36 @@ bool IOTAppStory::eepFieldsConvertOldToNew(){
 	String eepValArray[MAXNUMEXTRAFIELDS];
 	
 	{
+		// check if current eeprom layout is in the old style
+		// and thus can be converted to the new style
+		if(EEPROM.read(FIELD_EEP_START_ADDR + sizeof(eepHdrArray[0]) - 3) != MAGICEEP[0] && EEPROM.read(FIELD_EEP_START_ADDR + sizeof(eepHdrArray[0]) - 2) != MAGICEEP[1]) {
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n Did not detect stored fields");
+			#endif
+			
+			return false;
+		}
+		
+		if(EEPROM.read(FIELD_EEP_START_ADDR + (sizeof(eepHdrArray[0]) * 2) - 3) == MAGICEEP[0] && EEPROM.read(FIELD_EEP_START_ADDR + (sizeof(eepHdrArray[0]) * 2) - 2) == MAGICEEP[1]) {
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n - old style detected\n Continue conversion.");
+			#endif
+		}else{
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n - new style detected\n Ending conversion.");
+			#endif
+			
+			return false;
+		}
+		
+		
+		
 		for(unsigned int i = 0; i < MAXNUMEXTRAFIELDS; ++i) {
 
 			// calculate EEPROM addresses
-			const int eepStartAddress 	= FIELD_EEP_START_ADDR + (eepValFound * sizeof(eepHdrArray[eepValFound]));
-			const int magicBytesBegin 	= eepStartAddress + sizeof(eepHdrArray[eepValFound]) - 3;
+			const int eepStartAddress 		= FIELD_EEP_START_ADDR + (eepValFound * sizeof(eepHdrArray[eepValFound]));
+			const int magicBytesBegin 		= eepStartAddress + sizeof(eepHdrArray[eepValFound]) - 3;
+			const int secondMagicBytesBegin = eepStartAddress + (sizeof(eepHdrArray[eepValFound]) *2 ) - 3;
 			int eepFieldStart;
 			
 			if(EEPROM.read(magicBytesBegin) == MAGICEEP[0]) {
@@ -1264,16 +1289,16 @@ bool IOTAppStory::eepFieldsConvertOldToNew(){
 		}
 		
 		#if DEBUG_LVL >= 1
-			DEBUG_PRINT("\n Found values: ");
+			DEBUG_PRINT("\n Found field values: ");
 			DEBUG_PRINT(eepValFound);
 			DEBUG_PRINT("\n");
 		#endif
 		
-		for(unsigned int i = 0; i < eepValFound; ++i) {
-			#if DEBUG_LVL >= 1
+		#if DEBUG_LVL >= 3
+			for(unsigned int i = 0; i < eepValFound; ++i) {
 				DEBUG_PRINTLN(String(eepValArray[i]));
-			#endif
-		}
+			}
+		#endif
 	}
 	#if DEBUG_LVL >= 1
 		DEBUG_PRINTLN("\n Write found headers & values to the new style");
@@ -1326,6 +1351,10 @@ bool IOTAppStory::eepFieldsConvertOldToNew(){
 	delay(500);
 	DEBUG_PRINTLN("\n Done!");
 }
+
+
+
+
 
 
 /*-----------------------------------------------------------------------------
