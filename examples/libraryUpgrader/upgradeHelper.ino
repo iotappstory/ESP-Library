@@ -26,9 +26,9 @@ char tempValue[NROFADDEDFIELDS][LARGESTLENGTH];
 
 // ================================================ functions =========================================
 void runUpgrade(){
-  oldConfig oldCfg;
+  oldConfig_v20X oldCfg;
   const int oldCfgStartAddress  = 0;
-  const int oldMagicBytesBegin  = oldCfgStartAddress + sizeof(oldConfig) - 4;
+  const int oldMagicBytesBegin  = oldCfgStartAddress + sizeof(oldConfig_v20X) - 4;
   int nrOfFieldsFound           = 0;
 
   EEPROM.begin(EEPROM_SIZE);
@@ -39,7 +39,7 @@ void runUpgrade(){
 
   // check for magicBytes to confirm the old config struct is stored in EEPROM
   if(EEPROM.read(oldMagicBytesBegin) == MAGICBYTES[0] && EEPROM.read(oldMagicBytesBegin + 1) == MAGICBYTES[1] && EEPROM.read(oldMagicBytesBegin + 2) == MAGICBYTES[2]){
-    Serial.printf(" Found config! Size: %d\n", sizeof(oldConfig));
+    Serial.printf(" Found config! Size: %d\n", sizeof(oldConfig_v20X));
     
     // get the old config from EEPROM
     EEPROM.get(oldCfgStartAddress, oldCfg);
@@ -76,14 +76,14 @@ void runUpgrade(){
      
       
       // write the board details to the new config struct in EEPROM
-      configStruct newConfig;
+      ConfigStruct newConfig;
       strcpy(newConfig.actCode, oldCfg.actCode);
       strcpy(newConfig.appName, oldCfg.appName);
       strcpy(newConfig.appVersion, oldCfg.appVersion);
       strcpy(newConfig.deviceName, oldCfg.deviceName);
       strcpy(newConfig.compDate, oldCfg.compDate);
     
-      #if defined  ESP8266
+      #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
         strcpy(newConfig.sha1, oldCfg.sha1);
       #endif
       #if CFG_AUTHENTICATE == true
@@ -97,6 +97,30 @@ void runUpgrade(){
       if(nrOfFieldsFound > 0){
         writeAddedFields(nrOfFieldsFound);
       }
+
+
+      // if set write certificate to SPIFFS for future use
+      #if defined  ESP32 || HTTPS_8266_TYPE == CERTIFICATE
+        
+        // Mount SPIFFS
+        if(!ESP_SPIFFSBEGIN){
+          Serial.println(F(" Failed to mount SPIFFS"));
+        }
+  
+        // open new SPIFFS file for writing data
+        File fsUploadFile;
+        fsUploadFile = SPIFFS.open("/cert/iasRootCa.cer", "w"); /// close file
+  
+        // write certificate(hardcoded char array) to SPIFFS file
+        if(fsUploadFile.write((uint8_t *)ROOT_CA, strlen(ROOT_CA)) != strlen(ROOT_CA)){
+          Serial.println(F(" Failed to write certificate to SPIFFS"));
+        }
+  
+        // close SPIFFS FILE
+        fsUploadFile.close();
+  
+        Serial.println(F(" Added Certificate to SPIFFS"));
+      #endif
     #endif
     
   }else{
@@ -108,7 +132,7 @@ void runUpgrade(){
 
 
 
-void showOldConfig(oldConfig &oldCfg){
+void showOldConfig(oldConfig_v20X &oldCfg){
   
   Serial.println(FPSTR(SER_DEV));
   Serial.println(F("\n Old config values"));
@@ -164,7 +188,7 @@ int findAddedFields(){
     int fieldSearchStartAddress;
     
     if(lastFieldEndAt == 0){
-      fieldSearchStartAddress = sizeof(oldConfig);
+      fieldSearchStartAddress = sizeof(oldConfig_v20X);
     }else{
       fieldSearchStartAddress = lastFieldEndAt;
     }
@@ -234,7 +258,7 @@ void writeAddedFields(int fieldsFound){
   for(int i=0; i < fieldsFound; i++){
 
     // init fieldStruct
-    addFieldStruct fieldStruct;
+    AddFieldStruct fieldStruct;
     
     // calculate EEPROM addresses
     const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(fieldStruct));
