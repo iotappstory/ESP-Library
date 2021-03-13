@@ -9,7 +9,6 @@
   - Sets up initial hardcode WiFi connection
   - Contacts IOTAppStory.com over https
   - Registers your device with IOTAppStory.com
-  - Adds the device to a Devicebatch setup in your Control Panel
   - Saves the device activation code
   - Saves generated device name (eg. XXXX-22, XXXX-23 ...)
   - Saves the Fingerprint or Certificate (depends on config.h settings)
@@ -18,11 +17,10 @@
   
   You will need:
   - IOTAppStory.com account
-  - Existing Devicebatch
-  - Devicebatch hash
+  - Device hash
   - Local WiFi credentials
 
-  Copyright (c) [2019] [Onno Dirkzwager]
+  Copyright (c) [2021] [Onno Dirkzwager]
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +58,7 @@ const bool  saveWifiCred  = true;         // true : Save the Wifi credentials fo
 
 const char* hash          = "***";
 const char* host          = "iotappstory.com";
-const char* url           = "/ota/addtobatch";
+const char* url           = "/ota/addtoaccount";
 
 
 #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT

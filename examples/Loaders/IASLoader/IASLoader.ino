@@ -75,7 +75,6 @@ void setup() {
   IAS.preSetDeviceName(deviceName);	      // preset deviceName this is also your MDNS responder: http://deviceName-123.local
   IAS.preSetAppName(F("INITLoader"));     // preset appName | The appName & appVersion get updated when you receive OTA updates. As this is your first app we will set it manually.
   IAS.preSetAppVersion(F("1.3.1"));       // preset appVersion
-  IAS.preSetAutoUpdate(false);            // automaticUpdate (true, false)
 
 
   // You can configure callback functions that can give feedback to the app user about the current state of the application.

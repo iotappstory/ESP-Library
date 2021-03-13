@@ -1,4 +1,4 @@
-/*
+or /*
   This sketch is an example of how you can upgrade from the previous library(2.0.X) 
   to the new 2.1.0 library EEPROM layout. If successful all the previous settings
   like Wifi, IAS device registration and added fields get "rewritten" to the new 
@@ -51,8 +51,8 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);            // Initialize IOTAppStory
 #define NROFADDEDFIELDS             8             // How many added fields should we search for?
 #define LARGESTLENGTH               5             // What is de largest "max char return"
 
-int fieldMaxLength[NROFADDEDFIELDS] = {2  ,5};    // Max returns as used in the added fields.
-char fieldType[NROFADDEDFIELDS]     = {'P','N'};  // Field types as used in the added fields. (L if none was entered!)
+int fieldMaxLength[NROFADDEDFIELDS] = {2, 5};     // Max returns as used in the added fields.
+char fieldType[NROFADDEDFIELDS]     = {'p', 'n'}; // Field types as used in the added fields. (L if none was entered!)
 
 
 
@@ -62,7 +62,7 @@ char fieldType[NROFADDEDFIELDS]     = {'P','N'};  // Field types as used in the 
 #define OLD_STRUCT_BNAME_SIZE       30
 #define OLD_STRUCT_COMPDATE_SIZE    20
 
-typedef struct oldConfig{
+typedef struct oldConfig_v20X{
   char actCode[7];                              // saved IotAppStory activation code
   char appName[33];
   char appVersion[12];
@@ -79,6 +79,34 @@ typedef struct oldConfig{
   const char magicBytes[4] = MAGICBYTES;
 };
 
+
+// This certificate gets copied to a file in SPIFFS: /cert/iasRootCa.cer
+const char ROOT_CA[] = \
+  "-----BEGIN CERTIFICATE-----\n" \
+  "MIIEMjCCAxqgAwIBAgIBATANBgkqhkiG9w0BAQUFADB7MQswCQYDVQQGEwJHQjEb\n" \
+  "MBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHDAdTYWxmb3JkMRow\n" \
+  "GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj\n" \
+  "YXRlIFNlcnZpY2VzMB4XDTA0MDEwMTAwMDAwMFoXDTI4MTIzMTIzNTk1OVowezEL\n" \
+  "MAkGA1UEBhMCR0IxGzAZBgNVBAgMEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n" \
+  "BwwHU2FsZm9yZDEaMBgGA1UECgwRQ29tb2RvIENBIExpbWl0ZWQxITAfBgNVBAMM\n" \
+  "GEFBQSBDZXJ0aWZpY2F0ZSBTZXJ2aWNlczCCASIwDQYJKoZIhvcNAQEBBQADggEP\n" \
+  "ADCCAQoCggEBAL5AnfRu4ep2hxxNRUSOvkbIgwadwSr+GB+O5AL686tdUIoWMQua\n" \
+  "BtDFcCLNSS1UY8y2bmhGC1Pqy0wkwLxyTurxFa70VJoSCsN6sjNg4tqJVfMiWPPe\n" \
+  "3M/vg4aijJRPn2jymJBGhCfHdr/jzDUsi14HZGWCwEiwqJH5YZ92IFCokcdmtet4\n" \
+  "YgNW8IoaE+oxox6gmf049vYnMlhvB/VruPsUK6+3qszWY19zjNoFmag4qMsXeDZR\n" \
+  "rOme9Hg6jc8P2ULimAyrL58OAd7vn5lJ8S3frHRNG5i1R8XlKdH5kBjHYpy+g8cm\n" \
+  "ez6KJcfA3Z3mNWgQIJ2P2N7Sw4ScDV7oL8kCAwEAAaOBwDCBvTAdBgNVHQ4EFgQU\n" \
+  "oBEKIz6W8Qfs4q8p74Klf9AwpLQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQF\n" \
+  "MAMBAf8wewYDVR0fBHQwcjA4oDagNIYyaHR0cDovL2NybC5jb21vZG9jYS5jb20v\n" \
+  "QUFBQ2VydGlmaWNhdGVTZXJ2aWNlcy5jcmwwNqA0oDKGMGh0dHA6Ly9jcmwuY29t\n" \
+  "b2RvLm5ldC9BQUFDZXJ0aWZpY2F0ZVNlcnZpY2VzLmNybDANBgkqhkiG9w0BAQUF\n" \
+  "AAOCAQEACFb8AvCb6P+k+tZ7xkSAzk/ExfYAWMymtrwUSWgEdujm7l3sAg9g1o1Q\n" \
+  "GE8mTgHj5rCl7r+8dFRBv/38ErjHT1r0iWAFf2C3BUrz9vHCv8S5dIa2LX1rzNLz\n" \
+  "Rt0vxuBqw8M0Ayx9lt1awg6nCpnBBYurDC/zXDrPbDdVCYfeU0BsWO/8tqtlbgT2\n" \
+  "G9w84FoVxp7Z8VlIMCFlA2zs6SFz7JsDoeA3raAVGI/6ugLOpyypEBMs1OUIJqsi\n" \
+  "l2D4kF501KKaU73yqWjgom7C12yxow+ev+to51byrvLjKzg6CYG1a4XXvi3tPxq3\n" \
+  "smPi9WIsgtRqAEFQ8TmDn5XpNpaYbg==\n" \
+  "-----END CERTIFICATE-----\n";
 
 
 // ================================================ SETUP ================================================
@@ -101,6 +129,7 @@ void setup() {
   });
 
   IAS.onFirstBoot([]() {
+    Serial.println("IAS.onFirstBoot()");
     runUpgrade();                           // Run the library upgrader
   });
   
