@@ -54,7 +54,7 @@ char* chosen      = "0";
 
 char* updInt      = "60";
 char* ledPin      = "2";
-char* timeZone    = "0.0";
+char* timeZone    = "Europe/Amsterdam";
 
 
 
@@ -83,7 +83,7 @@ void setup() {
 
   IAS.addField(updInt, "Interval", 8, 'I');
   IAS.addField(ledPin, "ledPin", 2, 'P');
-  IAS.addField(timeZone, "Timezone", 4, 'Z');
+  IAS.addField(timeZone, "Timezone", 48, 'Z');
   
 
 
