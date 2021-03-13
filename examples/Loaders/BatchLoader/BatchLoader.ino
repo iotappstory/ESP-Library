@@ -18,8 +18,7 @@
   
   You will need:
   - IOTAppStory.com account
-  - Existing Devicebatch with at least 1 added device of the same 
-    type as the devices you want to use this sketch for.
+  - Existing Devicebatch
   - Devicebatch hash
   - Local WiFi credentials
 
@@ -59,9 +58,10 @@ const char* password      = "***";        // WiFi password
 const bool  saveWifiCred  = true;         // true : Save the Wifi credentials for future use
                                           // false: only use Wifi credentials for adding this device and doing the initial update
 
+const char* hash          = "***";
 const char* host          = "iotappstory.com";
 const char* url           = "/ota/addtobatch";
-const char* hash          = "***";
+
 
 #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
   // Use web browser to view and copy SHA1 fingerprint of the certificate
@@ -120,7 +120,7 @@ void setup() {
     // Synchronize the internal clock useing SNTP | used for verifying certificates on the ESP8266
     #if defined  ESP8266 && HTTPS_8266_TYPE == CERTIFICATE
       IAS.setClock();
-      IAS.ntpSync();
+      IAS.ntpWaitForSync();
     #endif
     
     // Use WiFiClientSecure class to create TLS connection
