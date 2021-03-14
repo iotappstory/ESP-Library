@@ -1575,15 +1575,14 @@ void IOTAppStory::loop() {
     }
     #endif
 
+    if(WiFi.status() == WL_CONNECTED) {
+        this->WiFiConnected = true;
+    }else{
+        this->WiFiConnected = false;
+    }
+
     // Call home and check for updates every _callHomeInterval
     if(this->WiFiConnected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
-		
-		DEBUG_PRINTLN(FPSTR(SER_DEV));
-		DEBUG_PRINTLN(_callHomeInterval);
-		DEBUG_PRINTLN(_lastCallHomeTime);
-		DEBUG_PRINTLN(millis() - this->_lastCallHomeTime);
-		DEBUG_PRINTLN(FPSTR(SER_DEV));
-		
         this->callHome();
     }
 
