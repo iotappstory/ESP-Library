@@ -142,7 +142,7 @@
 
 #define FNGPRINT    0
 #define CERTIFICATE 1
-#define IASLIB      "2.1.0-RC4"
+#define IASLIB      "2.1.0-RC5"
 
 // define storage types (internal use)
 #define EEP_OLD     0
