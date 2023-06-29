@@ -68,14 +68,15 @@ void setup() {
   IAS.preSetAppName(F("Wemos"));                          // preset appName | The appName & appVersion get updated when you receive OTA updates. As this is your first app we will set it manually.
   IAS.preSetAppVersion(F("1.3.1"));                       // preset appVersion
 
-  // default mode button not connected on LOLIN oled v2.1.0 shield
+  IAS.preSetAutoUpdate(false);                            // automaticUpdate (true, false)
+
+                                                          //  default mode button not connected on LOLIN oled v2.1.0 shield
   IAS.onModeButtonShortPress([]() {
     Serial.println(F(" If mode button is released, I will enter in firmware update mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
     dispTemplate_threeLineV2(F("Release"), F("for"), F("Updates"));
   });
 
-  // default mode button not connected on LOLIN oled v2.1.0 shield
   IAS.onModeButtonLongPress([]() {
     Serial.println(F(" If mode button is released, I will enter in configuration mode."));
     Serial.println(F("*-------------------------------------------------------------------------*"));
