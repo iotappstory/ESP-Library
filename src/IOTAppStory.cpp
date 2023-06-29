@@ -165,13 +165,21 @@ void IOTAppStory::preSetAutoConfig(bool automaticConfig) {
 }
 
 /*-----------------------------------------------------------------------------
+                        IOTAppStory preSetWifiConnectOnBoot
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::preSetConnWifiOnBoot(bool automaticWifiConnectOnBoot) {
+    this->_automaticWifiConnectOnBoot = automaticWifiConnectOnBoot;
+}
+
+/*-----------------------------------------------------------------------------
                         IOTAppStory preSetWifi
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::preSetWifi(const char* ssid, const char* password) {
     // Save Wifi presets if newer
     WiFiConnector WiFiConn;
-    if(strcmp(WiFiConn.getSSIDfromEEPROM(1), ssid) != 0) {
+    if(WiFiConn.getSSIDfromEEPROM(1) != String(ssid)) {
         WiFiConn.addAPtoEEPROM(ssid, password, 1);
     }
 }
@@ -257,16 +265,10 @@ void IOTAppStory::begin() {
         }
 
         // --------- START WIFI --------------------------
-        // Setup wifi with cred etc connect to AP
-        this->WiFiSetupAndConnect();
-
-        // Synchronize time useing SNTP. This is necessary to verify that
-        // the TLS certificates offered by servers are currently valid.
-        #if SNTP_INT_CLOCK_UPD == true
-            if(this->_connected) {
-                this->setClock();
-            }
-        #endif
+		if((_automaticWifiConnectOnBoot || this->boardMode == 'C') && !this->WiFiConnected){
+			// Setup wifi with cred etc connect to AP
+			this->WiFiSetupAndConnect();
+		}
 
         //---------- SELECT BOARD MODE -----------------------------
         #if CFG_INCLUDE == true
@@ -278,8 +280,15 @@ void IOTAppStory::begin() {
                     }
 
                     // notifi IAS & enduser this device went to config mode (also sends localIP)
-                    #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                        if(this->_connected) {
+                    #if CFG_ANNOUNCE == true
+                        if(this->WiFiConnected) {
+							
+                            #if SNTP_INT_CLOCK_UPD == true
+                              if(!this->_timeSet){
+                                this->ntpWaitForSync();
+                              }
+                            #endif
+							
                             this->iasLog("1");
                         }
                     #endif
@@ -295,9 +304,10 @@ void IOTAppStory::begin() {
                 delay(100);
 
                 // notifi IAS & enduser this device has left config mode (also sends localIP)
-                #if CFG_STORAGE != ST_SPIFSS && CFG_ANNOUNCE == true
-                    if(this->_connected) {
+                #if CFG_ANNOUNCE == true
+                    if(this->WiFiConnected) {
                         this->iasLog("0");
+						delay(100);
                     }
                 #endif
 
@@ -308,7 +318,7 @@ void IOTAppStory::begin() {
     }
 
     // --------- if connection & automaticUpdate Update --------------------------
-    if(this->_connected && this->_updateOnBoot == true) {
+    if(this->WiFiConnected && this->_updateOnBoot == true) {
         this->callHome();
     }
 
@@ -374,7 +384,14 @@ void IOTAppStory::iasLog(String msg) {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiSetupAndConnect() {
-
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	// ESP8266 setClock BEFORE wifi for faster sync
+	#if SNTP_INT_CLOCK_UPD == true && defined ESP8266
+		this->setClock();
+	#endif
+	
+	
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(SER_CONNECTING);
     #endif
@@ -389,7 +406,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
     // connect to access point
     if(!WiFiConn.connectToAP(".")) {
-        this->_connected = false;
+        this->WiFiConnected = false;
         // FAILED
         // if conditions are met, set to config mode (C)
         if(this->_automaticConfig || this->boardMode == 'C') {
@@ -413,7 +430,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
         }
 
     } else {
-        this->_connected = true;
+        this->WiFiConnected = true;
         // SUCCES
         // Show connection details if debug level is set
         #if DEBUG_LVL >= 1
@@ -428,10 +445,7 @@ void IOTAppStory::WiFiSetupAndConnect() {
 
         // Register host name in WiFi and mDNS
         #if WIFI_USE_MDNS == true
-
-            // wifi_station_set_hostname(config.deviceName);
-            // WiFi.hostname(hostNameWifi);
-
+		
             // get config from EEPROM
             ConfigStruct config;
             this->readConfig(config);
@@ -462,6 +476,13 @@ void IOTAppStory::WiFiSetupAndConnect() {
     #if DEBUG_LVL >= 1
         DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
+	
+	// Synchronize time useing SNTP. This is necessary to verify that
+	// the TLS certificates offered by servers are currently valid.
+	// ESP32 setClock AFTER wifi as stated in the docs & to prevent crashes
+	#if SNTP_INT_CLOCK_UPD == true && defined ESP32
+		this->setClock();
+	#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -472,16 +493,17 @@ void IOTAppStory::WiFiSetupAndConnect() {
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiConnect(){
     WiFiConnector WiFiConn;
-		WiFiConn.setup();
+	WiFiConn.setup();
+	
     // connect to access point
     if(!WiFiConn.connectToAP(".")){
-        _connected = false;
+        this->WiFiConnected = false;
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(F(" WiFi connection failed!"));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
     }else{
-        _connected = true;
+        this->WiFiConnected = true;
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(F(" WiFi connected!"));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -497,7 +519,7 @@ void IOTAppStory::WiFiConnect(){
 *///---------------------------------------------------------------------------
 void IOTAppStory::WiFiDisconnect() {
     WiFi.disconnect();
-    this->_connected = false;
+    this->WiFiConnected = false;
     #if DEBUG_LVL >= 2
         DEBUG_PRINTLN(F(" WiFi disconnected!"));
         DEBUG_PRINTLN(FPSTR(SER_DEV));
@@ -514,49 +536,47 @@ void IOTAppStory::WiFiDisconnect() {
 
 *///---------------------------------------------------------------------------
 void IOTAppStory::setClock() {
-    #if defined  ESP8266
-        int retries = WIFI_CONN_MAX_RETRIES;
-    #elif defined ESP32
-        int retries = (WIFI_CONN_MAX_RETRIES/2);
-    #endif
 
-    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    NtpHelper.ServerSetup(SNTP_INT_CLOCK_TIME_ZONE, SNTP_INT_CLOCK_SERV_1, SNTP_INT_CLOCK_SERV_2);
 
     #if DEBUG_LVL >= 2
-        DEBUG_PRINT(SER_SYNC_TIME_NTP);
+		  DEBUG_PRINT(SER_SNTP_SETUP);
+    #endif
+	
+    #if DEBUG_LVL >= 3  //<!-- will be debug level 3 when released
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_TIME_ZONE);
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_1);
+		  DEBUG_PRINT(F(" - "));
+		  DEBUG_PRINTLN(SNTP_INT_CLOCK_SERV_2);
     #endif
 
-    time_t now = time(nullptr);
-    while(now < 8 * 3600 * 2 && retries-- > 0 ) {
-        delay(500);
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINT(F("."));
-        #endif
-        now = time(nullptr);
-    }
-
-    if(retries > 0) {
-        struct tm timeinfo;
-        gmtime_r(&now, &timeinfo);
-        this->_timeSet        = true;
-        this->_lastTimeSet    = millis();
-
-        #if DEBUG_LVL >= 3
-            DEBUG_PRINT(F("\n Current time: "));
-            DEBUG_PRINT(asctime(&timeinfo));
-        #endif
-    } else {
-        this->_timeSet        = false;
-        this->_lastTimeSet    = 0;
-
-        #if DEBUG_LVL >= 2
-            DEBUG_PRINTLN(SER_FAILED_EXCL);
-        #endif
-    }
     #if DEBUG_LVL >= 2
-        DEBUG_PRINTLN(F(""));
-        DEBUG_PRINTLN(FPSTR(SER_DEV));
+		  DEBUG_PRINTLN(FPSTR(SER_DEV));
     #endif
+}
+
+
+bool IOTAppStory::ntpWaitForSync(int retries) {
+	#if DEBUG_LVL >= 2
+		DEBUG_PRINT(SER_SNTP_SYNC_TIME);
+	#endif
+	
+	if(!NtpHelper.WaitForSync(retries, ".")){
+		return false;
+	}
+	this->_timeSet = true;
+	time_t now = time(nullptr);
+
+	#if DEBUG_LVL >= 3
+		DEBUG_PRINT(F("\n "));
+		DEBUG_PRINT(SNTP_INT_CLOCK_TIME_ZONE);
+		DEBUG_PRINT(F(": "));
+		DEBUG_PRINT(ctime(&now));
+	#endif
+	
+	return true;
 }
 
 /*-----------------------------------------------------------------------------
@@ -575,6 +595,20 @@ void IOTAppStory::callHome(bool spiffs /*= true*/) {
     if (this->_firmwareUpdateCheckCallback) {
         this->_firmwareUpdateCheckCallback();
     }
+	
+	if(!this->WiFiConnected){
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTLN(F(" Failed: no wifi connection"));
+		#endif		
+		return;
+	}
+
+	#if SNTP_INT_CLOCK_UPD == true
+	if(!this->_timeSet){
+		this->ntpWaitForSync();
+	}
+	#endif
+	
 
     // try to update sketch from IOTAppStory
     this->iotUpdater();
@@ -665,6 +699,9 @@ bool IOTAppStory::iotUpdater(int command) {
         #if DEBUG_LVL >= 2
             DEBUG_PRINTLN(" " + this->statusMessage);
         #endif
+        if(this->_firmwareNoUpdateCallback) {
+            this->_firmwareNoUpdateCallback(this->statusMessage);
+        }
 
         return false;
     }
@@ -801,7 +838,7 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct
                     DEBUG_PRINTLN(" " + this->statusMessage);
                 #endif
                 if(this->_firmwareUpdateErrorCallback) {
-                    this->_firmwareUpdateErrorCallback();
+                    this->_firmwareUpdateErrorCallback(this->statusMessage);
                 }
             }
         }
@@ -815,175 +852,510 @@ bool IOTAppStory::espInstaller(Stream &streamPtr, FirmwareStruct *firmwareStruct
     Add fields to the fieldStruct
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type) {
-    // get config from EEPROM
-    ConfigStruct config;
-    this->readConfig(config);
-    if(strcmp(config.compDate, this->_compDate) == 0) {
-        if(this->_nrXF >= MAXNUMEXTRAFIELDS) {
-            // if MAXNUMEXTRAFIELDS is reached return an error
-            #if DEBUG_LVL >= 1
-                DEBUG_PRINTLN(SER_PROC_ERROR);
-            #endif
-        } else {
-            #if DEBUG_LVL >= 1
-                // if this is the first field being processed display header
-                if(this->_nrXF == 0){
+#if(EEPROM_STORAGE_STYLE == EEP_OLD)
+	void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type) {
+		// get config from EEPROM
+		ConfigStruct config;
+		this->readConfig(config);
+		if(strcmp(config.compDate, this->_compDate) == 0) {
+			if(this->_nrXF >= MAXNUMEXTRAFIELDS) {
+				// if MAXNUMEXTRAFIELDS is reached return an error
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINTLN(SER_PROC_ERROR);
+				#endif
+			} else {
+				#if DEBUG_LVL >= 1
+					// if this is the first field being processed display header
+					if(this->_nrXF == 0){
 
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTLN(FPSTR(SER_DEV));
-                    #endif
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN(FPSTR(SER_DEV));
+						#endif
 
-                    DEBUG_PRINT(SER_PROC_FIELDS);
-                    #if DEBUG_LVL == 1
-                        DEBUG_PRINTLN(F(""));
-                    #endif
+						DEBUG_PRINT(SER_PROC_FIELDS);
+						#if DEBUG_LVL == 1
+							DEBUG_PRINTLN(F(""));
+						#endif
 
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTLN(SER_PROC_TBL_HDR);
-                    #endif
-                }
-            #endif
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN(SER_PROC_TBL_HDR);
+						#endif
+					}
+				#endif
 
-            // init fieldStruct
-            AddFieldStruct fieldStruct;
+				// init fieldStruct
+				AddFieldStruct fieldStruct;
 
-            // calculate EEPROM addresses
-            const int eepStartAddress = FIELD_EEP_START_ADDR + (this->_nrXF * sizeof(fieldStruct));
-            const int eepEndAddress = eepStartAddress + sizeof(fieldStruct);
-            const int magicBytesBegin = eepEndAddress - 3;
-            int eepFieldStart;
+				// calculate EEPROM addresses
+				const int eepStartAddress = FIELD_EEP_START_ADDR + (this->_nrXF * sizeof(fieldStruct));
+				const int eepEndAddress = eepStartAddress + sizeof(fieldStruct);
+				const int magicBytesBegin = eepEndAddress - 3;
+				int eepFieldStart;
 
-            if(this->_nrXF == 0) {
-                eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
-            } else {
-                eepFieldStart = this->_nrXFlastAdd;
-            }
-            this->_nrXFlastAdd = eepFieldStart + length + 1;
+				if(this->_nrXF == 0) {
+					eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
+				} else {
+					eepFieldStart = this->_nrXFlastAdd;
+				}
+				this->_nrXFlastAdd = eepFieldStart + length + 1;
 
 
-            #if DEBUG_LVL >= 2
-                DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), this->_nrXF+1, fieldLabel, length, eepFieldStart, this->_nrXFlastAdd, defaultVal);
-            #endif
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %-30s | "), this->_nrXF+1, fieldLabel, length, eepFieldStart, this->_nrXFlastAdd, defaultVal);
+				#endif
 
-            // EEPROM begin
-            EEPROM.begin(EEPROM_SIZE);
+				// EEPROM begin
+				EEPROM.begin(EEPROM_SIZE);
 
-            // check for MAGICEEP to confirm the this fieldStruct is stored in EEPROM
-            if(EEPROM.read(magicBytesBegin) != MAGICEEP[0]) {
-                #if DEBUG_LVL >= 2
-                    DEBUG_PRINTF_P(SER_PROC_TBL_WRITE, defaultVal);
-                #endif
+				// check for MAGICEEP to confirm the this fieldStruct is stored in EEPROM
+				if(EEPROM.read(magicBytesBegin) != MAGICEEP[0]) {
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTF_P(SER_PROC_TBL_WRITE, defaultVal);
+					#endif
 
-                // add values to the fieldstruct
-                fieldStruct.fieldLabel  = fieldLabel;
-                fieldStruct.length      = length;
-                fieldStruct.type        = type;
+					// add values to the fieldstruct
+					fieldStruct.fieldLabel  = fieldLabel;
+					fieldStruct.length      = length;
+					fieldStruct.type        = type;
 
-                // put the fieldStruct to EEPROM
-                EEPROM.put(eepStartAddress, fieldStruct);
+					// put the fieldStruct to EEPROM
+					EEPROM.put(eepStartAddress, fieldStruct);
 
-                // temp val buffer
-                char eepVal[length+1];
-                strcpy(eepVal, defaultVal);
+					// temp val buffer
+					char eepVal[length+1];
+					strcpy(eepVal, defaultVal);
 
-                // put the field value to EEPROM
-                unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
-                    EEPROM.write(e, eepVal[ee]);
-                    ee++;
-                }
+					// put the field value to EEPROM
+					unsigned int ee = 0;
+					for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
+						EEPROM.write(e, eepVal[ee]);
+						ee++;
+					}
 
-            } else {
-                // get the fieldStruct from EEPROM
-                EEPROM.get(eepStartAddress, fieldStruct);
+				} else {
+					// get the fieldStruct from EEPROM
+					EEPROM.get(eepStartAddress, fieldStruct);
 
-                // temp val buffer
-                char eepVal[length+1];
+					// temp val buffer
+					char eepVal[length+1];
 
-                // read field value from EEPROM and store it in eepVal buffer
-                unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
-                    eepVal[ee] = EEPROM.read(e);
-                    ee++;
-                }
+					// read field value from EEPROM and store it in eepVal buffer
+					unsigned int ee = 0;
+					for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
+						eepVal[ee] = EEPROM.read(e);
+						ee++;
+					}
 
-                // compair EEPROM value with the defaultVal
-                if(strcmp(eepVal, defaultVal) == 0) {
-                    // EEPROM value is the same als the default value
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTF_P(SER_PROC_TBL_DEF, defaultVal);
-                    #endif
-                } else {
+					// compair EEPROM value with the defaultVal
+					if(strcmp(eepVal, defaultVal) == 0) {
+						// EEPROM value is the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTF_P(SER_PROC_TBL_DEF, defaultVal);
+						#endif
+					} else {
 
-                    // EEPROM value is NOT the same als the default value
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTF_P(SER_PROC_TBL_OVRW, eepVal);
-                    #endif
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTF_P(SER_PROC_TBL_OVRW, eepVal);
+						#endif
 
-                    // workaround to prevent jiberish chars | move addField char* to char[] with v3!
-                    defaultVal = new char[length+1];
+						// workaround to prevent jiberish chars | move addField char* to char[] with v3!
+						defaultVal = new char[length+1];
 
-                    // update the default value with the value from EEPROM
-                    strcpy(defaultVal, eepVal);
-                }
+						// update the default value with the value from EEPROM
+						strcpy(defaultVal, eepVal);
+					}
 
-                bool putfieldStruct = false;
+					bool putfieldStruct = false;
 
-                // compair EEPROM fieldLabel with the current fieldLabel
-                if(fieldStruct.fieldLabel != fieldLabel) {
-                    // EEPROM value is NOT the same als the default value
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTLN("Overwritting label");
-                    #endif
-                    // update the default value with the value from EEPROM
-                    fieldStruct.fieldLabel  = fieldLabel;
-                    putfieldStruct = true;
-                }
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.fieldLabel != fieldLabel) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting label");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.fieldLabel  = fieldLabel;
+						putfieldStruct = true;
+					}
 
-                // compair EEPROM fieldLabel with the current fieldLabel
-                if(fieldStruct.length != length) {
-                    // EEPROM value is NOT the same als the default value
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTLN("Overwritting length");
-                    #endif
-                    // update the default value with the value from EEPROM
-                    fieldStruct.length      = length;
-                    putfieldStruct = true;
-                }
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.length != length) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting length");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.length      = length;
+						putfieldStruct = true;
+					}
 
-                // compair EEPROM fieldLabel with the current fieldLabel
-                if(fieldStruct.type != type) {
-                    // EEPROM value is NOT the same als the default value
-                    #if DEBUG_LVL >= 2
-                        DEBUG_PRINTLN("Overwritting type");
-                    #endif
-                    // update the default value with the value from EEPROM
-                    fieldStruct.type        = type;
-                    putfieldStruct = true;
-                }
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.type != type) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting type");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.type        = type;
+						putfieldStruct = true;
+					}
 
-                if(putfieldStruct) {
-                    // put the fieldStruct to EEPROM
-                    EEPROM.put(eepStartAddress, fieldStruct);
-                }
-            }
+					if(putfieldStruct) {
+						// put the fieldStruct to EEPROM
+						EEPROM.put(eepStartAddress, fieldStruct);
+					}
+				}
 
-            // EEPROM end
-            EEPROM.end();
+				// EEPROM end
+				EEPROM.end();
 
-            #if DEBUG_LVL >= 1
-                DEBUG_PRINTLN("");
-            #endif
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINTLN("");
+				#endif
 
-            delay(200);
+				delay(200);
 
-            // increase added xtra field count
-            this->_nrXF++;
-            this->eepFreeFrom = this->_nrXFlastAdd;
-        }
-    }
+				// increase added xtra field count
+				this->_nrXF++;
+				this->eepFreeFrom = this->_nrXFlastAdd;
+			}
+		}
+	}
+#else
+	void IOTAppStory::addField(char* &defaultVal, const char *fieldLabel, const int length, const char type) {
+		// get config from EEPROM
+		ConfigStruct config;
+		this->readConfig(config);
+		
+		if(strcmp(config.compDate, this->_compDate) == 0) {
+
+			#if DEBUG_LVL >= 1
+				// if this is the first field being processed display header
+				if(this->_nrXF == 0){
+
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN(FPSTR(SER_DEV));
+					#endif
+					DEBUG_PRINT(SER_PROC_FIELDS);
+					#if DEBUG_LVL == 1
+						DEBUG_PRINTLN(F(""));
+					#endif
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTLN(SER_PROC_TBL_HDR);
+					#endif
+				}
+			#endif
+
+			// init fieldStruct
+			AddFieldStruct fieldStruct;
+
+			// calculate EEPROM addresses
+			int eepFieldHdrStart = this->_nrXFlastAdd;
+			if(eepFieldHdrStart == 0) {
+				eepFieldHdrStart 		= FIELD_EEP_START_ADDR;
+			}
+			
+			const int eepFieldHdrEnd 	= eepFieldHdrStart + sizeof(fieldStruct);
+			const int magicBytesBegin 	= eepFieldHdrEnd - 3;
+			
+			const int eepFieldValStart	= eepFieldHdrEnd;
+			const int eepFieldValEnd	= eepFieldValStart + length + 1;
+
+			// check if the last field address fits EEPROM size
+			if(eepFieldValEnd > EEPROM_SIZE){
+				
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINTLN(FPSTR(SER_DEV));
+					DEBUG_PRINTLN(SER_PROC_ERROR);
+				#endif
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINT(SER_LAST_FIELD_ENDS_AT);
+					DEBUG_PRINT(eepFieldValEnd);
+					DEBUG_PRINT(" |");
+					DEBUG_PRINT(SER_EEPROM_SIZE);
+					DEBUG_PRINTLN(EEPROM_SIZE);
+				#endif
+
+			}else{
+
+				#if DEBUG_LVL >= 2
+					DEBUG_PRINTF_P(PSTR(" %02d | %-30s | %03d | %04d to %04d | %04d to %04d | %-30s | "), this->_nrXF+1, fieldLabel, length, eepFieldHdrStart, eepFieldHdrEnd, eepFieldValStart, eepFieldValEnd, defaultVal);
+				#endif
+
+				// EEPROM begin
+				EEPROM.begin(EEPROM_SIZE);
+
+				// check for MAGICEEP to confirm the this fieldStruct is stored in EEPROM
+				if(EEPROM.read(magicBytesBegin) != MAGICEEP[0]) {
+					#if DEBUG_LVL >= 2
+						DEBUG_PRINTF_P(SER_PROC_TBL_WRITE, defaultVal);
+					#endif
+
+					// add values to the fieldstruct
+					fieldStruct.fieldLabel  = fieldLabel;
+					fieldStruct.length      = length;
+					fieldStruct.type        = type;
+
+					// put the fieldStruct to EEPROM
+					EEPROM.put(eepFieldHdrStart, fieldStruct);
+
+					// temp val buffer
+					char eepVal[length+1];
+					strcpy(eepVal, defaultVal);
+
+					// put the field value to EEPROM
+					unsigned int ee = 0;
+					for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+						EEPROM.write(e, eepVal[ee]);
+						ee++;
+					}
+
+				} else {
+					// get the fieldStruct from EEPROM
+					EEPROM.get(eepFieldHdrStart, fieldStruct);
+
+					// temp val buffer
+					char eepVal[length+1];
+
+					// read field value from EEPROM and store it in eepVal buffer
+					unsigned int ee = 0;
+					for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+						eepVal[ee] = EEPROM.read(e);
+						ee++;
+					}
+
+					// compair EEPROM value with the defaultVal
+					if(strcmp(eepVal, defaultVal) == 0) {
+						// EEPROM value is the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTF_P(SER_PROC_TBL_DEF, defaultVal);
+						#endif
+					} else {
+
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTF_P(SER_PROC_TBL_OVRW, eepVal);
+						#endif
+
+						// workaround to prevent jiberish chars | move addField char* to char[] with v3!
+						defaultVal = new char[length+1];
+
+						// update the default value with the value from EEPROM
+						strcpy(defaultVal, eepVal);
+					}
+
+					bool putfieldStruct = false;
+
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.fieldLabel != fieldLabel) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting label");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.fieldLabel  = fieldLabel;
+						putfieldStruct = true;
+					}
+
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.length != length) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting length");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.length      = length;
+						putfieldStruct = true;
+					}
+
+					// compair EEPROM fieldLabel with the current fieldLabel
+					if(fieldStruct.type != type) {
+						// EEPROM value is NOT the same als the default value
+						#if DEBUG_LVL >= 2
+							DEBUG_PRINTLN("Overwritting type");
+						#endif
+						// update the default value with the value from EEPROM
+						fieldStruct.type        = type;
+						putfieldStruct = true;
+					}
+
+					if(putfieldStruct) {
+						// put the fieldStruct to EEPROM
+						EEPROM.put(eepFieldHdrStart, fieldStruct);
+					}
+				}
+
+				// EEPROM end
+				EEPROM.end();
+
+				#if DEBUG_LVL >= 1
+					DEBUG_PRINTLN("");
+				#endif
+
+				delay(200);
+
+				// increase added xtra field count
+				this->_nrXF++;
+				this->_nrXFlastAdd 	= eepFieldValEnd;
+				this->eepFreeFrom 	= this->_nrXFlastAdd;
+			}
+		}
+	}
+#endif
+
+
+
+bool IOTAppStory::eepFieldsConvertOldToNew(){
+	
+	if(EEPROM_STORAGE_STYLE == EEP_OLD){
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINTLN(" ERROR: eepFieldsConvertOldToNew() will only work if config.h EEPROM_STORAGE_STYLE is set to EEP_NEW");
+		#endif
+		
+		return false;
+	}
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN("\n Running: eepFieldsConvertOldToNew()\n\n Scanning storage style");
+	#endif
+	
+	// EEPROM begin
+	EEPROM.begin(EEPROM_SIZE);
+	
+	unsigned int eepCurrAt 		= 0;
+	unsigned int eepValFound 	= 0;
+	AddFieldStruct eepHdrArray[MAXNUMEXTRAFIELDS];
+	String eepValArray[MAXNUMEXTRAFIELDS];
+	
+	{
+		// check if current eeprom layout is in the old style
+		// and thus can be converted to the new style
+		if(EEPROM.read(FIELD_EEP_START_ADDR + sizeof(eepHdrArray[0]) - 3) != MAGICEEP[0] && EEPROM.read(FIELD_EEP_START_ADDR + sizeof(eepHdrArray[0]) - 2) != MAGICEEP[1]) {
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n Did not detect stored fields");
+			#endif
+			
+			return false;
+		}
+		
+		if(EEPROM.read(FIELD_EEP_START_ADDR + (sizeof(eepHdrArray[0]) * 2) - 3) == MAGICEEP[0] && EEPROM.read(FIELD_EEP_START_ADDR + (sizeof(eepHdrArray[0]) * 2) - 2) == MAGICEEP[1]) {
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n - old style detected\n Continue conversion.");
+			#endif
+		}else{
+			#if DEBUG_LVL >= 1
+				DEBUG_PRINTLN("\n - new style detected\n Ending conversion.");
+			#endif
+			
+			return false;
+		}
+		
+		
+		
+		for(unsigned int i = 0; i < MAXNUMEXTRAFIELDS; ++i) {
+
+			// calculate EEPROM addresses
+			const int eepStartAddress 		= FIELD_EEP_START_ADDR + (eepValFound * sizeof(eepHdrArray[eepValFound]));
+			const int magicBytesBegin 		= eepStartAddress + sizeof(eepHdrArray[eepValFound]) - 3;
+			const int secondMagicBytesBegin = eepStartAddress + (sizeof(eepHdrArray[eepValFound]) *2 ) - 3;
+			int eepFieldStart;
+			
+			if(EEPROM.read(magicBytesBegin) == MAGICEEP[0]) {
+
+				// get the fieldStruct from EEPROM
+				EEPROM.get(eepStartAddress, eepHdrArray[eepValFound]);
+
+				if(eepValFound == 0) {
+					eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(eepHdrArray[eepValFound])) + eepCurrAt;
+				} else {
+					eepFieldStart = eepCurrAt;
+				}
+				eepCurrAt = eepFieldStart + eepHdrArray[eepValFound].length + 1;
+
+				// temp buffer
+				char eepVal[eepHdrArray[eepValFound].length + 1];
+
+				// read field value from EEPROM and store it in eepVal buffer
+				unsigned int ee = 0;
+				for(unsigned int e=eepFieldStart; e < eepCurrAt; e++) {
+					eepVal[ee] = EEPROM.read(e);
+					ee++;
+				}
+				
+				// update eepValArray
+				eepValArray[eepValFound] = eepVal;
+				eepValFound++;
+			}
+		}
+		
+		#if DEBUG_LVL >= 1
+			DEBUG_PRINT("\n Found field values: ");
+			DEBUG_PRINT(eepValFound);
+			DEBUG_PRINT("\n");
+		#endif
+		
+		#if DEBUG_LVL >= 3
+			for(unsigned int i = 0; i < eepValFound; ++i) {
+				DEBUG_PRINTLN(String(eepValArray[i]));
+			}
+		#endif
+	}
+	#if DEBUG_LVL >= 1
+		DEBUG_PRINTLN("\n Write found headers & values to the new style");
+	#endif
+	unsigned int eepLastWritten = 0;
+	
+	for(unsigned int i = 0; i < eepValFound; ++i) {
+		
+		// calculate EEPROM addresses
+		int eepFieldHdrStart = eepLastWritten;
+		if(eepFieldHdrStart == 0) {
+			eepFieldHdrStart 		= FIELD_EEP_START_ADDR;
+		}
+		
+		const int eepFieldHdrEnd 	= eepFieldHdrStart + sizeof(eepHdrArray[i]);
+		const int magicBytesBegin 	= eepFieldHdrEnd - 3;
+		const int eepFieldValStart	= eepFieldHdrEnd;
+		
+
+		// put the fieldStruct to EEPROM
+		EEPROM.put(eepFieldHdrStart, eepHdrArray[i]);
+
+		const int eepFieldValEnd	= eepFieldValStart + eepHdrArray[i].length + 1;
+		
+		// temp buffer
+		char eepVal[eepHdrArray[i].length + 1];
+		
+		// write temp stored string to char array
+		eepValArray[i].toCharArray(eepVal, eepHdrArray[i].length+1);
+		
+		
+		#if DEBUG_LVL >= 2
+			DEBUG_PRINTF_P(PSTR(" %02d | %03d | %04d to %04d | %04d to %04d | %-30s | "), i+1, eepHdrArray[i].length, eepFieldHdrStart, eepFieldHdrEnd, eepFieldValStart, eepFieldValEnd, eepVal);
+			DEBUG_PRINTLN("");
+		#endif
+		
+		// put the field value to EEPROM
+		unsigned int ee = 0;
+		for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+			EEPROM.write(e, eepVal[ee]);
+			ee++;
+		}
+		
+		
+		eepLastWritten = eepFieldValEnd;
+	}
+	
+	// EEPROM end
+	EEPROM.end();
+	delay(500);
+	DEBUG_PRINTLN("\n Done!");
 }
+
+
+
+
+
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory dPinConv
@@ -1188,29 +1560,29 @@ void IOTAppStory::loop() {
     // wifi connector
     #if WIFI_MULTI_FORCE_RECONN_ANY == true
     if(WiFi.status() == WL_NO_SSID_AVAIL) {
-        this->_connected = false;
+        this->WiFiConnected = false;
         WiFi.disconnect(false);
         delay(10);
         #if DEBUG_LVL >= 1
             DEBUG_PRINTLN(SER_CONN_LOST_RECONN);
         #endif
         WiFiConnector WiFiConn;
-        WiFiConn.WiFiConnectToAP(".");
+        WiFiConn.connectToAP(".");
         #if DEBUG_LVL >= 1
             DEBUG_PRINTLN(F(""));
             DEBUG_PRINTLN(FPSTR(SER_DEV));
         #endif
     }
     #endif
-    // Synchronize the internal clock useing SNTP every SNTP_INT_CLOCK_UPD_INTERVAL
-    #if SNTP_INT_CLOCK_UPD == true
-        if(this->_connected && millis() - this->_lastTimeSet > SNTP_INT_CLOCK_UPD_INTERVAL) {
-            this->setClock();
-        }
-    #endif
+
+    if(WiFi.status() == WL_CONNECTED) {
+        this->WiFiConnected = true;
+    }else{
+        this->WiFiConnected = false;
+    }
 
     // Call home and check for updates every _callHomeInterval
-    if(this->_connected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
+    if(this->WiFiConnected && this->_callHomeInterval > 0 && millis() - this->_lastCallHomeTime > this->_callHomeInterval) {
         this->callHome();
     }
 
@@ -1376,6 +1748,14 @@ void IOTAppStory::onFirmwareUpdateCheck(THandlerFunction value) {
 }
 
 /*-----------------------------------------------------------------------------
+                        IOTAppStory onFirmwareNoUpdate
+
+*///---------------------------------------------------------------------------
+void IOTAppStory::onFirmwareNoUpdate(THandlerFunctionStr value) {
+    this->_firmwareNoUpdateCallback = value;
+}
+
+/*-----------------------------------------------------------------------------
                         IOTAppStory onFirmwareUpdateDownload
 
 *///---------------------------------------------------------------------------
@@ -1395,7 +1775,7 @@ void IOTAppStory::onFirmwareUpdateProgress(THandlerFunctionArg value) {
                         IOTAppStory onFirmwareUpdateError
 
 *///---------------------------------------------------------------------------
-void IOTAppStory::onFirmwareUpdateError(THandlerFunction value) {
+void IOTAppStory::onFirmwareUpdateError(THandlerFunctionStr value) {
     this->_firmwareUpdateErrorCallback = value;
 }
 
@@ -1426,7 +1806,7 @@ String IOTAppStory::strRetHtmlRoot() {
     String retHtml;
     retHtml += FPSTR(HTTP_TEMP_START);
 
-    if(this->_connected) {
+    if(this->WiFiConnected) {
         retHtml.replace("{h}", FPSTR(HTTP_STA_JS));
     } else {
 
@@ -1631,83 +2011,167 @@ bool IOTAppStory::servSaveWifiCred(const char* newSSID, const char* newPass, Str
     Handle app / firmware information
 
 *///---------------------------------------------------------------------------
-String IOTAppStory::strRetAppInfo() {
-    #if DEBUG_LVL >= 3
-        DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
-    #endif
+#if(EEPROM_STORAGE_STYLE == EEP_OLD)
+	String IOTAppStory::strRetAppInfo() {
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
+		#endif
 
-    // EEPROM begin
-    EEPROM.begin(EEPROM_SIZE);
+		// EEPROM begin
+		EEPROM.begin(EEPROM_SIZE);
 
-    this->_nrXFlastAdd = 0;
+		this->_nrXFlastAdd = 0;
 
-    String retHtml = F("[");
-    for(unsigned int i = 0; i < this->_nrXF; ++i) {
+		String retHtml = F("[");
+		for(unsigned int i = 0; i < this->_nrXF; ++i) {
 
-        // return html results from the wifi scan
-        if(i > 0) {
-            retHtml += F(",");
-        }
+			// return html results from the wifi scan
+			if(i > 0) {
+				retHtml += F(",");
+			}
 
-        // init fieldStruct
-        AddFieldStruct fieldStruct;
+			// init fieldStruct
+			AddFieldStruct fieldStruct;
 
-        // calculate EEPROM addresses
-        const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(AddFieldStruct));
-        int eepFieldStart;
+			// calculate EEPROM addresses
+			const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(AddFieldStruct));
+			int eepFieldStart;
 
-        // get the fieldStruct from EEPROM
-        EEPROM.get(eepStartAddress, fieldStruct);
+			// get the fieldStruct from EEPROM
+			EEPROM.get(eepStartAddress, fieldStruct);
 
-        if(i == 0) {
-            eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(AddFieldStruct)) + this->_nrXFlastAdd;
-        } else {
-            eepFieldStart = this->_nrXFlastAdd;
-        }
-        this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
+			if(i == 0) {
+				eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(AddFieldStruct)) + this->_nrXFlastAdd;
+			} else {
+				eepFieldStart = this->_nrXFlastAdd;
+			}
+			this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
 
-        // temp buffer
-        char eepVal[fieldStruct.length + 1];
+			// temp buffer
+			char eepVal[fieldStruct.length + 1];
 
-        // read field value from EEPROM and store it in eepVal buffer
-        unsigned int ee = 0;
-        for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
-            eepVal[ee] = EEPROM.read(e);
-            ee++;
-        }
+			// read field value from EEPROM and store it in eepVal buffer
+			unsigned int ee = 0;
+			for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
+				eepVal[ee] = EEPROM.read(e);
+				ee++;
+			}
 
-        // add slashed to values where necessary to prevent the json repsons from being broken
-        String value = eepVal;
-        value.replace("\\", "\\\\");
-        value.replace("\"", "\\\"");
-        value.replace("\n", "\\n");
-        value.replace("\r", "\\r");
-        value.replace("\t", "\\t");
-        value.replace("\b", "\\b");
-        value.replace("\f", "\\f");
+			// add slashed to values where necessary to prevent the json repsons from being broken
+			String value = eepVal;
+			value.replace("\\", "\\\\");
+			value.replace("\"", "\\\"");
+			value.replace("\n", "\\n");
+			value.replace("\r", "\\r");
+			value.replace("\t", "\\t");
+			value.replace("\b", "\\b");
+			value.replace("\f", "\\f");
 
-        // get PROGMEM json string and replace {*} with values
-        retHtml += FPSTR(HTTP_APP_INFO);
-        retHtml.replace(F("{l}"), String(fieldStruct.fieldLabel));
-        retHtml.replace(F("{v}"), value);
-        retHtml.replace(F("{n}"), String(i));
-        retHtml.replace(F("{m}"), String(fieldStruct.length));
-        retHtml.replace(F("{t}"), String(fieldStruct.type));
-        delay(10);
-    }
-    retHtml += F("]");
+			// get PROGMEM json string and replace {*} with values
+			retHtml += FPSTR(HTTP_APP_INFO);
+			retHtml.replace(F("{l}"), String(fieldStruct.fieldLabel));
+			retHtml.replace(F("{v}"), value);
+			retHtml.replace(F("{n}"), String(i));
+			retHtml.replace(F("{m}"), String(fieldStruct.length));
+			retHtml.replace(F("{t}"), String(fieldStruct.type));
+			delay(10);
+		}
+		retHtml += F("]");
 
-    // EEPROM end
-    EEPROM.end();
-    delay(500);
+		// EEPROM end
+		EEPROM.end();
+		delay(500);
 
-    #if DEBUG_LVL >= 3
-        DEBUG_PRINTLN(retHtml);
-    #endif
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(retHtml);
+		#endif
 
-    return retHtml;
-}
+		return retHtml;
+	}
+#else
+	String IOTAppStory::strRetAppInfo() {
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(SER_SERV_APP_SETTINGS);
+		#endif
 
+		// EEPROM begin
+		EEPROM.begin(EEPROM_SIZE);
+
+		this->_nrXFlastAdd 	= 0;
+		String retHtml 		= F("[");
+		
+		for(unsigned int i = 0; i < this->_nrXF; ++i) {
+
+			// return html results from the wifi scan
+			if(i > 0) {
+				retHtml += F(",");
+			}
+
+			// init fieldStruct
+			AddFieldStruct fieldStruct;
+
+			// calculate EEPROM addresses
+			int eepFieldHdrStart = this->_nrXFlastAdd;
+			if(eepFieldHdrStart == 0) {
+				eepFieldHdrStart 		= FIELD_EEP_START_ADDR;
+			}
+			
+			const int eepFieldHdrEnd 	= eepFieldHdrStart + sizeof(fieldStruct);
+			const int magicBytesBegin 	= eepFieldHdrEnd - 3;
+			const int eepFieldValStart	= eepFieldHdrEnd;
+			
+
+			// get the fieldStruct from EEPROM
+			EEPROM.get(eepFieldHdrStart, fieldStruct);
+			
+			const int eepFieldValEnd	= eepFieldValStart + fieldStruct.length + 1;
+			
+			// temp buffer
+			char eepVal[fieldStruct.length + 1];
+
+			// read field value from EEPROM and store it in eepVal buffer
+			unsigned int ee = 0;
+			for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {      //this->_nrXFlastAdd
+				eepVal[ee] = EEPROM.read(e);
+				ee++;
+			}
+
+			// add slashed to values where necessary to prevent the json repsons from being broken
+			String value = eepVal;
+			value.replace("\\", "\\\\");
+			value.replace("\"", "\\\"");
+			value.replace("\n", "\\n");
+			value.replace("\r", "\\r");
+			value.replace("\t", "\\t");
+			value.replace("\b", "\\b");
+			value.replace("\f", "\\f");
+
+			// get PROGMEM json string and replace {*} with values
+			retHtml += FPSTR(HTTP_APP_INFO);
+			retHtml.replace(F("{l}"), String(fieldStruct.fieldLabel));
+			retHtml.replace(F("{v}"), value);
+			retHtml.replace(F("{n}"), String(i));
+			retHtml.replace(F("{m}"), String(fieldStruct.length));
+			retHtml.replace(F("{t}"), String(fieldStruct.type));
+			delay(10);
+			
+			this->_nrXFlastAdd = eepFieldValEnd;
+		}
+		retHtml += F("]");
+
+		
+
+		// EEPROM end
+		EEPROM.end();
+		delay(500);
+
+		#if DEBUG_LVL >= 3
+			DEBUG_PRINTLN(retHtml);
+		#endif
+
+		return retHtml;
+	}
+#endif
 /*-----------------------------------------------------------------------------
                         IOTAppStory servSaveFngPrint
 
@@ -1858,72 +2322,152 @@ String IOTAppStory::strRetCertScan(String path) {
     Save App Settings
 
 *///---------------------------------------------------------------------------
-bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
-    #if DEBUG_LVL >= 3
-        DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
-    #endif
+#ifndef ARDUINO_SAMD_VARIANT_COMPLIANCE
+	#if(EEPROM_STORAGE_STYLE == EEP_OLD)
+		bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
+			#endif
 
-    if(this->_nrXF) {
-        // EEPROM begin
-        EEPROM.begin(EEPROM_SIZE);
-        this->_nrXFlastAdd = 0;
-        // init fieldStruct
-        AddFieldStruct fieldStruct;
+			if(this->_nrXF) {
+				// EEPROM begin
+				EEPROM.begin(EEPROM_SIZE);
+				this->_nrXFlastAdd = 0;
+				// init fieldStruct
+				AddFieldStruct fieldStruct;
 
-        for(unsigned int i = 0; i < this->_nrXF; i++) {
-            if(request->hasParam(String(i), true)) {
-                // calculate EEPROM addresses
-                const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(fieldStruct));
-                int eepFieldStart;
-                // get the fieldStruct from EEPROM
-                EEPROM.get(eepStartAddress, fieldStruct);
+				for(unsigned int i = 0; i < this->_nrXF; i++) {
+					if(request->hasParam(String(i), true)) {
+						// calculate EEPROM addresses
+						const int eepStartAddress = FIELD_EEP_START_ADDR + (i * sizeof(fieldStruct));
+						int eepFieldStart;
+						// get the fieldStruct from EEPROM
+						EEPROM.get(eepStartAddress, fieldStruct);
 
-                if(i == 0) {
-                    eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
-                } else {
-                    eepFieldStart = this->_nrXFlastAdd;
-                }
-                this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
-                char eepVal[fieldStruct.length + 1];
-                // read field value from EEPROM and store it in eepVal buffer
-                unsigned int ee = 0;
-                for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
-                    eepVal[ee] = EEPROM.read(e);
-                    ee++;
-                }
+						if(i == 0) {
+							eepFieldStart = FIELD_EEP_START_ADDR + (MAXNUMEXTRAFIELDS * sizeof(fieldStruct)) + this->_nrXFlastAdd;
+						} else {
+							eepFieldStart = this->_nrXFlastAdd;
+						}
+						this->_nrXFlastAdd = eepFieldStart + fieldStruct.length + 1;
+						char eepVal[fieldStruct.length + 1];
+						// read field value from EEPROM and store it in eepVal buffer
+						unsigned int ee = 0;
+						for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
+							eepVal[ee] = EEPROM.read(e);
+							ee++;
+						}
 
-                if(strcmp(eepVal, request->getParam(String(i), true)->value().c_str()) != 0) {
-                    char saveEepVal[fieldStruct.length+1];
-                    // overwrite current value with the saved value
-                    request->getParam(String(i), true)->value().toCharArray(saveEepVal, fieldStruct.length+1);
-                    // write the field value to EEPROM
-                    unsigned int ee = 0;
-                    for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
-                        EEPROM.write(e, saveEepVal[ee]);
-                        ee++;
-                    }
+						if(strcmp(eepVal, request->getParam(String(i), true)->value().c_str()) != 0) {
+							char saveEepVal[fieldStruct.length+1];
+							// overwrite current value with the saved value
+							request->getParam(String(i), true)->value().toCharArray(saveEepVal, fieldStruct.length+1);
+							// write the field value to EEPROM
+							unsigned int ee = 0;
+							for(unsigned int e=eepFieldStart; e < this->_nrXFlastAdd; e++) {
+								EEPROM.write(e, saveEepVal[ee]);
+								ee++;
+							}
 
-                #if DEBUG_LVL >= 3
-                    DEBUG_PRINT("\nOverwrite with new value: ");
-                    DEBUG_PRINTLN(saveEepVal);
-                    DEBUG_PRINT("EEPROM from: ");
-                    DEBUG_PRINT(eepFieldStart);
-                    DEBUG_PRINT(" to ");
-                    DEBUG_PRINTLN(this->_nrXFlastAdd);
-                } else {
-                    DEBUG_PRINTLN("No need to overwrite current value");
-                #endif
-                }
-            }
-        }
-        // EEPROM end
-        EEPROM.end();
-        delay(200);
-        return true;
-    }
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINT("\nOverwrite with new value: ");
+							DEBUG_PRINTLN(saveEepVal);
+							DEBUG_PRINT("EEPROM from: ");
+							DEBUG_PRINT(eepFieldStart);
+							DEBUG_PRINT(" to ");
+							DEBUG_PRINTLN(this->_nrXFlastAdd);
+						} else {
+							DEBUG_PRINTLN("No need to overwrite current value");
+						#endif
+						}
+					}
+				}
+				// EEPROM end
+				EEPROM.end();
+				delay(200);
+				return true;
+			}
 
-    return false;
-}
+			return false;
+		}
+	#else
+		bool IOTAppStory::servSaveAppInfo(AsyncWebServerRequest *request) {
+			#if DEBUG_LVL >= 3
+				DEBUG_PRINTLN(SER_SAVE_APP_SETTINGS);
+			#endif
+
+			if(this->_nrXF) {
+				// EEPROM begin
+				EEPROM.begin(EEPROM_SIZE);
+				this->_nrXFlastAdd = 0;
+				// init fieldStruct
+				AddFieldStruct fieldStruct;
+
+				for(unsigned int i = 0; i < this->_nrXF; i++) {
+					if(request->hasParam(String(i), true)) {
+						
+						// calculate EEPROM addresses
+						int eepFieldHdrStart = this->_nrXFlastAdd;
+						if(eepFieldHdrStart == 0) {
+							eepFieldHdrStart 		= FIELD_EEP_START_ADDR;
+						}
+						
+						const int eepFieldHdrEnd 	= eepFieldHdrStart + sizeof(fieldStruct);
+						const int magicBytesBegin 	= eepFieldHdrEnd - 3;
+						const int eepFieldValStart	= eepFieldHdrEnd;
+						
+
+						// get the fieldStruct from EEPROM
+						EEPROM.get(eepFieldHdrStart, fieldStruct);
+						
+						const int eepFieldValEnd	= eepFieldValStart + fieldStruct.length + 1;
+
+						// temp buffer
+						char eepVal[fieldStruct.length + 1];
+						
+						// read field value from EEPROM and store it in eepVal buffer
+						unsigned int ee = 0;
+						for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+							eepVal[ee] = EEPROM.read(e);
+							ee++;
+						}
+
+						if(strcmp(eepVal, request->getParam(String(i), true)->value().c_str()) != 0) {
+							char saveEepVal[fieldStruct.length+1];
+							// overwrite current value with the saved value
+							request->getParam(String(i), true)->value().toCharArray(saveEepVal, fieldStruct.length+1);
+							// write the field value to EEPROM
+							unsigned int ee = 0;
+							for(unsigned int e=eepFieldValStart; e < eepFieldValEnd; e++) {
+								EEPROM.write(e, saveEepVal[ee]);
+								ee++;
+							}
+
+						#if DEBUG_LVL >= 3
+							DEBUG_PRINT("\nOverwrite with new value: ");
+							DEBUG_PRINTLN(saveEepVal);
+							DEBUG_PRINT("EEPROM from: ");
+							DEBUG_PRINT(eepFieldValStart);
+							DEBUG_PRINT(" to ");
+							DEBUG_PRINTLN(eepFieldValEnd);
+						} else {
+							DEBUG_PRINTLN("No need to overwrite current value");
+						#endif
+						}
+					
+						this->_nrXFlastAdd = eepFieldValEnd;
+					}
+				}
+				// EEPROM end
+				EEPROM.end();
+				delay(200);
+				return true;
+			}
+
+			return false;
+		}
+	#endif
+#endif
 
 /*-----------------------------------------------------------------------------
                         IOTAppStory servSaveActcode

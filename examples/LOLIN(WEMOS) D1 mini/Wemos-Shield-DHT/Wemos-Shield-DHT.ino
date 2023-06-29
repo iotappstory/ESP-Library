@@ -141,7 +141,7 @@ void setup() {
     Serial.print(".");
   });
 
-  IAS.onFirmwareUpdateError([]() {
+  IAS.onFirmwareUpdateError([](String statusMessage) {
     dispTemplate_threeLineV1(F("Update"), F("Error"), F("Check logs"));
   });
   /*

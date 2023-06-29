@@ -22,22 +22,24 @@
 #define SER_ERASE_NONE                  " Laat EEPROM intact"
 #define SER_ERASE_FLASH                 " Erasing Flash...\n From %4d to %4d\n"
 
-#define SER_CALLBACK_FIRST_BOOT         " Run first boot callback"
+#define SER_CALLBACK_FIRST_BOOT         " Voer first boot callback uit"
 #define SER_START                       " Start "
-#define SER_SAVE_CONFIG                 "Save config presets...\n"
+#define SER_SAVE_CONFIG                 "Config instellingen opslaan...\n"
 #define SER_MODE_SEL_BTN                " Mode select knop: GPIO%d\n Boardname: %s\n Update on boot: %d\n"
 
 #define SER_BOOTTIMES_UPDATE            " bootTimes sinds laatste update: %d\n boardMode: %c\n"
 #define SER_BOOTTIMES_POWERUP           " rtcMem\n bootTimes sinds powerup: %d\n boardMode: %c\n"
 
-#define SER_UPDATE_IASLOG               " update iasLog"
+#define SER_UPDATE_IASLOG               " Verstuur log naar IAS"
 #define SER_FAILED_COLON                " Mislukt: "
+#define SER_FAILED_EXCL                 "\n Mislukt!"
 #define SER_FAILED_TRYAGAIN             "\n Mislukt, Probeer nogmaals!!!"
 
 #define SER_CONFIG_MODE                 "\n\n\n\n C O N F I G U R A T I E   M O D U S\n"
 #define SER_CONFIG_AP_MODE              " AP mode. Verbinden met Wifi AP \"%s\"\n En open 192.168.4.1\n"
 #define SER_CONFIG_STA_MODE             " STA mode. Open "
 #define SER_CONFIG_STA_MODE_CHANGE      "\n Veranderd naar STA mode. Open "
+#define SER_CONFIG_TIMEOUT              " Time-out vanwege inactiviteit"
 #define SER_CONFIG_EXIT                 " Exit config"
 #define SER_CONFIG_ENTER                " Start Configuratie Modus"
 
@@ -46,9 +48,16 @@
 
 #define SER_CONN_SAVE_EEPROM            " Verbonden. Opslaan config naar eeprom"
 #define SER_CONNECTING                  " Verbinden met WiFi AP"
-#define SER_CONN_NONE_GO_CFG            "\n Geen verbinding. Ga in Configuratie Modus\n"
+#define SER_CONN_NONE_GO_CFG            "Geen verbinding. Ga in Configuratie Modus\n"
 #define SER_CONN_NONE_CONTINU           "\n WiFi NIET verbonden. Toch verder\n"
-#define SER_CONNECTED                   "\n WiFi verbonden\n"
+#define SER_CONN_LOST_RECONN            " Verbinding verloren! Opnieuw verbinden"
+#define SER_CONNECTED                   " WiFi verbonden\n"
+
+#define SER_SNTP_SETUP                  " NTP server instellen\n"
+#define SER_SNTP_SYNC_TIME              " Sync tijd met NTP server\n "
+#define SER_SNTP_DISP_UTC               "\n UTC: "
+
+#define SER_RETRY_LATER                 " Probeer later opnieuw"
 
 #define SER_DEV_MAC                     " Apparaat MAC: "
 #define SER_DEV_IP                      " Apparaat IP Address: "
@@ -77,7 +86,7 @@
 
 #define SER_PROC_ERROR                  "Teveel velden! Verander MAXNUMEXTRAFIELDS in config.h;"
 #define SER_PROC_FIELDS                 " Verwerken toegevoegde velden"
-#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT WAARDE                  | HUIDIGE WAARDE                  | STATUS\n"
+#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM HDR  |  EEPROM VAL  | DEFAULT WAARDE                  | HUIDIGE WAARDE                  | STATUS\n"
 #define SER_PROC_TBL_OVRW               "%-30s | OVERSCHREVEN"
 #define SER_PROC_TBL_DEF                "%-30s | DEFAULT"
 #define SER_PROC_TBL_WRITE              "%-30s | SCHRIJVEN NAAR EEPROM"
@@ -85,7 +94,10 @@
 #define SER_EEPROM_FOUND                " EEPROM Configuratie gevonden"
 #define SER_EEPROM_NOT_FOUND            " EEPROM Configuratie NIET GEVONDEN!!!!"
 
+#define SER_SPIFFS_MOUNTING             "Koppel SPIFFS..."
 #define SER_SPIFFS_PART_NOT_FOUND       "SPIFFS Partitie Niet gevonden"
+#define SER_CERTIFICATE_NOT_FOUND       "Certificaat Niet gevonden!"
+#define SER_CERTIFICATE_NOT_LOADED      "Kon certificaat niet laden!"
 
 #define SER_UPD_SPIFFS_TO_LARGE         "SPIFFS update te groot!"
 #define SER_UPD_SKETCH_TO_LARGE         "Sketch update te groot!"
@@ -96,6 +108,8 @@
 
 #define SER_SERV_DEV_INFO               " Serveer apparaat info"
 #define SER_SERV_WIFI_SCAN_RES          " Serveer resultaat van Wifiscan"
+#define SER_SERV_WIFI_CRED              " Serveer Wifi credentials"
+#define SER_SERV_CERT_SCAN_RES          " Serveer resultaten certificate scan"
 #define SER_SERV_APP_SETTINGS           " Serveer App Settings"
 
 #define SER_SAVE_APP_SETTINGS           " Opslaan App Settings"

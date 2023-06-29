@@ -59,9 +59,10 @@ private:
     ConfigStruct* _config;
     std::unique_ptr<AsyncWebServer> server;
 
-    bool _tryToConn         = false;        // is the wifi connector busy? (trying to connect)
-    bool _connFail          = false;        // did the last connection attempt faile
-    bool _connChangeMode    = false;        // flag to notify the loop to change from AP to STA mode
+    bool _tryToConn         	= false;        // is the wifi connector busy? (trying to connect)
+    bool _connFail          	= false;        // did the last connection attempt faile
+    bool _connChangeMode    	= false;        // flag to notify the loop to change from AP to STA mode
+    unsigned int _lastAction 	= 0;            // last action taken by human to determine when to timeout
 
     void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     void hdlReturn(AsyncWebServerRequest *request, int ret);

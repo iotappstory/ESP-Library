@@ -18,6 +18,8 @@
     #include <WiFiMulti.h>
     #include "espressif/WiFiConnector.h"
     #include <ESPmDNS.h>
+	
+    #include "espressif/esp32/NtpTimeSync.h"
 
     #include "espressif/esp32/BoardInfo.h"
     #include "espressif/esp32/CallServer.h"
@@ -41,6 +43,8 @@
     #include <ESP8266WiFiMulti.h>
     #include "espressif/WiFiConnector.h"
     #include <ESP8266mDNS.h>
+	
+    #include "espressif/esp8266/NtpTimeSync.h"	
 
     #include "espressif/esp8266/BoardInfo.h"
     #include "espressif/esp8266/CallServer.h"

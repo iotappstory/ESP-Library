@@ -125,7 +125,7 @@ void setup() {
     delay(100);
   });
 
-  IAS.onFirmwareUpdateError([]() {
+  IAS.onFirmwareUpdateError([](String statusMessage) {
     pixels.clear();
     pixels.setPixelColor(0, red);                         // send red / update error to the neopixel
     pixels.show();

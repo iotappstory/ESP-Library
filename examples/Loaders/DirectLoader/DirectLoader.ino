@@ -1,7 +1,7 @@
 /*
   Warning: This is not for first time users. Use the IASLoader instead!
 
-  This sketch is meant for adding large quantities of devices to an existing project(product)
+  This sketch is meant for adding large quantities of devices to an existing Devicebatch
   without having to do/repeat the initial setup.(Wifi, registration etc.)
 
   This sketch:
@@ -9,7 +9,6 @@
   - Sets up initial hardcode WiFi connection
   - Contacts IOTAppStory.com over https
   - Registers your device with IOTAppStory.com
-  - Adds the device to a project(product)
   - Saves the device activation code
   - Saves generated device name (eg. XXXX-22, XXXX-23 ...)
   - Saves the Fingerprint or Certificate (depends on config.h settings)
@@ -18,12 +17,10 @@
   
   You will need:
   - IOTAppStory.com account
-  - Existing project(product) with at least 1 added device of the same 
-    type as the devices you want to use this sketch for.
-  - Project hash
+  - Device hash
   - Local WiFi credentials
 
-  Copyright (c) [2019] [Onno Dirkzwager]
+  Copyright (c) [2021] [Onno Dirkzwager]
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -54,54 +51,46 @@ IOTAppStory IAS(COMPDATE, MODEBUTTON);    // Initialize IOTAppStory
 
 
 // ================================================ VARS =================================================
-const char* ssid          = "YourSSID";   // Wifi SSID
-const char* password      = "password";   // WiFi password
+const char* ssid          = "***";        // Wifi SSID
+const char* password      = "***";        // WiFi password
 const bool  saveWifiCred  = true;         // true : Save the Wifi credentials for future use
                                           // false: only use Wifi credentials for adding this device and doing the initial update
 
+const char* hash          = "***";
 const char* host          = "iotappstory.com";
-const char* url           = "/ota/addtoproject.php";
-const char* hash          = "EXAMPLE1234567890abcdefghij1234EXAMPLEghij1234567890abcdefghij12";
+const char* url           = "/ota/addtoaccount";
+
 
 #if defined  ESP8266 && HTTPS_8266_TYPE == FNGPRINT
   // Use web browser to view and copy SHA1 fingerprint of the certificate
-  const char fingerprint[] PROGMEM = "34 6d 0a 26 f0 40 3a 0a 1b f1 ca 8e c8 0c f5 14 21 83 7c b1";
+  const char fingerprint[] PROGMEM = "2b 14 1a f1 5e 54 87 fc 0d f4 6f 0e 01 1c 0d 77 25 28 5b 9e";
 #else
   // Use web browser to save a copy of the root certificate
   const char ROOT_CA[] = \
     "-----BEGIN CERTIFICATE-----\n" \
-    "MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n" \
-    "hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n" \
-    "A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNV\n" \
-    "BAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTAwMTE5\n" \
-    "MDAwMDAwWhcNMzgwMTE4MjM1OTU5WjCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgT\n" \
-    "EkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMR\n" \
-    "Q09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNh\n" \
-    "dGlvbiBBdXRob3JpdHkwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCR\n" \
-    "6FSS0gpWsawNJN3Fz0RndJkrN6N9I3AAcbxT38T6KhKPS38QVr2fcHK3YX/JSw8X\n" \
-    "pz3jsARh7v8Rl8f0hj4K+j5c+ZPmNHrZFGvnnLOFoIJ6dq9xkNfs/Q36nGz637CC\n" \
-    "9BR++b7Epi9Pf5l/tfxnQ3K9DADWietrLNPtj5gcFKt+5eNu/Nio5JIk2kNrYrhV\n" \
-    "/erBvGy2i/MOjZrkm2xpmfh4SDBF1a3hDTxFYPwyllEnvGfDyi62a+pGx8cgoLEf\n" \
-    "Zd5ICLqkTqnyg0Y3hOvozIFIQ2dOciqbXL1MGyiKXCJ7tKuY2e7gUYPDCUZObT6Z\n" \
-    "+pUX2nwzV0E8jVHtC7ZcryxjGt9XyD+86V3Em69FmeKjWiS0uqlWPc9vqv9JWL7w\n" \
-    "qP/0uK3pN/u6uPQLOvnoQ0IeidiEyxPx2bvhiWC4jChWrBQdnArncevPDt09qZah\n" \
-    "SL0896+1DSJMwBGB7FY79tOi4lu3sgQiUpWAk2nojkxl8ZEDLXB0AuqLZxUpaVIC\n" \
-    "u9ffUGpVRr+goyhhf3DQw6KqLCGqR84onAZFdr+CGCe01a60y1Dma/RMhnEw6abf\n" \
-    "Fobg2P9A3fvQQoh/ozM6LlweQRGBY84YcWsr7KaKtzFcOmpH4MN5WdYgGq/yapiq\n" \
-    "crxXStJLnbsQ/LBMQeXtHT1eKJ2czL+zUdqnR+WEUwIDAQABo0IwQDAdBgNVHQ4E\n" \
-    "FgQUu69+Aj36pvE8hI6t7jiY7NkyMtQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB\n" \
-    "/wQFMAMBAf8wDQYJKoZIhvcNAQEMBQADggIBAArx1UaEt65Ru2yyTUEUAJNMnMvl\n" \
-    "wFTPoCWOAvn9sKIN9SCYPBMtrFaisNZ+EZLpLrqeLppysb0ZRGxhNaKatBYSaVqM\n" \
-    "4dc+pBroLwP0rmEdEBsqpIt6xf4FpuHA1sj+nq6PK7o9mfjYcwlYRm6mnPTXJ9OV\n" \
-    "2jeDchzTc+CiR5kDOF3VSXkAKRzH7JsgHAckaVd4sjn8OoSgtZx8jb8uk2Intzna\n" \
-    "FxiuvTwJaP+EmzzV1gsD41eeFPfR60/IvYcjt7ZJQ3mFXLrrkguhxuhoqEwWsRqZ\n" \
-    "CuhTLJK7oQkYdQxlqHvLI7cawiiFwxv/0Cti76R7CZGYZ4wUAc1oBmpjIXUDgIiK\n" \
-    "boHGhfKppC3n9KUkEEeDys30jXlYsQab5xoq2Z0B15R97QNKyvDb6KkBPvVWmcke\n" \
-    "jkk9u+UJueBPSZI9FoJAzMxZxuY67RIuaTxslbH9qh17f4a+Hg4yRvv7E491f0yL\n" \
-    "S0Zj/gA0QHDBw7mh3aZw4gSzQbzpgJHqZJx64SIDqZxubw5lT2yHh17zbqD5daWb\n" \
-    "QOhTsiedSrnAdyGN/4fy3ryM7xfft0kL0fJuMAsaDk527RH89elWsn2/x20Kk4yl\n" \
-    "0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB\n" \
-    "NVOFBkpdn627G190\n" \
+    "MIIEMjCCAxqgAwIBAgIBATANBgkqhkiG9w0BAQUFADB7MQswCQYDVQQGEwJHQjEb\n" \
+    "MBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHDAdTYWxmb3JkMRow\n" \
+    "GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj\n" \
+    "YXRlIFNlcnZpY2VzMB4XDTA0MDEwMTAwMDAwMFoXDTI4MTIzMTIzNTk1OVowezEL\n" \
+    "MAkGA1UEBhMCR0IxGzAZBgNVBAgMEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n" \
+    "BwwHU2FsZm9yZDEaMBgGA1UECgwRQ29tb2RvIENBIExpbWl0ZWQxITAfBgNVBAMM\n" \
+    "GEFBQSBDZXJ0aWZpY2F0ZSBTZXJ2aWNlczCCASIwDQYJKoZIhvcNAQEBBQADggEP\n" \
+    "ADCCAQoCggEBAL5AnfRu4ep2hxxNRUSOvkbIgwadwSr+GB+O5AL686tdUIoWMQua\n" \
+    "BtDFcCLNSS1UY8y2bmhGC1Pqy0wkwLxyTurxFa70VJoSCsN6sjNg4tqJVfMiWPPe\n" \
+    "3M/vg4aijJRPn2jymJBGhCfHdr/jzDUsi14HZGWCwEiwqJH5YZ92IFCokcdmtet4\n" \
+    "YgNW8IoaE+oxox6gmf049vYnMlhvB/VruPsUK6+3qszWY19zjNoFmag4qMsXeDZR\n" \
+    "rOme9Hg6jc8P2ULimAyrL58OAd7vn5lJ8S3frHRNG5i1R8XlKdH5kBjHYpy+g8cm\n" \
+    "ez6KJcfA3Z3mNWgQIJ2P2N7Sw4ScDV7oL8kCAwEAAaOBwDCBvTAdBgNVHQ4EFgQU\n" \
+    "oBEKIz6W8Qfs4q8p74Klf9AwpLQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQF\n" \
+    "MAMBAf8wewYDVR0fBHQwcjA4oDagNIYyaHR0cDovL2NybC5jb21vZG9jYS5jb20v\n" \
+    "QUFBQ2VydGlmaWNhdGVTZXJ2aWNlcy5jcmwwNqA0oDKGMGh0dHA6Ly9jcmwuY29t\n" \
+    "b2RvLm5ldC9BQUFDZXJ0aWZpY2F0ZVNlcnZpY2VzLmNybDANBgkqhkiG9w0BAQUF\n" \
+    "AAOCAQEACFb8AvCb6P+k+tZ7xkSAzk/ExfYAWMymtrwUSWgEdujm7l3sAg9g1o1Q\n" \
+    "GE8mTgHj5rCl7r+8dFRBv/38ErjHT1r0iWAFf2C3BUrz9vHCv8S5dIa2LX1rzNLz\n" \
+    "Rt0vxuBqw8M0Ayx9lt1awg6nCpnBBYurDC/zXDrPbDdVCYfeU0BsWO/8tqtlbgT2\n" \
+    "G9w84FoVxp7Z8VlIMCFlA2zs6SFz7JsDoeA3raAVGI/6ugLOpyypEBMs1OUIJqsi\n" \
+    "l2D4kF501KKaU73yqWjgom7C12yxow+ev+to51byrvLjKzg6CYG1a4XXvi3tPxq3\n" \
+    "smPi9WIsgtRqAEFQ8TmDn5XpNpaYbg==\n" \
     "-----END CERTIFICATE-----\n";
 #endif
 
@@ -121,6 +110,7 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  IAS.WiFiConnected = true;
   Serial.print(F("\n WiFi connected\n IP address: "));
   Serial.println(WiFi.localIP());
   
@@ -128,6 +118,7 @@ void setup() {
     // Synchronize the internal clock useing SNTP | used for verifying certificates on the ESP8266
     #if defined  ESP8266 && HTTPS_8266_TYPE == CERTIFICATE
       IAS.setClock();
+      IAS.ntpWaitForSync();
     #endif
     
     // Use WiFiClientSecure class to create TLS connection
@@ -144,14 +135,15 @@ void setup() {
     #elif defined ESP32
       client.setCACert(ROOT_CA);
     #endif
-    
-    if (!client.connect(host, 443)) {
-      Serial.println(F(" Connection failed"));
-      return;
+
+    Serial.print(" ");
+    while (!client.connect(host, 443)) {
+      delay(500);
+      Serial.print(".");
     }
   
     // request url from host
-    Serial.printf(" Requesting URL: %s%s\n", host, url);
+    Serial.printf("\n Requesting URL: %s%s\n", host, url);
     client.print(String("GET ") + url + "?hash=" + hash + F(" HTTP/1.1") +
                  F("\r\nHost: ") + host + 
                  F("\r\nUser-Agent: ESP-http-Update") +
@@ -203,7 +195,7 @@ void setup() {
       Serial.println(F("\n Success! Added device to IAS.\n Updating device..."));
   
       // create new config struc
-      configStruct newConfig;
+      ConfigStruct newConfig;
 
       // read config | this gets the default settings
       IAS.readConfig(newConfig);

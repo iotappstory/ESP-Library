@@ -39,18 +39,25 @@
 #define SER_CONFIG_AP_MODE              " AP mode. Connect to Wifi AP \"%s\"\n And open 192.168.4.1\n"
 #define SER_CONFIG_STA_MODE             " STA mode. Open "
 #define SER_CONFIG_STA_MODE_CHANGE      " Changed to STA mode. Reconnect to: "
+#define SER_CONFIG_TIMEOUT              " Timeout due to inactivity"
 #define SER_CONFIG_EXIT                 " Exit config"
 #define SER_CONFIG_ENTER                " Entering in Configuration Mode"
 
 #define SER_REC_ACT_CODE                "\n Received activation code from browser"
+#define SER_REC_CREDENTIALS             "Received credentials: "
 
 #define SER_CONN_SAVE_EEPROM            " Connected. Saving config to eeprom"
 #define SER_CONNECTING                  " Connecting to WiFi AP"
-#define SER_CONN_NONE_GO_CFG            " Going into Configuration Mode\n"
+#define SER_CONN_NONE_GO_CFG            "No creds or AP's available. Going into Configuration Mode\n"
 #define SER_CONN_NONE_CONTINU           "\n Continu without WiFi\n"
 #define SER_CONN_LOST_RECONN            " Connection lost! Reconnecting"
 #define SER_CONNECTED                   " WiFi connected\n"
-#define SER_SYNC_TIME_NTP               " Synchronising time with NTP server\n "
+
+#define SER_SNTP_SETUP                  " Set NTP server settings\n"
+#define SER_SNTP_SYNC_TIME              " Wait for background NTP sync\n "
+#define SER_SNTP_DISP_UTC               "\n UTC: "
+
+#define SER_RETRY_LATER                 " Retry later"
 
 #define SER_DEV_MAC                     " Device MAC: "
 #define SER_DEV_IP                      " IP Address: "
@@ -59,8 +66,8 @@
 #define SER_DEV_MDNS_FAIL               " MDNS responder failed to start"
 
 #define SER_CALLING_HOME                " Calling Home"
-#define SER_CALLHOME_FAILED             "Error: connection failed"
-#define SER_CALLHOME_TIMEOUT            "Error: connection timeout"
+#define SER_CALLHOME_FAILED             "ERROR: connection failed"
+#define SER_CALLHOME_TIMEOUT            "ERROR: connection timeout"
 #define SER_CALLHOME_CERT_FAILED        " ERROR: certificate verification failed!"
 #define SER_CALLHOME_HDR_FAILED         " ERROR: file header verification failed!"
 #define SER_RET_FROM_IAS                "\n Returning from IOTAppStory.com"
@@ -71,21 +78,23 @@
 #define SER_UPDATES_FROM                " updates from: "
 #define SER_UPDATES                     " updates"
 #define SER_UPDATEDTO                   "\n Updated to: "
-#define SER_UPDATEDERROR                "\n Error updating device: "
+#define SER_UPDATEDERROR                "\n ERROR: updating device: "
 
 #define SER_DOWNLOADING                 " Downloading..."
 #define SER_INSTALLING                  " Installing..."
 #define SER_REBOOT_NEC                  " Reboot necessary!"
 
-#define SER_PROC_ERROR                  "To many fields! Change MAXNUMEXTRAFIELDS in config.h;"
+#define SER_PROC_ERROR                  " ERROR: Added fields size > EEPROM size."
 #define SER_PROC_FIELDS                 " Processing added fields"
-#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM LOC  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"
+#define SER_LAST_FIELD_ENDS_AT          " Last field ends at: "
+#define SER_PROC_TBL_HDR                "\n ID | LABEL                          | LEN |  EEPROM HDR  |  EEPROM VAL  | DEFAULT VALUE                  | CURRENT VALUE                  | STATUS\n"
 #define SER_PROC_TBL_OVRW               "%-30s | OVERWRITTEN"
 #define SER_PROC_TBL_DEF                "%-30s | DEFAULT"
 #define SER_PROC_TBL_WRITE              "%-30s | WRITTING TO EEPROM"
 
 #define SER_EEPROM_FOUND                " EEPROM Configuration found"
 #define SER_EEPROM_NOT_FOUND            " EEPROM Configuration NOT FOUND!!!!"
+#define SER_EEPROM_SIZE            		" EEPROM_SIZE: "
 
 #define SER_SPIFFS_MOUNTING             "Mounting SPIFFS..."
 #define SER_SPIFFS_PART_NOT_FOUND       "SPIFFS Partition Not Found"

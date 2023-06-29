@@ -38,6 +38,7 @@
 #define CFG_PAGE_INFO               true        // include the info page in Config mode
 #define CFG_PAGE_IAS                true        // include the IAS page in Config mode
 #define CFG_ANNOUNCE                true        // Announce to IAS on which ip this device is during Config mode.
+#define CFG_TIMEOUT                 300000       // Exit Config mode after X time of inactivity.
 
 // Wifi defines
 #define WIFI_SMARTCONFIG            false       // Set to true to enable smartconfig by smartphone app "ESP Smart Config" or "ESP8266 SmartConfig" | This will add (+/- 2%) of program storage space and +/- 1%) of dynamic memory
@@ -52,22 +53,30 @@
 // Internal clock
 #if defined  ESP8266
    #define SNTP_INT_CLOCK_UPD           true            // Synchronize the internal clock useing SNTP? BearSSL: This is necessary to verify that the TLS certificates offered by servers are currently valid.
-   #define SNTP_INT_CLOCK_UPD_INTERVAL  43200000        // Clock update internal in miliseconds (default 43200000 = 12 hour)
+   #define SNTP_INT_CLOCK_TIME_ZONE     TZ_Etc_GMT      // Ntp time zone
+   #define SNTP_USE_STORED_UNTILL_SYNC  false           // Use the last stored timestamp untill time is synced with the NTP server (faster reboots..)(ESP8266 only)
 #elif defined ESP32
    #define SNTP_INT_CLOCK_UPD           false           // The esp32 uses mbedTLS instead of BearSSL and does not need the time. Your welcome to turn it on for your own projects!
-   #define SNTP_INT_CLOCK_UPD_INTERVAL  43200000        // Clock update internal in miliseconds (default 43200000 = 12 hour)
+   #define SNTP_INT_CLOCK_TIME_ZONE     PSTR("GMT0")    // Ntp time zone
 #endif
+
+
+#define SNTP_INT_CLOCK_SERV_1       "pool.ntp.org"      // Ntp server 1
+#define SNTP_INT_CLOCK_SERV_2       "time.nist.gov"     // Ntp server 2
+#define SNTP_CONN_MAX_RETRIES       200                 // NTP sync is important! But we cannot wait forever...
 
 // HTTPS defines
 #define HTTPS                       true                // Use HTTPS for OTA updates
 #define HTTPS_8266_TYPE             CERTIFICATE         // FNGPRINT / CERTIFICATE | ESP32 only accepts certificates | SET to FNGPRINT for backwards compatibility with 2.0.X (ESP8266)
 #define HTTPS_CERT_STORAGE          ST_SPIFFS           // ST_SPIFFS / ST_PROGMEM | If you want to be able to update your certificates from config mode choose for ST_SPIFFS
-#define HTTPS_FNGPRINT              "34 6d 0a 26 f0 40 3a 0a 1b f1 ca 8e c8 0c f5 14 21 83 7c b1" // Initial fingerprint(ESP8266). You can edit & change this later in config mode.
+#define HTTPS_FNGPRINT              "2b 14 1a f1 5e 54 87 fc 0d f4 6f 0e 01 1c 0d 77 25 28 5b 9e" // Initial fingerprint(ESP8266). You can edit & change this later in config mode.
 
 // OTA defines
 #define OTA_HOST                    "iotappstory.com"   // OTA update host
-#define OTA_UPD_FILE                "/ota/updates.php"  // file at host that handles 8266 updates
-#define OTA_LOG_FILE                "/ota/logs.php"     // file at host that handles 8266 updates
+#define OTA_UPD_FILE                "/ota/updates"      // file at host that handles 8266 updates
+#define OTA_LOG_FILE                "/ota/logs"         // file at host that handles 8266 updates
+#define OTA_HOST_HTTP_PORT          80
+#define OTA_HOST_HTTPS_PORT         443
 #define OTA_LOCAL_UPDATE            false               // Update firmware by uploading a .bin file in config mode | Only when config is stored in SPIFFS. CFG_STORAGE (line 15)
 #define OTA_UPD_CHECK_SPIFFS        true                // Do you want to OTA update SPIFFS? | true / false
 #define OTA_UPD_CHECK_NEXTION       false               // Do you want to OTA update your Nextion display? | true / false
@@ -87,6 +96,8 @@
 #endif
 
 // EERPOM & max nr of addable fields
+#define EEPROM_STORAGE_STYLE        EEP_NEW	// EEP_OLD / EEP_NEW
+
 #if defined  ESP8266
     #define EEPROM_SIZE             4096    // EEPROM_SIZE depending on device
     #define MAXNUMEXTRAFIELDS       8       // wifimanger | max num of fields that can be added
@@ -131,7 +142,11 @@
 
 #define FNGPRINT    0
 #define CERTIFICATE 1
-#define IASLIB      "2.1.0-RC3"
+#define IASLIB      "2.1.0-RC5.1"
+
+// define storage types (internal use)
+#define EEP_OLD     0
+#define EEP_NEW     1
 
 // used for storing the config struct to eeprom
 #define MAGICBYTES  "CFG"
